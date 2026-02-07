@@ -70,6 +70,15 @@ onConnect((params) => {
     label = outgoingCount === 0 ? 'True' : 'False'
   }
 
+  if (sourceNode?.type === 'condition' && label) {
+    // 记录 True/False 目标节点，后端可直接使用
+    if (label === 'True') {
+      sourceNode.data = { ...sourceNode.data, trueTarget: params.target }
+    } else if (label === 'False') {
+      sourceNode.data = { ...sourceNode.data, falseTarget: params.target }
+    }
+  }
+
   addEdges([
     {
       ...params,
@@ -95,6 +104,12 @@ const onEdgeClick = (_: any, edge: any) => {
       labelStyle: getEdgeLabelStyle(nextLabel),
     }
   })
+
+  if (nextLabel === 'True') {
+    sourceNode.data = { ...sourceNode.data, trueTarget: edge.target }
+  } else {
+    sourceNode.data = { ...sourceNode.data, falseTarget: edge.target }
+  }
 }
 
 // 拖拽进入画布时允许放置

@@ -123,6 +123,12 @@ export class WorkflowEngine {
       return currentNode.data.falseTarget
     }
 
+    // 根据连线标签选择目标
+    const labeled = outgoing.find((edge: any) => edge.label === (isTrue ? 'True' : 'False'))
+    if (labeled?.target) {
+      return labeled.target
+    }
+
     // 未配置目标时，默认取第一/第二条出边
     if (isTrue) {
       return outgoing[0]?.target
