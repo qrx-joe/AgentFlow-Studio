@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { WorkflowNode, WorkflowEdge, Workflow } from '@/types'
+import type { WorkflowNode, WorkflowEdge, Workflow, WorkflowExecution } from '@/types'
 import { workflowApi } from '@/api'
 
 // 工作流状态管理：负责画布数据、保存与执行
@@ -12,6 +12,7 @@ export const useWorkflowStore = defineStore('workflow', {
     saving: false,
     executing: false,
     executionLogs: [] as string[],
+    executions: [] as WorkflowExecution[],
   }),
 
   actions: {
@@ -76,10 +77,17 @@ export const useWorkflowStore = defineStore('workflow', {
         if (Array.isArray(response.logs)) {
           this.executionLogs = response.logs
         }
+        await this.fetchExecutions()
         return response
       } finally {
         this.executing = false
       }
+    },
+
+    async fetchExecutions() {
+      if (!this.workflowId) return
+      const response = await workflowApi.listExecutions(this.workflowId)
+      this.executions = response
     },
   },
 })

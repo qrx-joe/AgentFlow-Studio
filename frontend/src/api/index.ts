@@ -8,6 +8,7 @@ export const workflowApi = {
   update: (id: string, payload: any) => request.put(`/workflows/${id}`, payload),
   remove: (id: string) => request.delete(`/workflows/${id}`),
   execute: (id: string, input?: string) => request.post(`/workflows/${id}/execute`, { input }),
+  listExecutions: (id: string) => request.get(`/workflows/${id}/executions`),
 }
 
 // 知识库 API

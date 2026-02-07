@@ -25,6 +25,18 @@ export interface Workflow {
   updatedAt?: string
 }
 
+export interface WorkflowExecution {
+  id: string
+  workflowId: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  input?: Record<string, any>
+  output?: Record<string, any>
+  logs: string[]
+  startedAt: string
+  completedAt?: string
+  errorMessage?: string
+}
+
 export interface DocumentItem {
   id: string
   filename: string

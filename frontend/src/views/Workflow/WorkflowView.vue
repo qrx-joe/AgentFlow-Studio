@@ -12,6 +12,7 @@ import NodePalette from '@/components/workflow/NodePalette.vue'
 import NodeToolbar from '@/components/workflow/NodeToolbar.vue'
 import NodeConfigDrawer from '@/components/workflow/NodeConfigDrawer.vue'
 import ExecutionLog from '@/components/workflow/ExecutionLog.vue'
+import ExecutionHistory from '@/components/workflow/ExecutionHistory.vue'
 
 import TriggerNode from '@/components/nodes/TriggerNode.vue'
 import LLMNode from '@/components/nodes/LLMNode.vue'
@@ -88,6 +89,7 @@ const handleSaveConfig = (nodeId: string, data: Record<string, any>) => {
 const handleSaveWorkflow = async () => {
   await workflowStore.saveWorkflow()
   workflowStore.addLog('工作流已保存')
+  await workflowStore.fetchExecutions()
 }
 
 const handleRunWorkflow = async () => {
