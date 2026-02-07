@@ -26,6 +26,7 @@ const selectedNodeId = ref('')
 const showDrawer = ref(false)
 const selectedExecution = ref<any>(null)
 const showExecutionDialog = ref(false)
+let highlightTimer: number | undefined
 
 // 注册自定义节点类型
 const nodeTypes = {
@@ -37,7 +38,10 @@ const nodeTypes = {
   end: EndNode,
 }
 
-const { onConnect, addEdges, addNodes, project, setCenter } = useVueFlow()
+const vueFlow = useVueFlow()
+const { onConnect, addEdges, addNodes, project, setCenter, fitView } = vueFlow
+const viewportStack = ref<Array<{ x: number; y: number; zoom: number }>>([])
+const nodeStyleCache = new Map<string, any>()
 
 // 连接事件：创建边
 const getEdgeStyle = (label?: string) => {
@@ -171,21 +175,70 @@ const handleClear = () => {
 }
 
 const highlightNode = (nodeId: string) => {
+  // 保存当前视角，便于恢复
+  const getViewport = (vueFlow as any).getViewport
+  if (getViewport) {
+    viewportStack.value.push(getViewport())
+  }
+
   // 高亮节点：给节点添加边框样式
   workflowStore.nodes = workflowStore.nodes.map(node => {
     if (node.id === nodeId) {
+      nodeStyleCache.set(node.id, node.style || null)
       return {
         ...node,
-        style: { border: '2px solid #38bdf8', borderRadius: '10px' },
+        style: {
+          ...node.style,
+          border: '2px solid #38bdf8',
+          borderRadius: '10px',
+          boxShadow: '0 0 0 4px rgba(56, 189, 248, 0.25)',
+          transition: 'box-shadow 0.3s ease, border 0.3s ease',
+        },
       }
     }
-    return { ...node, style: { border: '1px solid transparent' } }
+    return node
   })
 
   // 自动居中定位节点，提升定位效率
   const target = workflowStore.nodes.find(node => node.id === nodeId)
   if (target) {
-    setCenter(target.position.x, target.position.y, { zoom: 1.2 })
+    // 使用 setCenter 动画过渡（若底层不支持 duration，将自动忽略）
+    ;(setCenter as any)(target.position.x, target.position.y, { zoom: 1.2, duration: 400 })
+  }
+
+  // 自动取消高亮，避免长期高亮造成干扰
+  if (highlightTimer) {
+    window.clearTimeout(highlightTimer)
+  }
+  highlightTimer = window.setTimeout(() => {
+    workflowStore.nodes = workflowStore.nodes.map(node => {
+      if (nodeStyleCache.has(node.id)) {
+        const cached = nodeStyleCache.get(node.id)
+        nodeStyleCache.delete(node.id)
+        return {
+          ...node,
+          style: cached || undefined,
+        }
+      }
+      return node
+    })
+  }, 2000)
+}
+
+const handleRestoreViewport = () => {
+  const setViewport = (vueFlow as any).setViewport
+  if (viewportStack.value.length > 0 && setViewport) {
+    // 恢复上次视角
+    const last = viewportStack.value.pop()
+    if (last) {
+      setViewport(last, { duration: 300 })
+      return
+    }
+    return
+  }
+  // 回退：居中并适配全部节点
+  if (fitView) {
+    ;(fitView as any)({ padding: 0.2, duration: 300 })
   }
 }
 

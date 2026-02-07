@@ -9,6 +9,7 @@ defineEmits<{
   (e: 'save'): void
   (e: 'run'): void
   (e: 'clear'): void
+  (e: 'restore'): void
 }>()
 </script>
 
@@ -17,6 +18,7 @@ defineEmits<{
     <el-button type="primary" :loading="saving" @click="$emit('save')">保存</el-button>
     <el-button type="success" :loading="executing" @click="$emit('run')">运行</el-button>
     <el-button @click="$emit('clear')">清空</el-button>
+    <el-button @click="$emit('restore')">恢复视角</el-button>
     <el-button disabled>撤销</el-button>
   </div>
 </template>
