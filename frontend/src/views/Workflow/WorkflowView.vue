@@ -172,6 +172,16 @@ const formattedExecutionOutput = computed(() => {
     : ''
 })
 
+const conditionTargetOptions = computed(() => {
+  // 条件节点目标选项：过滤掉自身，显示名称+ID
+  return workflowStore.nodes
+    .filter(node => node.id !== selectedNodeId.value)
+    .map(node => ({
+      label: `${node.data?.label || node.type} (${node.id})`,
+      value: node.id,
+    }))
+})
+
 const formattedExecutionLogs = computed(() => {
   return selectedExecution.value?.logs?.length
     ? selectedExecution.value.logs.join('\n')
@@ -245,6 +255,7 @@ const handleDownloadLogs = () => {
     <NodeConfigDrawer
       v-model="showDrawer"
       :node="workflowStore.nodes.find(n => n.id === selectedNodeId)"
+      :node-options="conditionTargetOptions"
       @save="handleSaveConfig"
     />
 

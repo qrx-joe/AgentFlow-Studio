@@ -6,6 +6,7 @@ import type { WorkflowNode } from '@/types'
 const props = defineProps<{
   modelValue: boolean
   node?: WorkflowNode
+  nodeOptions?: Array<{ label: string; value: string }>
 }>()
 
 const emit = defineEmits<{
@@ -92,10 +93,34 @@ const handleSave = () => {
           <el-input v-model="form.expectedValue" placeholder="为空表示仅判断真值" />
         </el-form-item>
         <el-form-item label="True目标">
-          <el-input v-model="form.trueTarget" placeholder="可选：指定下一节点ID" />
+          <el-select
+            v-model="form.trueTarget"
+            placeholder="选择 True 分支目标"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="option in props.nodeOptions || []"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="False目标">
-          <el-input v-model="form.falseTarget" placeholder="可选：指定下一节点ID" />
+          <el-select
+            v-model="form.falseTarget"
+            placeholder="选择 False 分支目标"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="option in props.nodeOptions || []"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
         </el-form-item>
       </template>
     </el-form>
