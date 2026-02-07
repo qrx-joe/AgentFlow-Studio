@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import { computed, reactive, watch } from 'vue'
+import type { WorkflowNode } from '@/types'
+
+// 配置面板：双击节点后编辑其参数
+const props = defineProps<{
+  modelValue: boolean
+  node?: WorkflowNode
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'save', nodeId: string, data: Record<string, any>): void
+}>()
+
+// 使用局部表单避免直接修改原对象
+const form = reactive({
+  label: '',
+  model: 'gpt-4o-mini',
+  prompt: '',
+  topK: 3,
+})
+
+watch(
+  () => props.node,
+  (node) => {
+    if (!node) return
+    form.label = node.data?.label || ''
+    form.model = node.data?.model || 'gpt-4o-mini'
+    form.prompt = node.data?.prompt || ''
+    form.topK = node.data?.topK || 3
+  },
+  { immediate: true }
+)
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value),
+})
+
+const handleSave = () => {
+  if (!props.node) return
+  emit('save', props.node.id, {
+    label: form.label,
+    model: form.model,
+    prompt: form.prompt,
+    topK: form.topK,
+  })
+  visible.value = false
+}
+</script>
+
+<template>
+  <el-drawer v-model="visible" title="节点配置" size="360px">
+    <el-form label-width="80px">
+      <el-form-item label="名称">
+        <el-input v-model="form.label" placeholder="节点名称" />
+      </el-form-item>
+
+      <template v-if="node?.type === 'llm'">
+        <el-form-item label="模型">
+          <el-input v-model="form.model" placeholder="模型名称" />
+        </el-form-item>
+        <el-form-item label="Prompt">
+          <el-input v-model="form.prompt" type="textarea" :rows="4" />
+        </el-form-item>
+      </template>
+
+      <template v-if="node?.type === 'knowledge'">
+        <el-form-item label="TopK">
+          <el-input-number v-model="form.topK" :min="1" :max="10" />
+        </el-form-item>
+      </template>
+    </el-form>
+
+    <div class="actions">
+      <el-button type="primary" @click="handleSave">保存配置</el-button>
+    </div>
+  </el-drawer>
+</template>
+
+<style scoped>
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+</style>

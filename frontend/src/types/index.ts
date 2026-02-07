@@ -1,0 +1,62 @@
+// 通用类型定义，集中管理前后端交互数据结构
+
+export type NodeType = 'trigger' | 'llm' | 'knowledge' | 'condition' | 'code' | 'end'
+
+export interface WorkflowNode {
+  id: string
+  type: NodeType
+  position: { x: number; y: number }
+  data?: Record<string, any>
+}
+
+export interface WorkflowEdge {
+  id: string
+  source: string
+  target: string
+}
+
+export interface Workflow {
+  id: string
+  name: string
+  description?: string
+  nodes: WorkflowNode[]
+  edges: WorkflowEdge[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface DocumentItem {
+  id: string
+  filename: string
+  fileType?: string
+  fileSize?: number
+  createdAt?: string
+}
+
+export interface SearchResult {
+  id: string
+  documentId: string
+  content: string
+  similarity: number
+}
+
+export interface MessageSource {
+  documentId?: string
+  nodeId?: string
+  content?: string
+}
+
+export interface Message {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  sources?: MessageSource[]
+  createdAt?: string
+}
+
+export interface Session {
+  id: string
+  title?: string
+  workflowId?: string
+  createdAt?: string
+}
