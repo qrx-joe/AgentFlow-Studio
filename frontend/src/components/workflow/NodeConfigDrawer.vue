@@ -92,6 +92,11 @@ const handleSave = () => {
         <el-form-item label="期望值">
           <el-input v-model="form.expectedValue" placeholder="为空表示仅判断真值" />
         </el-form-item>
+        <el-form-item label="提示">
+          <div class="hint">
+            连线点击可切换 True/False，系统以边 ID 作为分支绑定
+          </div>
+        </el-form-item>
         <el-form-item label="True目标">
           <el-select
             v-model="form.trueTarget"
@@ -136,5 +141,11 @@ const handleSave = () => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
 }
 </style>

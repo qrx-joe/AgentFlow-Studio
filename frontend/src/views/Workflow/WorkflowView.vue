@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/background/dist/style.css'
@@ -76,11 +76,11 @@ onConnect((params) => {
   }
 
   if (sourceNode?.type === 'condition' && label) {
-    // 记录 True/False 目标节点，后端可直接使用
+    // 记录 True/False 目标边 ID，后端可直接使用
     if (label === 'True') {
-      sourceNode.data = { ...sourceNode.data, trueTarget: params.target }
+      sourceNode.data = { ...sourceNode.data, trueEdgeId: params.id, trueTarget: params.target }
     } else if (label === 'False') {
-      sourceNode.data = { ...sourceNode.data, falseTarget: params.target }
+      sourceNode.data = { ...sourceNode.data, falseEdgeId: params.id, falseTarget: params.target }
     }
   }
 
@@ -88,6 +88,7 @@ onConnect((params) => {
     {
       ...params,
       label,
+      branchType: label,
       style: getEdgeStyle(label),
       labelStyle: getEdgeLabelStyle(label),
     },
@@ -105,15 +106,50 @@ const onEdgeClick = (_: any, edge: any) => {
     return {
       ...item,
       label: nextLabel,
+      branchType: nextLabel,
       style: getEdgeStyle(nextLabel),
       labelStyle: getEdgeLabelStyle(nextLabel),
     }
   })
 
+  const siblings = workflowStore.edges.filter(item => item.source === edge.source && item.id !== edge.id)
   if (nextLabel === 'True') {
-    sourceNode.data = { ...sourceNode.data, trueTarget: edge.target }
+    // 将当前边设为 True，其他边设为 False/清空
+    sourceNode.data = {
+      ...sourceNode.data,
+      trueEdgeId: edge.id,
+      trueTarget: edge.target,
+      falseEdgeId: siblings[0]?.id,
+      falseTarget: siblings[0]?.target,
+    }
+    workflowStore.edges = workflowStore.edges.map(item => {
+      if (item.source !== edge.source || item.id === edge.id) return item
+      return {
+        ...item,
+        label: 'False',
+        branchType: 'False',
+        style: getEdgeStyle('False'),
+        labelStyle: getEdgeLabelStyle('False'),
+      }
+    })
   } else {
-    sourceNode.data = { ...sourceNode.data, falseTarget: edge.target }
+    sourceNode.data = {
+      ...sourceNode.data,
+      falseEdgeId: edge.id,
+      falseTarget: edge.target,
+      trueEdgeId: siblings[0]?.id,
+      trueTarget: siblings[0]?.target,
+    }
+    workflowStore.edges = workflowStore.edges.map(item => {
+      if (item.source !== edge.source || item.id === edge.id) return item
+      return {
+        ...item,
+        label: 'True',
+        branchType: 'True',
+        style: getEdgeStyle('True'),
+        labelStyle: getEdgeLabelStyle('True'),
+      }
+    })
   }
 }
 
@@ -281,6 +317,56 @@ const formattedExecutionLogs = computed(() => {
     : ''
 })
 
+const executionLogGroups = computed(() => {
+  const logs = selectedExecution.value?.logs || []
+  const groups: Array<{ title: string; items: string[]; nodeId?: string }> = []
+  let currentGroup: { title: string; items: string[]; nodeId?: string } | null = null
+
+  for (const line of logs) {
+    if (line.includes('执行节点：')) {
+      const nodeId = getNodeIdFromLog(line)
+      if (currentGroup) {
+        groups.push(currentGroup)
+      }
+      currentGroup = { title: line, items: [], nodeId: nodeId || undefined }
+      continue
+    }
+
+    if (!currentGroup) {
+      currentGroup = { title: '通用日志', items: [] }
+    }
+    currentGroup.items.push(line)
+  }
+
+  if (currentGroup) {
+    groups.push(currentGroup)
+  }
+
+  return groups
+})
+
+const collapsedGroups = ref<Set<number>>(new Set())
+
+const toggleGroup = (index: number) => {
+  if (collapsedGroups.value.has(index)) {
+    collapsedGroups.value.delete(index)
+  } else {
+    collapsedGroups.value.add(index)
+  }
+}
+
+// 默认折叠策略：仅展开最近一组，其余折叠
+watch(executionLogGroups, (groups) => {
+  const next = new Set<number>()
+  const lastIndex = groups.length - 1
+  groups.forEach((_, index) => {
+    if (index !== lastIndex) {
+      next.add(index)
+    }
+  })
+  collapsedGroups.value = next
+})
+
 const handleCopyExecution = async () => {
   if (!selectedExecution.value) return
   const payload = {
@@ -391,13 +477,28 @@ const getNodeIdFromLog = (line: string) => {
           <div class="label">日志</div>
           <div class="log-list">
             <div
-              v-for="(line, index) in selectedExecution.logs"
-              :key="index"
-              class="log-item"
-              :class="{ clickable: getNodeIdFromLog(line) }"
-              @click="getNodeIdFromLog(line) && highlightNode(getNodeIdFromLog(line))"
+              v-for="(group, gIndex) in executionLogGroups"
+              :key="gIndex"
+              class="group"
             >
-              {{ line }}
+              <div class="group-header" @click="toggleGroup(gIndex)">
+                <span class="group-title">{{ group.title }}</span>
+                <span class="group-toggle">
+                  {{ collapsedGroups.has(gIndex) ? '展开' : '折叠' }}
+                </span>
+              </div>
+              <div v-if="!collapsedGroups.has(gIndex)">
+                <div v-if="group.items.length === 0" class="log-item muted">无额外信息</div>
+                <div
+                  v-for="(line, index) in group.items"
+                  :key="index"
+                  class="log-item"
+                  :class="{ clickable: getNodeIdFromLog(line) }"
+                  @click="getNodeIdFromLog(line) && highlightNode(getNodeIdFromLog(line))"
+                >
+                  {{ line }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -481,6 +582,30 @@ const getNodeIdFromLog = (line: string) => {
   gap: 6px;
 }
 
+.group {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.group-toggle {
+  font-size: 12px;
+  color: #64748b;
+}
+
 .log-item {
   font-size: 12px;
   color: #334155;
@@ -489,6 +614,10 @@ const getNodeIdFromLog = (line: string) => {
 .log-item.clickable {
   cursor: pointer;
   color: #0ea5e9;
+}
+
+.log-item.muted {
+  color: #94a3b8;
 }
 
 .actions {

@@ -115,7 +115,17 @@ export class WorkflowEngine {
 
     const isTrue = this.evaluateCondition(currentNode, context)
 
-    // 优先使用配置的目标节点
+    // 优先使用配置的目标边 ID
+    if (isTrue && currentNode.data?.trueEdgeId) {
+      const edge = outgoing.find((item: any) => item.id === currentNode.data.trueEdgeId)
+      if (edge?.target) return edge.target
+    }
+    if (!isTrue && currentNode.data?.falseEdgeId) {
+      const edge = outgoing.find((item: any) => item.id === currentNode.data.falseEdgeId)
+      if (edge?.target) return edge.target
+    }
+
+    // 兼容旧配置：目标节点优先
     if (isTrue && currentNode.data?.trueTarget) {
       return currentNode.data.trueTarget
     }
@@ -123,8 +133,10 @@ export class WorkflowEngine {
       return currentNode.data.falseTarget
     }
 
-    // 根据连线标签选择目标
-    const labeled = outgoing.find((edge: any) => edge.label === (isTrue ? 'True' : 'False'))
+    // 根据连线标签/分支类型选择目标
+    const labeled = outgoing.find((edge: any) =>
+      (edge.branchType || edge.label) === (isTrue ? 'True' : 'False')
+    )
     if (labeled?.target) {
       return labeled.target
     }

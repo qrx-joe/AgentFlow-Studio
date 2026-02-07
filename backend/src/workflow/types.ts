@@ -14,6 +14,7 @@ export interface WorkflowEdge {
   source: string
   target: string
   label?: string
+  branchType?: 'True' | 'False'
 }
 
 export interface WorkflowDefinition {
