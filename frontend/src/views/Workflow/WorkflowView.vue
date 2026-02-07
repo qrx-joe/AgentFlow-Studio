@@ -40,10 +40,62 @@ const nodeTypes = {
 const { onConnect, addEdges, addNodes, project } = useVueFlow()
 
 // 连接事件：创建边
+const getEdgeStyle = (label?: string) => {
+  if (label === 'True') {
+    return { stroke: '#16a34a', strokeWidth: 2 }
+  }
+  if (label === 'False') {
+    return { stroke: '#dc2626', strokeWidth: 2 }
+  }
+  return { stroke: '#94a3b8', strokeWidth: 2 }
+}
+
+const getEdgeLabelStyle = (label?: string) => {
+  if (label === 'True') {
+    return { fill: '#16a34a', fontWeight: 600 }
+  }
+  if (label === 'False') {
+    return { fill: '#dc2626', fontWeight: 600 }
+  }
+  return { fill: '#64748b' }
+}
+
 onConnect((params) => {
-  // addEdges 会更新 v-model 绑定的 edges
-  addEdges([params])
+  // 条件节点的出边标记 True/False，便于画布识别
+  const sourceNode = workflowStore.nodes.find(node => node.id === params.source)
+  const outgoingCount = workflowStore.edges.filter(edge => edge.source === params.source).length
+
+  let label: string | undefined
+  if (sourceNode?.type === 'condition') {
+    label = outgoingCount === 0 ? 'True' : 'False'
+  }
+
+  addEdges([
+    {
+      ...params,
+      label,
+      style: getEdgeStyle(label),
+      labelStyle: getEdgeLabelStyle(label),
+    },
+  ])
 })
+
+const onEdgeClick = (_: any, edge: any) => {
+  const sourceNode = workflowStore.nodes.find(node => node.id === edge.source)
+  if (sourceNode?.type !== 'condition') return
+
+  // 点击切换 True/False 标签，便于手动修正
+  const nextLabel = edge.label === 'True' ? 'False' : 'True'
+  workflowStore.edges = workflowStore.edges.map(item => {
+    if (item.id !== edge.id) return item
+    return {
+      ...item,
+      label: nextLabel,
+      style: getEdgeStyle(nextLabel),
+      labelStyle: getEdgeLabelStyle(nextLabel),
+    }
+  })
+}
 
 // 拖拽进入画布时允许放置
 const onDragOver = (event: DragEvent) => {
@@ -182,6 +234,7 @@ const handleDownloadLogs = () => {
           v-model:edges="workflowStore.edges"
           :node-types="nodeTypes"
           @node-double-click="onNodeDoubleClick"
+          @edge-click="onEdgeClick"
         >
           <Background />
           <Controls />
