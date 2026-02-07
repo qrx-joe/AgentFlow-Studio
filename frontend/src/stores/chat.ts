@@ -55,14 +55,63 @@ export const useChatStore = defineStore('chat', {
 
       this.loading = true
       try {
-        const response = await chatApi.sendMessage({
-          sessionId: this.currentSessionId,
-          content,
+        // 先插入一个空的助手消息，用于流式展示
+        const assistantMessage: Message = {
+          id: `msg-${Date.now() + 1}`,
+          role: 'assistant',
+          content: '',
+          sources: [],
+          createdAt: new Date().toISOString(),
+        }
+        this.messages.push(assistantMessage)
+
+        // 使用后端 SSE 流式接口
+        const response = await fetch('/api/chat/messages/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: this.currentSessionId, content }),
         })
 
-        // 添加助手消息与溯源信息
-        this.messages.push(response)
-        return response
+        if (!response.body) {
+          // 回退到非流式接口
+          const fallback = await chatApi.sendMessage({
+            sessionId: this.currentSessionId,
+            content,
+          })
+          assistantMessage.content = fallback.content || ''
+          assistantMessage.sources = fallback.sources || []
+          return fallback
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder('utf-8')
+        let buffer = ''
+
+        // 读取 SSE 数据块
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          // 按 SSE 事件分割
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() || ''
+
+          for (const part of parts) {
+            if (part.startsWith('event: done')) {
+              const dataLine = part.split('\n').find(line => line.startsWith('data: '))
+              if (dataLine) {
+                const payload = JSON.parse(dataLine.replace('data: ', ''))
+                assistantMessage.sources = payload.sources || []
+              }
+            } else if (part.startsWith('data: ')) {
+              const token = part.replace('data: ', '')
+              assistantMessage.content += token
+            }
+          }
+        }
+
+        return assistantMessage
       } finally {
         this.loading = false
       }

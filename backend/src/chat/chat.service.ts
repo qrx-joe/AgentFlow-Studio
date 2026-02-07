@@ -38,6 +38,13 @@ export class ChatService {
   async sendMessage(payload: { sessionId: string; content: string }) {
     const { sessionId, content } = payload
 
+    // 0. 拉取最近对话，构建多轮上下文
+    const history = await this.messageRepo.find({
+      where: { sessionId },
+      order: { createdAt: 'ASC' },
+      take: 10,
+    })
+
     // 1. 保存用户消息
     await this.messageRepo.save({
       sessionId,
@@ -59,6 +66,7 @@ export class ChatService {
       prompt: `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`,
       input: content,
       context: { sources },
+      history: history.map(item => ({ role: item.role, content: item.content })),
     })
 
     // 4. 保存助手消息
@@ -66,6 +74,58 @@ export class ChatService {
       sessionId,
       role: 'assistant',
       content: answer,
+      sources,
+    })
+
+    return assistant
+  }
+
+  // 流式对话：边生成边返回 token
+  async streamMessage(
+    payload: { sessionId: string; content: string },
+    onToken: (token: string) => void
+  ) {
+    const { sessionId, content } = payload
+
+    // 0. 拉取最近对话，构建多轮上下文
+    const history = await this.messageRepo.find({
+      where: { sessionId },
+      order: { createdAt: 'ASC' },
+      take: 10,
+    })
+
+    // 1. 保存用户消息
+    await this.messageRepo.save({
+      sessionId,
+      role: 'user',
+      content,
+    })
+
+    // 2. 检索知识库，构造上下文
+    const searchResults = await this.knowledgeService.search(content, 3)
+    const sources: ChatSource[] = searchResults.map((item) => ({
+      documentId: item.documentId,
+      content: item.content,
+    }))
+    const contextText = searchResults.map((item) => item.content).join('\n\n---\n\n')
+
+    // 3. 流式调用 LLM
+    let fullText = ''
+    for await (const token of this.agentService.streamChat({
+      prompt: `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`,
+      input: content,
+      context: { sources },
+      history: history.map(item => ({ role: item.role, content: item.content })),
+    })) {
+      fullText += token
+      onToken(token)
+    }
+
+    // 4. 保存助手消息
+    const assistant = await this.messageRepo.save({
+      sessionId,
+      role: 'assistant',
+      content: fullText,
       sources,
     })
 
