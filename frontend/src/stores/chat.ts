@@ -9,6 +9,8 @@ export const useChatStore = defineStore('chat', {
     currentSessionId: '' as string,
     messages: [] as Message[],
     loading: false,
+    streaming: false,
+    abortController: null as AbortController | null,
   }),
 
   getters: {
@@ -54,6 +56,8 @@ export const useChatStore = defineStore('chat', {
       this.messages.push(userMessage)
 
       this.loading = true
+      this.streaming = true
+      this.abortController = new AbortController()
       try {
         // 先插入一个空的助手消息，用于流式展示
         const assistantMessage: Message = {
@@ -70,6 +74,7 @@ export const useChatStore = defineStore('chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId: this.currentSessionId, content }),
+          signal: this.abortController.signal,
         })
 
         if (!response.body) {
@@ -114,7 +119,19 @@ export const useChatStore = defineStore('chat', {
         return assistantMessage
       } finally {
         this.loading = false
+        this.streaming = false
+        this.abortController = null
       }
+    },
+
+    // 中断流式输出
+    abortStreaming() {
+      if (this.abortController) {
+        this.abortController.abort()
+        this.abortController = null
+      }
+      this.streaming = false
+      this.loading = false
     },
 
     async deleteSession(id: string) {

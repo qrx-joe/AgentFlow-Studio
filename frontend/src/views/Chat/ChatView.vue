@@ -15,6 +15,10 @@ const handleSend = async () => {
   input.value = ''
   await chatStore.sendMessage(content)
 }
+
+const handleStop = () => {
+  chatStore.abortStreaming()
+}
 </script>
 
 <template>
@@ -51,6 +55,11 @@ const handleSend = async () => {
       <div class="input">
         <el-input v-model="input" type="textarea" :rows="2" placeholder="输入消息..." />
         <el-button type="primary" :loading="chatStore.loading" @click="handleSend">发送</el-button>
+        <el-button v-if="chatStore.streaming" type="danger" @click="handleStop">停止</el-button>
+      </div>
+
+      <div v-if="chatStore.streaming" class="streaming-hint">
+        正在生成回答...
       </div>
     </section>
   </div>
@@ -144,6 +153,12 @@ const handleSend = async () => {
   display: flex;
   gap: 10px;
   margin-top: 12px;
+}
+
+.streaming-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .title {
