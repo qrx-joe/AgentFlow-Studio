@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/background/dist/style.css'
@@ -24,6 +24,8 @@ import EndNode from '@/components/nodes/EndNode.vue'
 const workflowStore = useWorkflowStore()
 const selectedNodeId = ref('')
 const showDrawer = ref(false)
+const selectedExecution = ref<any>(null)
+const showExecutionDialog = ref(false)
 
 // 注册自定义节点类型
 const nodeTypes = {
@@ -100,6 +102,58 @@ const handleRunWorkflow = async () => {
 const handleClear = () => {
   workflowStore.setCanvas([], [])
 }
+
+const handleSelectExecution = (execution: any) => {
+  selectedExecution.value = execution
+  showExecutionDialog.value = true
+}
+
+const formattedExecutionInput = computed(() => {
+  return selectedExecution.value?.input
+    ? JSON.stringify(selectedExecution.value.input, null, 2)
+    : ''
+})
+
+const formattedExecutionOutput = computed(() => {
+  return selectedExecution.value?.output
+    ? JSON.stringify(selectedExecution.value.output, null, 2)
+    : ''
+})
+
+const formattedExecutionLogs = computed(() => {
+  return selectedExecution.value?.logs?.length
+    ? selectedExecution.value.logs.join('\n')
+    : ''
+})
+
+const handleCopyExecution = async () => {
+  if (!selectedExecution.value) return
+  const payload = {
+    status: selectedExecution.value.status,
+    startedAt: selectedExecution.value.startedAt,
+    completedAt: selectedExecution.value.completedAt,
+    errorMessage: selectedExecution.value.errorMessage,
+    input: selectedExecution.value.input,
+    output: selectedExecution.value.output,
+    logs: selectedExecution.value.logs,
+  }
+  // 复制执行详情到剪贴板，便于复盘与分享
+  await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+}
+
+const handleDownloadLogs = () => {
+  if (!selectedExecution.value?.logs?.length) return
+  const filename = `execution-${selectedExecution.value.id}.log`
+  const blob = new Blob([formattedExecutionLogs.value], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -107,6 +161,10 @@ const handleClear = () => {
     <div class="left">
       <NodePalette />
       <ExecutionLog :logs="workflowStore.executionLogs" />
+      <ExecutionHistory
+        :executions="workflowStore.executions"
+        @select="handleSelectExecution"
+      />
     </div>
 
     <div class="center">
@@ -136,6 +194,49 @@ const handleClear = () => {
       :node="workflowStore.nodes.find(n => n.id === selectedNodeId)"
       @save="handleSaveConfig"
     />
+
+    <el-dialog v-model="showExecutionDialog" title="执行详情" width="720px">
+      <div v-if="selectedExecution" class="execution-detail">
+        <div class="section">
+          <div class="label">状态</div>
+          <div class="value">{{ selectedExecution.status }}</div>
+        </div>
+        <div class="section">
+          <div class="label">开始时间</div>
+          <div class="value">{{ selectedExecution.startedAt }}</div>
+        </div>
+        <div class="section" v-if="selectedExecution.completedAt">
+          <div class="label">结束时间</div>
+          <div class="value">{{ selectedExecution.completedAt }}</div>
+        </div>
+        <div class="section" v-if="selectedExecution.errorMessage">
+          <div class="label">错误信息</div>
+          <div class="value error">{{ selectedExecution.errorMessage }}</div>
+        </div>
+
+        <div class="section" v-if="formattedExecutionInput">
+          <div class="label">输入</div>
+          <pre class="code">{{ formattedExecutionInput }}</pre>
+        </div>
+        <div class="section" v-if="formattedExecutionOutput">
+          <div class="label">输出</div>
+          <pre class="code">{{ formattedExecutionOutput }}</pre>
+        </div>
+        <div class="section" v-if="selectedExecution.logs?.length">
+          <div class="label">日志</div>
+          <div class="log-list">
+            <div v-for="(line, index) in selectedExecution.logs" :key="index" class="log-item">
+              {{ line }}
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <el-button @click="handleCopyExecution">复制详情</el-button>
+          <el-button type="primary" @click="handleDownloadLogs">下载日志</el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -166,5 +267,57 @@ const handleClear = () => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.execution-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section {
+  display: flex;
+  gap: 12px;
+}
+
+.label {
+  width: 80px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.value {
+  color: #0f172a;
+}
+
+.value.error {
+  color: #b91c1c;
+}
+
+.code {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  overflow: auto;
+}
+
+.log-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-item {
+  font-size: 12px;
+  color: #334155;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

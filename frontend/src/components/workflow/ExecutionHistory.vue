@@ -2,7 +2,11 @@
 import type { WorkflowExecution } from '@/types'
 
 // 执行历史面板：展示最近执行记录
-defineProps<{ executions: WorkflowExecution[] }>()
+const props = defineProps<{ executions: WorkflowExecution[] }>()
+
+const emit = defineEmits<{
+  (e: 'select', execution: WorkflowExecution): void
+}>()
 </script>
 
 <template>
@@ -10,7 +14,12 @@ defineProps<{ executions: WorkflowExecution[] }>()
     <div class="title">执行历史</div>
     <div v-if="executions.length === 0" class="empty">暂无记录</div>
     <div v-else class="list">
-      <div v-for="item in executions" :key="item.id" class="row">
+      <div
+        v-for="item in props.executions"
+        :key="item.id"
+        class="row"
+        @click="emit('select', item)"
+      >
         <div class="meta">
           <span class="status" :class="item.status">{{ item.status }}</span>
           <span class="time">{{ item.startedAt }}</span>
