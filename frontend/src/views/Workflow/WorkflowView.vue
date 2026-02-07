@@ -37,7 +37,7 @@ const nodeTypes = {
   end: EndNode,
 }
 
-const { onConnect, addEdges, addNodes, project } = useVueFlow()
+const { onConnect, addEdges, addNodes, project, setCenter } = useVueFlow()
 
 // 连接事件：创建边
 const getEdgeStyle = (label?: string) => {
@@ -170,6 +170,25 @@ const handleClear = () => {
   workflowStore.setCanvas([], [])
 }
 
+const highlightNode = (nodeId: string) => {
+  // 高亮节点：给节点添加边框样式
+  workflowStore.nodes = workflowStore.nodes.map(node => {
+    if (node.id === nodeId) {
+      return {
+        ...node,
+        style: { border: '2px solid #38bdf8', borderRadius: '10px' },
+      }
+    }
+    return { ...node, style: { border: '1px solid transparent' } }
+  })
+
+  // 自动居中定位节点，提升定位效率
+  const target = workflowStore.nodes.find(node => node.id === nodeId)
+  if (target) {
+    setCenter(target.position.x, target.position.y, { zoom: 1.2 })
+  }
+}
+
 const handleSelectExecution = (execution: any) => {
   selectedExecution.value = execution
   showExecutionDialog.value = true
@@ -237,7 +256,10 @@ const handleDownloadLogs = () => {
   <div class="page">
     <div class="left">
       <NodePalette />
-      <ExecutionLog :logs="workflowStore.executionLogs" />
+      <ExecutionLog
+        :logs="workflowStore.executionLogs"
+        @select-node="highlightNode"
+      />
       <ExecutionHistory
         :executions="workflowStore.executions"
         @select="handleSelectExecution"
