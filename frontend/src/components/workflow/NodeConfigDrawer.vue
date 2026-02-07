@@ -19,6 +19,10 @@ const form = reactive({
   model: 'gpt-4o-mini',
   prompt: '',
   topK: 3,
+  variableKey: '',
+  expectedValue: '',
+  trueTarget: '',
+  falseTarget: '',
 })
 
 watch(
@@ -29,6 +33,10 @@ watch(
     form.model = node.data?.model || 'gpt-4o-mini'
     form.prompt = node.data?.prompt || ''
     form.topK = node.data?.topK || 3
+    form.variableKey = node.data?.variableKey || ''
+    form.expectedValue = node.data?.expectedValue || ''
+    form.trueTarget = node.data?.trueTarget || ''
+    form.falseTarget = node.data?.falseTarget || ''
   },
   { immediate: true }
 )
@@ -45,6 +53,10 @@ const handleSave = () => {
     model: form.model,
     prompt: form.prompt,
     topK: form.topK,
+    variableKey: form.variableKey,
+    expectedValue: form.expectedValue,
+    trueTarget: form.trueTarget,
+    falseTarget: form.falseTarget,
   })
   visible.value = false
 }
@@ -69,6 +81,21 @@ const handleSave = () => {
       <template v-if="node?.type === 'knowledge'">
         <el-form-item label="TopK">
           <el-input-number v-model="form.topK" :min="1" :max="10" />
+        </el-form-item>
+      </template>
+
+      <template v-if="node?.type === 'condition'">
+        <el-form-item label="变量Key">
+          <el-input v-model="form.variableKey" placeholder="如：node-1" />
+        </el-form-item>
+        <el-form-item label="期望值">
+          <el-input v-model="form.expectedValue" placeholder="为空表示仅判断真值" />
+        </el-form-item>
+        <el-form-item label="True目标">
+          <el-input v-model="form.trueTarget" placeholder="可选：指定下一节点ID" />
+        </el-form-item>
+        <el-form-item label="False目标">
+          <el-input v-model="form.falseTarget" placeholder="可选：指定下一节点ID" />
         </el-form-item>
       </template>
     </el-form>

@@ -24,11 +24,28 @@ export class WorkflowEngine {
     }
 
     try {
-      const order = this.topologicalSort()
-      for (const nodeId of order) {
-        const node = this.nodes.get(nodeId)
-        if (!node) continue
-        await this.executeNode(node, context)
+      // 先检测是否存在环，避免执行时死循环
+      this.topologicalSort()
+
+      // 按连线进行执行，符合真实工作流路径
+      const startNode = this.findStartNode()
+      let currentNode: WorkflowNode | undefined = startNode
+      let stepCount = 0
+
+      while (currentNode) {
+        stepCount += 1
+        if (stepCount > 200) {
+          throw new Error('工作流执行步数过多，可能存在循环')
+        }
+
+        await this.executeNode(currentNode, context)
+
+        if (currentNode.type === 'end') {
+          break
+        }
+
+        const nextNodeId = this.getNextNodeId(currentNode, context)
+        currentNode = nextNodeId ? this.nodes.get(nextNodeId) : undefined
       }
 
       return { status: 'completed', output: context.variables, logs: context.logs }
@@ -67,8 +84,8 @@ export class WorkflowEngine {
         return
 
       case 'condition':
-        // MVP：条件节点暂不分流，只记录
-        context.logs.push('条件节点暂未实现分支逻辑')
+        // 条件节点只做判断，不在这里选择路径
+        context.logs.push('条件节点已评估条件')
         return
 
       case 'code':
@@ -79,6 +96,63 @@ export class WorkflowEngine {
         context.logs.push('到达结束节点')
         return
     }
+  }
+
+  // 选择下一个节点：普通节点取第一条边，条件节点分流
+  private getNextNodeId(currentNode: WorkflowNode, context: ExecutionContext) {
+    const outgoing = this.edges.filter((edge) => edge.source === currentNode.id)
+
+    if (outgoing.length === 0) {
+      return undefined
+    }
+
+    if (currentNode.type !== 'condition') {
+      if (outgoing.length > 1) {
+        context.logs.push(`节点 ${currentNode.id} 存在多条出边，默认取第一条`)
+      }
+      return outgoing[0].target
+    }
+
+    const isTrue = this.evaluateCondition(currentNode, context)
+
+    // 优先使用配置的目标节点
+    if (isTrue && currentNode.data?.trueTarget) {
+      return currentNode.data.trueTarget
+    }
+    if (!isTrue && currentNode.data?.falseTarget) {
+      return currentNode.data.falseTarget
+    }
+
+    // 未配置目标时，默认取第一/第二条出边
+    if (isTrue) {
+      return outgoing[0]?.target
+    }
+    return outgoing[1]?.target || outgoing[0]?.target
+  }
+
+  // 条件判断：支持变量对比与输入真值判断
+  private evaluateCondition(node: WorkflowNode, context: ExecutionContext) {
+    const variableKey = node.data?.variableKey as string | undefined
+    const expectedValue = node.data?.expectedValue as string | undefined
+
+    if (variableKey) {
+      const actual = context.variables[variableKey]
+      if (expectedValue !== undefined && expectedValue !== null) {
+        return String(actual) === String(expectedValue)
+      }
+      return Boolean(actual)
+    }
+
+    return Boolean(context.input)
+  }
+
+  // 查找触发节点作为执行起点
+  private findStartNode(): WorkflowNode {
+    const startNode = [...this.nodes.values()].find((n) => n.type === 'trigger')
+    if (!startNode) {
+      throw new Error('工作流缺少触发节点')
+    }
+    return startNode
   }
 
   // 拓扑排序：确保执行顺序
