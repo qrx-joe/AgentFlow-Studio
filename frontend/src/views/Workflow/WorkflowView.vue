@@ -42,6 +42,7 @@ const vueFlow = useVueFlow()
 const { onConnect, addEdges, addNodes, project, setCenter, fitView } = vueFlow
 const viewportStack = ref<Array<{ x: number; y: number; zoom: number }>>([])
 const nodeStyleCache = new Map<string, any>()
+const nodeClassCache = new Map<string, any>()
 
 // 连接事件：创建边
 const getEdgeStyle = (label?: string) => {
@@ -185,6 +186,7 @@ const highlightNode = (nodeId: string) => {
   workflowStore.nodes = workflowStore.nodes.map(node => {
     if (node.id === nodeId) {
       nodeStyleCache.set(node.id, node.style || null)
+      nodeClassCache.set(node.id, node.class || null)
       return {
         ...node,
         style: {
@@ -194,6 +196,7 @@ const highlightNode = (nodeId: string) => {
           boxShadow: '0 0 0 4px rgba(56, 189, 248, 0.25)',
           transition: 'box-shadow 0.3s ease, border 0.3s ease',
         },
+        class: 'node-highlight',
       }
     }
     return node
@@ -215,9 +218,12 @@ const highlightNode = (nodeId: string) => {
       if (nodeStyleCache.has(node.id)) {
         const cached = nodeStyleCache.get(node.id)
         nodeStyleCache.delete(node.id)
+        const cachedClass = nodeClassCache.get(node.id)
+        nodeClassCache.delete(node.id)
         return {
           ...node,
           style: cached || undefined,
+          class: cachedClass || undefined,
         }
       }
       return node
@@ -303,6 +309,11 @@ const handleDownloadLogs = () => {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+const getNodeIdFromLog = (line: string) => {
+  const match = line.match(/\(([^)]+)\)/)
+  return match ? match[1] : ''
+}
 </script>
 
 <template>
@@ -379,7 +390,13 @@ const handleDownloadLogs = () => {
         <div class="section" v-if="selectedExecution.logs?.length">
           <div class="label">日志</div>
           <div class="log-list">
-            <div v-for="(line, index) in selectedExecution.logs" :key="index" class="log-item">
+            <div
+              v-for="(line, index) in selectedExecution.logs"
+              :key="index"
+              class="log-item"
+              :class="{ clickable: getNodeIdFromLog(line) }"
+              @click="getNodeIdFromLog(line) && highlightNode(getNodeIdFromLog(line))"
+            >
               {{ line }}
             </div>
           </div>
@@ -469,9 +486,30 @@ const handleDownloadLogs = () => {
   color: #334155;
 }
 
+.log-item.clickable {
+  cursor: pointer;
+  color: #0ea5e9;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+@keyframes nodeBlink {
+  0% {
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+  }
+}
+
+:deep(.node-highlight) {
+  animation: nodeBlink 0.8s ease-in-out 2;
 }
 </style>
