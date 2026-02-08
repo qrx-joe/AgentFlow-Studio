@@ -28,7 +28,11 @@ export const knowledgeApi = {
     })
   },
   remove: (id: string) => request.delete(`/knowledge/documents/${id}`),
-  search: (query: string, topK: number) => request.post('/knowledge/search', { query, topK }),
+  search: (
+    query: string,
+    topK: number,
+    options?: { scoreThreshold?: number; hybrid?: boolean; rerank?: boolean }
+  ) => request.post('/knowledge/search', { query, topK, ...options }),
 }
 
 // 对话 API

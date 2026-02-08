@@ -54,16 +54,30 @@ const renderContent = (msg: any) => {
   const snippets = (msg.sources || [])
     .map((item: any) => String(item.content || '').trim())
     .filter(Boolean)
-    .map(snippet => snippet.length > 80 ? snippet.slice(0, 80) : snippet)
 
-  for (const snippet of snippets) {
+  for (let i = 0; i < snippets.length; i += 1) {
+    const snippet = snippets[i]
     const safeSnippet = escapeHtml(snippet)
     if (safeSnippet && html.includes(safeSnippet)) {
-      html = html.replace(safeSnippet, `<mark class="highlight">${safeSnippet}</mark>`)
+      html = html.split(safeSnippet).join(
+        `<mark class="highlight" data-source-index="${i}">${safeSnippet}</mark>`
+      )
     }
   }
 
   return html.replace(/\n/g, '<br />')
+}
+
+const handleContentClick = (msg: any, event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const mark = target.closest('mark') as HTMLElement | null
+  if (!mark) return
+  const index = Number(mark.dataset.sourceIndex)
+  if (Number.isNaN(index)) return
+  const source = msg.sources?.[index]
+  if (source) {
+    handleSelectSource(msg.id, source)
+  }
 }
 </script>
 
@@ -100,6 +114,7 @@ const renderContent = (msg: any) => {
               v-if="msg.role === 'assistant'"
               class="content"
               v-html="renderContent(msg)"
+              @click="handleContentClick(msg, $event)"
             />
             <div v-else class="content">{{ msg.content }}</div>
             <div v-if="msg.sources?.length" class="sources">
@@ -234,6 +249,7 @@ const renderContent = (msg: any) => {
   color: #854d0e;
   padding: 0 2px;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .sources {

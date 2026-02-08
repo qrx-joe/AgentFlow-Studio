@@ -31,7 +31,17 @@ export class KnowledgeController {
   }
 
   @Post('search')
-  search(@Body('query') query: string, @Body('topK') topK: number) {
-    return this.knowledgeService.searchWithStats(query, topK || 3)
+  search(
+    @Body('query') query: string,
+    @Body('topK') topK: number,
+    @Body('scoreThreshold') scoreThreshold?: number,
+    @Body('hybrid') hybrid?: boolean,
+    @Body('rerank') rerank?: boolean
+  ) {
+    return this.knowledgeService.searchWithStats(query, topK || 3, {
+      scoreThreshold,
+      hybrid,
+      rerank,
+    })
   }
 }

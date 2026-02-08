@@ -5,6 +5,9 @@ import { useKnowledgeStore } from '@/stores/knowledge'
 const knowledgeStore = useKnowledgeStore()
 const searchQuery = ref('')
 const topK = ref(3)
+const scoreThreshold = ref(0)
+const hybrid = ref(false)
+const rerank = ref(false)
 const chunkSize = ref(500)
 const overlap = ref(50)
 
@@ -22,7 +25,11 @@ const handleUpload = async (file: any) => {
 
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) return
-  await knowledgeStore.search(searchQuery.value, topK.value)
+  await knowledgeStore.search(searchQuery.value, topK.value, {
+    scoreThreshold: scoreThreshold.value,
+    hybrid: hybrid.value,
+    rerank: rerank.value,
+  })
 }
 </script>
 
@@ -46,16 +53,26 @@ const handleSearch = async () => {
         <el-table-column prop="fileType" label="类型" width="100" />
         <el-table-column label="分块参数" width="320">
           <template #default="scope">
-            <div class="meta">
-              <span class="meta-item">size: {{ scope.row.metadata?.chunkSize ?? '-' }}</span>
-              <span class="meta-item">overlap: {{ scope.row.metadata?.overlap ?? '-' }}</span>
-              <span class="meta-item">chunks: {{ scope.row.metadata?.chunkCount ?? '-' }}</span>
-              <span class="meta-item">chars: {{ scope.row.metadata?.charCount ?? '-' }}</span>
-              <span class="meta-item">dim: {{ scope.row.metadata?.embeddingDim ?? '-' }}</span>
-              <span class="meta-item">chunkMs: {{ scope.row.metadata?.chunkMs ?? '-' }}</span>
-              <span class="meta-item">embedMs: {{ scope.row.metadata?.embedMs ?? '-' }}</span>
-              <span class="meta-item">processMs: {{ scope.row.metadata?.processMs ?? '-' }}</span>
-            </div>
+            <el-tooltip placement="top" effect="dark">
+              <template #content>
+                <div class="meta-tooltip">
+                  <div>size: {{ scope.row.metadata?.chunkSize ?? '-' }}</div>
+                  <div>overlap: {{ scope.row.metadata?.overlap ?? '-' }}</div>
+                  <div>chunks: {{ scope.row.metadata?.chunkCount ?? '-' }}</div>
+                  <div>chars: {{ scope.row.metadata?.charCount ?? '-' }}</div>
+                  <div>dim: {{ scope.row.metadata?.embeddingDim ?? '-' }}</div>
+                  <div>chunkMs: {{ scope.row.metadata?.chunkMs ?? '-' }}</div>
+                  <div>embedMs: {{ scope.row.metadata?.embedMs ?? '-' }}</div>
+                  <div>processMs: {{ scope.row.metadata?.processMs ?? '-' }}</div>
+                </div>
+              </template>
+              <div class="meta">
+                <span class="meta-item">size: {{ scope.row.metadata?.chunkSize ?? '-' }}</span>
+                <span class="meta-item">overlap: {{ scope.row.metadata?.overlap ?? '-' }}</span>
+                <span class="meta-item">chunks: {{ scope.row.metadata?.chunkCount ?? '-' }}</span>
+                <span class="meta-item">chars: {{ scope.row.metadata?.charCount ?? '-' }}</span>
+              </div>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="上传时间" width="180" />
@@ -72,12 +89,16 @@ const handleSearch = async () => {
       <div class="search">
         <el-input v-model="searchQuery" placeholder="输入检索问题" />
         <el-input-number v-model="topK" :min="1" :max="10" />
+        <el-input-number v-model="scoreThreshold" :min="0" :max="1" :step="0.05" />
+        <el-switch v-model="hybrid" active-text="混合" />
+        <el-switch v-model="rerank" active-text="重排" />
         <el-button type="success" :loading="knowledgeStore.searching" @click="handleSearch">检索</el-button>
       </div>
 
       <div class="result" v-if="knowledgeStore.searchResults.length">
         <div class="stats">
           过滤前：{{ knowledgeStore.searchStats.total }} | 过滤后：{{ knowledgeStore.searchStats.filtered }}
+          | threshold: {{ scoreThreshold }} | hybrid: {{ hybrid ? 'on' : 'off' }} | rerank: {{ rerank ? 'on' : 'off' }}
         </div>
         <div v-for="item in knowledgeStore.searchResults" :key="item.id" class="result-item">
           <div class="meta">相似度：{{ item.similarity.toFixed(3) }}</div>
@@ -138,6 +159,11 @@ const handleSearch = async () => {
 
 .meta-item {
   line-height: 1.2;
+}
+
+.meta-tooltip {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .result-item {

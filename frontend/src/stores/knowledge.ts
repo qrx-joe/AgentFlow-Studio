@@ -39,10 +39,14 @@ export const useKnowledgeStore = defineStore('knowledge', {
       await this.fetchDocuments()
     },
 
-    async search(query: string, topK: number) {
+    async search(
+      query: string,
+      topK: number,
+      options?: { scoreThreshold?: number; hybrid?: boolean; rerank?: boolean }
+    ) {
       this.searching = true
       try {
-        const response = await knowledgeApi.search(query, topK)
+        const response = await knowledgeApi.search(query, topK, options)
         this.searchResults = response.results || []
         this.searchStats = {
           total: response.total || 0,
