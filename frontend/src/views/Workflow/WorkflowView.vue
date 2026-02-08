@@ -6,6 +6,7 @@ import '@vue-flow/background/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
+import { ElMessage } from 'element-plus'
 
 import { useWorkflowStore } from '@/stores/workflow'
 import NodePalette from '@/components/workflow/NodePalette.vue'
@@ -82,6 +83,10 @@ onConnect((params) => {
 
   let label: string | undefined
   if (sourceNode?.type === 'condition') {
+    if (outgoingCount >= 2) {
+      ElMessage.warning('条件节点最多只能有两条分支')
+      return
+    }
     label = outgoingCount === 0 ? 'True' : 'False'
   }
 

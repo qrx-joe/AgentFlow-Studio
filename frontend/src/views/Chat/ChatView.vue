@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { useChatStore } from '@/stores/chat'
 
 const chatStore = useChatStore()
 const input = ref('')
+const showSourceDrawer = ref(false)
+const selectedSource = ref<any>(null)
+const activeMessageId = ref('')
 
 onMounted(() => {
   chatStore.fetchSessions()
@@ -18,6 +21,21 @@ const handleSend = async () => {
 
 const handleStop = () => {
   chatStore.abortStreaming()
+}
+
+const handleSelectSource = (messageId: string, source: any) => {
+  // 记录当前高亮的消息与来源
+  activeMessageId.value = messageId
+  selectedSource.value = source
+  showSourceDrawer.value = true
+
+  // 自动滚动到对应消息，便于定位
+  nextTick(() => {
+    const target = document.getElementById(`msg-${messageId}`)
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
 }
 </script>
 
@@ -41,12 +59,25 @@ const handleStop = () => {
 
     <section class="chat">
       <div class="messages">
-        <div v-for="msg in chatStore.messages" :key="msg.id" class="message" :class="msg.role">
+        <div
+          v-for="msg in chatStore.messages"
+          :key="msg.id"
+          :id="`msg-${msg.id}`"
+          class="message"
+          :class="msg.role"
+        >
           <div class="role">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
-          <div class="bubble">
+          <div class="bubble" :class="{ highlight: msg.id === activeMessageId }">
             <div class="content">{{ msg.content }}</div>
             <div v-if="msg.sources?.length" class="sources">
-              <div v-for="(src, index) in msg.sources" :key="index">📎 {{ src.documentId || src.nodeId }}</div>
+              <div
+                v-for="(src, index) in msg.sources"
+                :key="index"
+                class="source-chip"
+                @click="handleSelectSource(msg.id, src)"
+              >
+                📎 {{ src.documentId || src.nodeId || '来源' }}
+              </div>
             </div>
           </div>
         </div>
@@ -62,6 +93,23 @@ const handleStop = () => {
         正在生成回答...
       </div>
     </section>
+
+    <el-drawer v-model="showSourceDrawer" title="来源详情" size="360px">
+      <div v-if="selectedSource" class="source-detail">
+        <div class="detail-item">
+          <div class="label">文档ID</div>
+          <div class="value">{{ selectedSource.documentId || '-' }}</div>
+        </div>
+        <div class="detail-item">
+          <div class="label">节点ID</div>
+          <div class="value">{{ selectedSource.nodeId || '-' }}</div>
+        </div>
+        <div class="detail-item" v-if="selectedSource.content">
+          <div class="label">内容片段</div>
+          <pre class="snippet">{{ selectedSource.content }}</pre>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -130,6 +178,11 @@ const handleStop = () => {
   max-width: 70%;
 }
 
+.bubble.highlight {
+  border: 1px solid #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
 .message.user .bubble {
   background: #e0f2fe;
 }
@@ -147,6 +200,19 @@ const handleStop = () => {
   margin-top: 6px;
   font-size: 12px;
   color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-chip {
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  font-size: 12px;
+  color: #0ea5e9;
 }
 
 .input {
@@ -163,5 +229,35 @@ const handleStop = () => {
 
 .title {
   font-weight: 600;
+}
+
+.source-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 10px;
+}
+
+.label {
+  width: 70px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.value {
+  color: #0f172a;
+}
+
+.snippet {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 8px;
+  border-radius: 8px;
+  width: 100%;
+  overflow: auto;
 }
 </style>
