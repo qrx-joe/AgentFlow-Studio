@@ -79,6 +79,74 @@ const getEdgeLabelBgStyle = (label?: string) => {
 onConnect((params) => {
   // 条件节点的出边标记 True/False，便于画布识别
   const sourceNode = workflowStore.nodes.find(node => node.id === params.source)
+  const targetNode = workflowStore.nodes.find(node => node.id === params.target)
+
+  // 禁止自环连接
+  if (params.source === params.target) {
+    ElMessage.warning('不允许节点连接自身')
+    return
+  }
+
+  // 触发节点不允许被连接为目标
+  if (targetNode?.type === 'trigger') {
+    ElMessage.warning('触发节点不能作为目标节点')
+    return
+  }
+
+  // 结束节点不允许作为源节点
+  if (sourceNode?.type === 'end') {
+    ElMessage.warning('结束节点不能再连接出边')
+    return
+  }
+
+  // 禁止重复连线（任意节点）
+  const duplicateEdge = workflowStore.edges.some(
+    edge => edge.source === params.source && edge.target === params.target
+  )
+  if (duplicateEdge) {
+    ElMessage.warning('该连线已存在')
+    return
+  }
+
+  // 简单环检测：如果目标节点能回到源节点，新增边会造成环
+  const createsCycle = (() => {
+    const adjacency = new Map<string, string[]>()
+    workflowStore.edges.forEach(edge => {
+      const list = adjacency.get(edge.source) || []
+      list.push(edge.target)
+      adjacency.set(edge.source, list)
+    })
+
+    const visited = new Set<string>()
+    const stack = [params.target]
+
+    while (stack.length > 0) {
+      const current = stack.pop() as string
+      if (current === params.source) {
+        return true
+      }
+      if (visited.has(current)) {
+        continue
+      }
+      visited.add(current)
+      const next = adjacency.get(current) || []
+      stack.push(...next)
+    }
+    return false
+  })()
+
+  if (createsCycle) {
+    ElMessage.warning('该连线会导致循环依赖')
+    return
+  }
+
+  // 非条件节点多出边提醒（允许，但提示）
+  if (sourceNode && sourceNode.type !== 'condition') {
+    const existingOutgoing = workflowStore.edges.filter(edge => edge.source === params.source).length
+    if (existingOutgoing >= 1) {
+      ElMessage.warning('该节点已存在出边，请确认是否需要多分支')
+    }
+  }
   const outgoingCount = workflowStore.edges.filter(edge => edge.source === params.source).length
 
   let label: string | undefined
@@ -88,6 +156,14 @@ onConnect((params) => {
       return
     }
     label = outgoingCount === 0 ? 'True' : 'False'
+    // 条件节点分支不允许重复指向同一目标
+    const duplicateTarget = workflowStore.edges.some(
+      edge => edge.source === params.source && edge.target === params.target
+    )
+    if (duplicateTarget) {
+      ElMessage.warning('条件节点分支已连接到该目标')
+      return
+    }
   }
 
   if (sourceNode?.type === 'condition' && label) {
@@ -216,18 +292,117 @@ const handleSaveConfig = (nodeId: string, data: Record<string, any>) => {
 }
 
 const handleSaveWorkflow = async () => {
+  if (!validateWorkflow()) return
   await workflowStore.saveWorkflow()
   workflowStore.addLog('工作流已保存')
   await workflowStore.fetchExecutions()
 }
 
 const handleRunWorkflow = async () => {
+  if (!validateWorkflow()) return
   const result = await workflowStore.executeWorkflow('示例输入')
   workflowStore.addLog(`执行完成：${result?.status || 'success'}`)
 }
 
 const handleClear = () => {
   workflowStore.setCanvas([], [])
+}
+
+const validateWorkflow = () => {
+  const nodes = workflowStore.nodes
+  const edges = workflowStore.edges
+
+  const outgoingMap = new Map<string, string[]>()
+  const incomingMap = new Map<string, string[]>()
+
+  edges.forEach(edge => {
+    const outgoing = outgoingMap.get(edge.source) || []
+    outgoing.push(edge.id)
+    outgoingMap.set(edge.source, outgoing)
+
+    const incoming = incomingMap.get(edge.target) || []
+    incoming.push(edge.id)
+    incomingMap.set(edge.target, incoming)
+  })
+
+  // 规则1：条件节点必须有 True/False 两条边
+  for (const node of nodes) {
+    if (node.type !== 'condition') continue
+    const outgoingEdgeIds = outgoingMap.get(node.id) || []
+    if (outgoingEdgeIds.length !== 2) {
+      ElMessage.warning('条件节点必须有 True/False 两条边')
+      return false
+    }
+    const labels = outgoingEdgeIds.map(id => {
+      const edge = edges.find(item => item.id === id)
+      return edge?.branchType || edge?.label
+    })
+    if (!(labels.includes('True') && labels.includes('False'))) {
+      ElMessage.warning('条件节点必须包含 True/False 分支标签')
+      return false
+    }
+  }
+
+  // 规则2：触发节点必须只有 1 条出边
+  for (const node of nodes) {
+    if (node.type !== 'trigger') continue
+    const outgoingCount = (outgoingMap.get(node.id) || []).length
+    if (outgoingCount !== 1) {
+      ElMessage.warning('触发节点必须只有 1 条出边')
+      return false
+    }
+  }
+
+  // 规则3：结束节点必须有 1 条入边
+  for (const node of nodes) {
+    if (node.type !== 'end') continue
+    const incomingCount = (incomingMap.get(node.id) || []).length
+    if (incomingCount !== 1) {
+      ElMessage.warning('结束节点必须有 1 条入边')
+      return false
+    }
+  }
+
+  // 规则4：知识检索节点必须在 LLM 之前（即 LLM 的上游存在知识节点）
+  const knowledgeNodes = nodes.filter(node => node.type === 'knowledge')
+  const llmNodes = nodes.filter(node => node.type === 'llm')
+  if (knowledgeNodes.length > 0 && llmNodes.length > 0) {
+    // 构建反向邻接表，便于从 LLM 回溯上游
+    const reverseAdj = new Map<string, string[]>()
+    edges.forEach(edge => {
+      const list = reverseAdj.get(edge.target) || []
+      list.push(edge.source)
+      reverseAdj.set(edge.target, list)
+    })
+
+    const knowledgeIds = new Set(knowledgeNodes.map(node => node.id))
+
+    for (const llm of llmNodes) {
+      const stack = [llm.id]
+      const visited = new Set<string>()
+      let found = false
+      while (stack.length > 0) {
+        const current = stack.pop() as string
+        if (visited.has(current)) continue
+        visited.add(current)
+        const parents = reverseAdj.get(current) || []
+        for (const parent of parents) {
+          if (knowledgeIds.has(parent)) {
+            found = true
+            break
+          }
+          stack.push(parent)
+        }
+        if (found) break
+      }
+      if (!found) {
+        ElMessage.warning('知识检索节点必须在 LLM 之前')
+        return false
+      }
+    }
+  }
+
+  return true
 }
 
 const highlightNode = (nodeId: string) => {
