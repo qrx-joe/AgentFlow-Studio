@@ -1,21 +1,56 @@
 @echo off
+chcp 65001 >nul
 setlocal
 
-REM 一键启动开发环境：数据库 + 后端 + 前端
-REM 依赖：Docker、pnpm 已安装并可用
+REM Start development environment
+cd /d "%~dp0.."
 
-echo [AgentFlow] 启动数据库容器...
-docker-compose up -d
+REM Check Docker availability
+where docker >nul 2>nul
 if %errorlevel% neq 0 (
-  echo [AgentFlow] Docker 启动失败，请检查 Docker 是否运行。
-  exit /b 1
+    echo [Error] Docker command not found!
+    echo Please install Docker Desktop for Windows: https://www.docker.com/products/docker-desktop
+    pause
+    exit /b 1
 )
 
-echo [AgentFlow] 启动后端服务...
+REM Check Docker Compose availability
+set DOCKER_COMPOSE_CMD=docker-compose
+where docker-compose >nul 2>nul
+if %errorlevel% neq 0 (
+    REM Try "docker compose" plugin
+    docker compose version >nul 2>nul
+    if %errorlevel% equ 0 (
+        set DOCKER_COMPOSE_CMD=docker compose
+    ) else (
+        echo [Error] Docker Compose not found!
+        echo Please ensure Docker Desktop is installed and running.
+        pause
+        exit /b 1
+    )
+)
+
+echo [AgentFlow] Using command: %DOCKER_COMPOSE_CMD%
+
+echo [AgentFlow] Starting database container...
+%DOCKER_COMPOSE_CMD% up -d
+if %errorlevel% neq 0 (
+    echo [AgentFlow] Docker start failed. Please check if Docker is running.
+    pause
+    exit /b 1
+)
+
+echo [AgentFlow] Starting backend service...
 start "AgentFlow Backend" cmd /k "cd /d backend && pnpm install && pnpm run start:dev"
 
-echo [AgentFlow] 启动前端服务...
+echo [AgentFlow] Starting frontend service...
 start "AgentFlow Frontend" cmd /k "cd /d frontend && pnpm install && pnpm dev"
 
-echo [AgentFlow] 启动完成。
+echo [AgentFlow] Waiting for services to start...
+timeout /t 5 >nul
+
+echo [AgentFlow] Opening browser...
+start http://localhost:5173
+
+echo [AgentFlow] Startup complete.
 endlocal

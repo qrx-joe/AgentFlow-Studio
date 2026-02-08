@@ -43,7 +43,7 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
 
     <path
       :id="id"
-      class="branch-edge flow"
+      :class="['branch-edge', 'flow', props.class]"
       :d="edgePathData[0]"
       :style="style"
       :marker-end="`url(#${id}-arrow)`"
@@ -88,6 +88,14 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
 .flow {
   stroke-dasharray: 6 6;
   animation: flowDash 1.2s linear infinite;
+}
+
+.edge-highlight {
+  stroke-width: 3;
+}
+
+.edge-highlight.flow {
+  animation-duration: 0.5s;
 }
 
 .edge-label {

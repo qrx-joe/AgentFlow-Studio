@@ -28,6 +28,14 @@ const showDrawer = ref(false)
 const selectedExecution = ref<any>(null)
 const showExecutionDialog = ref(false)
 let highlightTimer: number | undefined
+let replayTimer: number | undefined
+let edgeHighlightTimer: number | undefined
+const replaying = ref(false)
+const replaySpeed = ref(1200)
+const replayProgress = ref(0)
+const replayTotal = ref(0)
+const replayNodes = ref<string[]>([])
+const lastHighlightedEdgeId = ref('')
 
 // 注册自定义节点类型
 const nodeTypes = {
@@ -44,6 +52,8 @@ const { onConnect, addEdges, addNodes, project, setCenter, fitView } = vueFlow
 const viewportStack = ref<Array<{ x: number; y: number; zoom: number }>>([])
 const nodeStyleCache = new Map<string, any>()
 const nodeClassCache = new Map<string, any>()
+const edgeStyleCache = new Map<string, any>()
+const edgeClassCache = new Map<string, any>()
 
 // 连接事件：创建边
 const getEdgeStyle = (label?: string) => {
@@ -308,6 +318,95 @@ const handleClear = () => {
   workflowStore.setCanvas([], [])
 }
 
+const getNodeIdsFromLogs = (logs: string[]) => {
+  return logs
+    .filter(line => line.includes('执行节点：'))
+    .map(line => getNodeIdFromLog(line))
+    .filter(Boolean)
+}
+
+const startReplay = (logs?: string[]) => {
+  const sourceLogs = logs || workflowStore.executionLogs
+  const nodeIds = getNodeIdsFromLogs(sourceLogs)
+  if (nodeIds.length === 0) {
+    ElMessage.warning('暂无可回放的执行日志')
+    return
+  }
+
+  stopReplay()
+  replaying.value = true
+
+  replayNodes.value = nodeIds
+  replayTotal.value = nodeIds.length
+  replayProgress.value = 0
+
+  let previousId: string | undefined
+
+  const tick = () => {
+    const nodeId = replayNodes.value[replayProgress.value]
+    if (nodeId) {
+      highlightNode(nodeId)
+      highlightEdgeByNodes(previousId, nodeId)
+    }
+    previousId = nodeId
+    replayProgress.value += 1
+    if (replayProgress.value >= replayNodes.value.length) {
+      stopReplay()
+    }
+  }
+
+  tick()
+  replayTimer = window.setInterval(tick, replaySpeed.value)
+}
+
+const stopReplay = () => {
+  if (replayTimer) {
+    window.clearInterval(replayTimer)
+    replayTimer = undefined
+  }
+  replaying.value = false
+  replayNodes.value = []
+  replayProgress.value = 0
+  replayTotal.value = 0
+  restoreEdgeHighlight()
+}
+
+const startReplayFromExecution = () => {
+  if (!selectedExecution.value?.logs?.length) {
+    ElMessage.warning('该执行记录没有可回放日志')
+    return
+  }
+  startReplay(selectedExecution.value.logs)
+}
+
+const seekReplay = (index: number) => {
+  if (replayNodes.value.length === 0) return
+  const clamped = Math.min(Math.max(index, 0), replayNodes.value.length - 1)
+  replayProgress.value = clamped
+  const nodeId = replayNodes.value[clamped]
+  if (nodeId) {
+    highlightNode(nodeId)
+    const previous = replayNodes.value[clamped - 1]
+    highlightEdgeByNodes(previous, nodeId)
+  }
+}
+
+// 记忆回放速度（本地缓存）
+const replaySpeedKey = 'workflowReplaySpeed'
+const cachedSpeed = Number(localStorage.getItem(replaySpeedKey))
+if (!Number.isNaN(cachedSpeed) && cachedSpeed > 0) {
+  replaySpeed.value = cachedSpeed
+}
+
+watch(replaySpeed, (value) => {
+  localStorage.setItem(replaySpeedKey, String(value))
+  // 若正在回放，更新间隔
+  if (replaying.value) {
+    stopReplay()
+    startReplay()
+  }
+})
+
 const validateWorkflow = () => {
   const nodes = workflowStore.nodes
   const edges = workflowStore.edges
@@ -458,6 +557,62 @@ const highlightNode = (nodeId: string) => {
       }
       return node
     })
+
+    // 同步清理连线高亮
+    restoreEdgeHighlight()
+  }, 2000)
+}
+
+const restoreEdgeHighlight = () => {
+  if (edgeHighlightTimer) {
+    window.clearTimeout(edgeHighlightTimer)
+    edgeHighlightTimer = undefined
+  }
+  if (!lastHighlightedEdgeId.value) return
+  const edgeId = lastHighlightedEdgeId.value
+  workflowStore.edges = workflowStore.edges.map(edge => {
+    if (edge.id !== edgeId) return edge
+    const cachedStyle = edgeStyleCache.get(edgeId)
+    const cachedClass = edgeClassCache.get(edgeId)
+    edgeStyleCache.delete(edgeId)
+    edgeClassCache.delete(edgeId)
+    return {
+      ...edge,
+      style: cachedStyle || undefined,
+      class: cachedClass || undefined,
+    }
+  })
+  lastHighlightedEdgeId.value = ''
+}
+
+const highlightEdgeByNodes = (sourceId: string | undefined, targetId: string | undefined) => {
+  if (!sourceId || !targetId) return
+  const edge = workflowStore.edges.find(item => item.source === sourceId && item.target === targetId)
+  if (!edge) return
+
+  // 清理上一次高亮
+  restoreEdgeHighlight()
+
+  edgeStyleCache.set(edge.id, edge.style || null)
+  edgeClassCache.set(edge.id, edge.class || null)
+  lastHighlightedEdgeId.value = edge.id
+
+  workflowStore.edges = workflowStore.edges.map(item => {
+    if (item.id !== edge.id) return item
+    return {
+      ...item,
+      style: {
+        ...item.style,
+        strokeWidth: 3,
+        filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.6))',
+      },
+      class: 'edge-highlight',
+    }
+  })
+
+  // 保持连线高亮一段时间
+  edgeHighlightTimer = window.setTimeout(() => {
+    restoreEdgeHighlight()
   }, 2000)
 }
 
@@ -614,9 +769,16 @@ const getNodeIdFromLog = (line: string) => {
       <NodeToolbar
         :saving="workflowStore.saving"
         :executing="workflowStore.executing"
+        :replaying="replaying"
+        v-model:replaySpeed="replaySpeed"
+        :replay-progress="replayProgress"
+        :replay-total="replayTotal"
         @save="handleSaveWorkflow"
         @run="handleRunWorkflow"
         @clear="handleClear"
+        @replay="startReplay"
+        @stop-replay="stopReplay"
+        @seek-replay="seekReplay"
       />
 
       <div class="canvas" @dragover="onDragOver" @drop="onDrop">
@@ -701,6 +863,7 @@ const getNodeIdFromLog = (line: string) => {
         <div class="actions">
           <el-button @click="handleCopyExecution">复制详情</el-button>
           <el-button type="primary" @click="handleDownloadLogs">下载日志</el-button>
+          <el-button type="success" @click="startReplayFromExecution">回放该记录</el-button>
         </div>
       </div>
     </el-dialog>

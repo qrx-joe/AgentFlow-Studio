@@ -3,6 +3,10 @@
 defineProps<{
   saving: boolean
   executing: boolean
+  replaying: boolean
+  replaySpeed: number
+  replayProgress: number
+  replayTotal: number
 }>()
 
 defineEmits<{
@@ -10,6 +14,10 @@ defineEmits<{
   (e: 'run'): void
   (e: 'clear'): void
   (e: 'restore'): void
+  (e: 'replay'): void
+  (e: 'stopReplay'): void
+  (e: 'update:replaySpeed', value: number): void
+  (e: 'seekReplay', value: number): void
 }>()
 </script>
 
@@ -19,6 +27,34 @@ defineEmits<{
     <el-button type="success" :loading="executing" @click="$emit('run')">运行</el-button>
     <el-button @click="$emit('clear')">清空</el-button>
     <el-button @click="$emit('restore')">恢复视角</el-button>
+    <el-button v-if="!replaying" @click="$emit('replay')">回放</el-button>
+    <el-button v-else type="danger" @click="$emit('stopReplay')">停止回放</el-button>
+    <div class="speed-control">
+      <span class="speed-label">回放速度</span>
+      <el-slider
+        class="speed"
+        :model-value="replaySpeed"
+        :min="400"
+        :max="2000"
+        :step="200"
+        :show-tooltip="true"
+        @update:model-value="$emit('update:replaySpeed', $event)"
+      />
+      <span class="speed-value">{{ (replaySpeed / 1000).toFixed(1) }}s</span>
+    </div>
+    <div class="progress-control">
+      <span class="progress-label">进度</span>
+      <el-slider
+        class="progress"
+        :model-value="replayProgress"
+        :min="0"
+        :max="Math.max(replayTotal - 1, 0)"
+        :step="1"
+        :show-tooltip="true"
+        @change="$emit('seekReplay', $event)"
+      />
+      <span class="progress-value">{{ replayTotal === 0 ? 0 : replayProgress + 1 }}/{{ replayTotal }}</span>
+    </div>
     <el-button disabled>撤销</el-button>
   </div>
 </template>
@@ -32,5 +68,45 @@ defineEmits<{
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speed {
+  width: 140px;
+}
+
+.speed-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.speed-value {
+  font-size: 12px;
+  color: #334155;
+}
+
+.progress-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress {
+  width: 160px;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.progress-value {
+  font-size: 12px;
+  color: #334155;
 }
 </style>
