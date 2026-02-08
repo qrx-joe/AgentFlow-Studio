@@ -57,12 +57,22 @@ const getEdgeStyle = (label?: string) => {
 
 const getEdgeLabelStyle = (label?: string) => {
   if (label === 'True') {
-    return { fill: '#16a34a', fontWeight: 600 }
+    return { fill: '#166534', fontWeight: 600 }
   }
   if (label === 'False') {
-    return { fill: '#dc2626', fontWeight: 600 }
+    return { fill: '#991b1b', fontWeight: 600 }
   }
   return { fill: '#64748b' }
+}
+
+const getEdgeLabelBgStyle = (label?: string) => {
+  if (label === 'True') {
+    return { fill: '#dcfce7', stroke: '#86efac', strokeWidth: 1, rx: 6, ry: 6 }
+  }
+  if (label === 'False') {
+    return { fill: '#fee2e2', stroke: '#fecaca', strokeWidth: 1, rx: 6, ry: 6 }
+  }
+  return { fill: '#f1f5f9', stroke: '#e2e8f0', strokeWidth: 1, rx: 6, ry: 6 }
 }
 
 onConnect((params) => {
@@ -91,6 +101,7 @@ onConnect((params) => {
       branchType: label,
       style: getEdgeStyle(label),
       labelStyle: getEdgeLabelStyle(label),
+      labelBgStyle: getEdgeLabelBgStyle(label),
     },
   ])
 })
@@ -109,6 +120,7 @@ const onEdgeClick = (_: any, edge: any) => {
       branchType: nextLabel,
       style: getEdgeStyle(nextLabel),
       labelStyle: getEdgeLabelStyle(nextLabel),
+      labelBgStyle: getEdgeLabelBgStyle(nextLabel),
     }
   })
 
@@ -130,6 +142,7 @@ const onEdgeClick = (_: any, edge: any) => {
         branchType: 'False',
         style: getEdgeStyle('False'),
         labelStyle: getEdgeLabelStyle('False'),
+        labelBgStyle: getEdgeLabelBgStyle('False'),
       }
     })
   } else {
@@ -148,6 +161,7 @@ const onEdgeClick = (_: any, edge: any) => {
         branchType: 'True',
         style: getEdgeStyle('True'),
         labelStyle: getEdgeLabelStyle('True'),
+        labelBgStyle: getEdgeLabelBgStyle('True'),
       }
     })
   }
@@ -430,6 +444,7 @@ const getNodeIdFromLog = (line: string) => {
           v-model:nodes="workflowStore.nodes"
           v-model:edges="workflowStore.edges"
           :node-types="nodeTypes"
+          :edge-types="edgeTypes"
           @node-double-click="onNodeDoubleClick"
           @edge-click="onEdgeClick"
         >
