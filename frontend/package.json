@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "build:analyze": "cross-env ANALYZE=true vite build",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "build:ci": "pnpm run build && pnpm run check:bundle",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },

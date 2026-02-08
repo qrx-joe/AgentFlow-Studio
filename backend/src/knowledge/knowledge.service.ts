@@ -91,21 +91,43 @@ export class KnowledgeService {
   }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    const results = await this.ragService.search(query, topK)
-    return this.applySearchOptions(results, query, options)
+    const optionsKey = this.buildSearchOptionsKey(options)
+    const vectorResults = await this.ragService.search(query, topK, optionsKey)
+    const keywordResults = this.shouldRunKeyword(options)
+      ? await this.ragService.searchKeyword(query, topK, optionsKey)
+      : []
+    const merged = this.mergeResults(vectorResults, keywordResults)
+    return this.applySearchOptions(merged, query, options)
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    const results = await this.ragService.search(query, topK)
-    const filtered = this.applySearchOptions(results, query, options)
+    const optionsKey = this.buildSearchOptionsKey(options)
+    const vectorResults = await this.ragService.search(query, topK, optionsKey)
+    const keywordResults = this.shouldRunKeyword(options)
+      ? await this.ragService.searchKeyword(query, topK, optionsKey)
+      : []
+    const merged = this.mergeResults(vectorResults, keywordResults)
+    const filtered = await this.applySearchOptions(merged, query, options)
     return {
-      total: results.length,
+      total: merged.length,
       filtered: filtered.length,
       results: filtered,
     }
   }
 
-  private applySearchOptions(
+  private buildSearchOptionsKey(options: KnowledgeSearchOptions) {
+    const normalized = {
+      scoreThreshold: typeof options.scoreThreshold === 'number' ? options.scoreThreshold : null,
+      hybrid: Boolean(options.hybrid),
+      rerank: Boolean(options.rerank),
+      vectorWeight: typeof options.vectorWeight === 'number' ? options.vectorWeight : null,
+      keywordWeight: typeof options.keywordWeight === 'number' ? options.keywordWeight : null,
+      keywordMode: options.keywordMode || 'bm25',
+    }
+    return Buffer.from(JSON.stringify(normalized)).toString('base64')
+  }
+
+  private async applySearchOptions(
     results: SearchResult[],
     query: string,
     options: KnowledgeSearchOptions
@@ -117,30 +139,32 @@ export class KnowledgeService {
       .map(word => word.trim())
       .filter(Boolean)
 
-    // 相似度阈值过滤
-    if (typeof options.scoreThreshold === 'number') {
-      filtered = filtered.filter(item => item.similarity >= options.scoreThreshold)
+    const vectorWeight = typeof options.vectorWeight === 'number' ? options.vectorWeight : 1
+    const keywordWeight = typeof options.keywordWeight === 'number' ? options.keywordWeight : 0.1
+    const keywordMode = options.keywordMode || 'bm25'
+
+    if (this.shouldRunKeyword(options) && keywordMode === 'bm25' && keywords.length > 0) {
+      filtered = await this.applyBm25Scores(filtered, keywords)
     }
 
-    // 混合检索：引入简单关键词匹配分
     filtered = filtered.map(item => {
-      const text = item.content || ''
-      const keywordHits = keywords.reduce((count, word) => {
-        return count + (text.includes(word) ? 1 : 0)
-      }, 0)
-      const keywordScore = keywords.length > 0 ? keywordHits / keywords.length : 0
-      const fusedScore = options.hybrid
-        ? item.similarity + keywordScore * 0.1
-        : item.similarity
+      const keywordScore = item.keywordScore || 0
+      const fusedScore = vectorWeight * (item.similarity || 0) + keywordWeight * keywordScore
       return {
         ...item,
-        keywordHits,
-        keywordScore,
         fusedScore,
       }
     })
 
-    // 重排序：按融合分数降序
+    const useFusedThreshold = options.hybrid || keywordWeight > 0
+
+    if (typeof options.scoreThreshold === 'number') {
+      filtered = filtered.filter(item => {
+        const score = useFusedThreshold ? item.fusedScore ?? 0 : item.similarity
+        return score >= options.scoreThreshold
+      })
+    }
+
     if (options.rerank || options.hybrid) {
       filtered = [...filtered].sort((a, b) => {
         const aScore = a.fusedScore ?? a.similarity
@@ -150,6 +174,93 @@ export class KnowledgeService {
     }
 
     return filtered
+  }
+
+  private shouldRunKeyword(options: KnowledgeSearchOptions) {
+    if (options.hybrid) return true
+    if (typeof options.keywordWeight === 'number' && options.keywordWeight > 0) return true
+    return false
+  }
+
+  private mergeResults(vectorResults: SearchResult[], keywordResults: SearchResult[]) {
+    const merged = new Map<string, SearchResult>()
+    vectorResults.forEach(item => {
+      merged.set(item.id, { ...item })
+    })
+    keywordResults.forEach(item => {
+      const existing = merged.get(item.id)
+      if (existing) {
+        merged.set(item.id, {
+          ...existing,
+          keywordScore: item.keywordScore ?? existing.keywordScore,
+        })
+      } else {
+        merged.set(item.id, { ...item })
+      }
+    })
+    return Array.from(merged.values())
+  }
+
+  private async applyBm25Scores(results: SearchResult[], keywords: string[]) {
+    const trimmed = keywords
+      .map(word => word.trim())
+      .filter(Boolean)
+      .map(word => word.slice(0, 50))
+
+    if (trimmed.length === 0) {
+      return results
+    }
+
+    const corpusStats = await this.chunkRepo.query(
+      `SELECT COUNT(*)::int as total_docs, AVG(LENGTH(content))::float as avg_len FROM document_chunks`
+    )
+
+    const totalDocs = Number(corpusStats?.[0]?.total_docs || 0)
+    const avgLen = Number(corpusStats?.[0]?.avg_len || 0)
+
+    if (!totalDocs || !avgLen) {
+      return results
+    }
+
+    const dfMap = new Map<string, number>()
+    for (const term of trimmed) {
+      const dfRows = await this.chunkRepo.query(
+        `SELECT COUNT(*)::int as df FROM document_chunks WHERE content ILIKE $1`,
+        [`%${term}%`]
+      )
+      const df = Number(dfRows?.[0]?.df || 0)
+      dfMap.set(term, df)
+    }
+
+    const k1 = 1.5
+    const b = 0.75
+
+    return results.map(item => {
+      const text = item.content || ''
+      const dl = text.length || 1
+      let score = 0
+      for (const term of trimmed) {
+        const df = dfMap.get(term) || 0
+        if (!df) continue
+        const tf = this.countOccurrences(text, term)
+        if (!tf) continue
+        const idf = Math.log((totalDocs - df + 0.5) / (df + 0.5) + 1)
+        const denom = tf + k1 * (1 - b + (b * dl) / avgLen)
+        score += idf * ((tf * (k1 + 1)) / denom)
+      }
+      return {
+        ...item,
+        keywordScore: score,
+      }
+    })
+  }
+
+  private countOccurrences(text: string, term: string) {
+    if (!term) return 0
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escaped, 'gi')
+    const matches = text.match(regex)
+    return matches ? matches.length : 0
   }
 
   // 文本分块：固定长度 + 重叠窗口
