@@ -44,7 +44,14 @@ export const useKnowledgeStore = defineStore('knowledge', {
     async search(
       query: string,
       topK: number,
-      options?: { scoreThreshold?: number; hybrid?: boolean; rerank?: boolean }
+      options?: {
+        scoreThreshold?: number
+        hybrid?: boolean
+        rerank?: boolean
+        vectorWeight?: number
+        keywordWeight?: number
+        keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+      }
     ) {
       this.searching = true
       try {

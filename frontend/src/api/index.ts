@@ -31,7 +31,14 @@ export const knowledgeApi = {
   search: (
     query: string,
     topK: number,
-    options?: { scoreThreshold?: number; hybrid?: boolean; rerank?: boolean }
+    options?: {
+      scoreThreshold?: number
+      hybrid?: boolean
+      rerank?: boolean
+      vectorWeight?: number
+      keywordWeight?: number
+      keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+    }
   ) => request.post('/knowledge/search', { query, topK, ...options }),
   listChunks: (id: string, limit: number = 5) =>
     request.get(`/knowledge/documents/${id}/chunks`, { params: { limit } }),

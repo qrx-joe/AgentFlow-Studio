@@ -4,6 +4,8 @@
 
 -- 启用 pgvector 扩展
 CREATE EXTENSION IF NOT EXISTS vector;
+-- 启用 pg_trgm 扩展（关键词检索加速）
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ========================================
 -- 工作流表
@@ -71,6 +73,17 @@ ON document_chunks(document_id);
 -- 创建全文索引（关键词检索）
 CREATE INDEX IF NOT EXISTS idx_document_chunks_content_tsv
 ON document_chunks USING GIN (to_tsvector('simple', content));
+
+-- 创建 trigram 索引（ILIKE 查询加速）
+CREATE INDEX IF NOT EXISTS idx_document_chunks_content_trgm
+ON document_chunks USING GIN (content gin_trgm_ops);
+
+-- 关键词统计表（BM25 预计算）
+CREATE TABLE IF NOT EXISTS rag_term_stats (
+    term TEXT PRIMARY KEY,
+    df INTEGER NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ========================================
 -- 会话表

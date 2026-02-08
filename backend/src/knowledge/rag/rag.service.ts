@@ -67,7 +67,7 @@ export class RagService {
     query: string,
     topK = 3,
     cacheKeySuffix = '',
-    mode: 'bm25' | 'tsrank' = 'bm25'
+    mode: 'bm25' | 'tsrank' | 'trgm' = 'bm25'
   ): Promise<SearchResult[]> {
     if (!query || !query.trim()) {
       return []
@@ -87,18 +87,30 @@ export class RagService {
       return cached
     }
 
-    const rankFn = mode === 'tsrank' ? 'ts_rank' : 'ts_rank_cd'
-    const results = await this.chunkRepo.query(
-      `
-      SELECT id, content, document_id,
-             ${rankFn}(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
-      FROM document_chunks
-      WHERE to_tsvector('simple', content) @@ plainto_tsquery('simple', $2)
-      ORDER BY keyword_score DESC
-      LIMIT $1
-    `,
-      [topK, query]
-    )
+    const results =
+      mode === 'trgm'
+        ? await this.chunkRepo.query(
+            `
+            SELECT id, content, document_id,
+                   similarity(content, $2) as keyword_score
+            FROM document_chunks
+            WHERE content ILIKE $3
+            ORDER BY keyword_score DESC
+            LIMIT $1
+          `,
+            [topK, query, `%${query}%`]
+          )
+        : await this.chunkRepo.query(
+            `
+            SELECT id, content, document_id,
+                   ${mode === 'tsrank' ? 'ts_rank' : 'ts_rank_cd'}(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
+            FROM document_chunks
+            WHERE to_tsvector('simple', content) @@ plainto_tsquery('simple', $2)
+            ORDER BY keyword_score DESC
+            LIMIT $1
+          `,
+            [topK, query]
+          )
 
     const mapped = results.map((row: any) => ({
       id: row.id,

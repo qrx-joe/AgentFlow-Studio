@@ -4,8 +4,8 @@ import { Repository } from 'typeorm'
 import { DocumentEntity } from './entities/document.entity'
 import { DocumentChunkEntity } from './entities/document-chunk.entity'
 import { EmbeddingService } from './embedding/embedding.service'
-import { RagService } from './rag/rag.service'
-import type { KnowledgeSearchOptions, SearchResult } from './types'
+import { KnowledgeSearchService } from './search/knowledge-search.service'
+import type { KnowledgeSearchOptions } from './types'
 
 @Injectable()
 export class KnowledgeService {
@@ -13,7 +13,7 @@ export class KnowledgeService {
     @InjectRepository(DocumentEntity) private documentRepo: Repository<DocumentEntity>,
     @InjectRepository(DocumentChunkEntity) private chunkRepo: Repository<DocumentChunkEntity>,
     private embeddingService: EmbeddingService,
-    private ragService: RagService
+    private searchService: KnowledgeSearchService
   ) {}
 
   async listDocuments() {
@@ -91,176 +91,11 @@ export class KnowledgeService {
   }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    const optionsKey = this.buildSearchOptionsKey(options)
-    const vectorResults = await this.ragService.search(query, topK, optionsKey)
-    const keywordResults = this.shouldRunKeyword(options)
-      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
-      : []
-    const merged = this.mergeResults(vectorResults, keywordResults)
-    return this.applySearchOptions(merged, query, options)
+    return this.searchService.search(query, topK, options)
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    const optionsKey = this.buildSearchOptionsKey(options)
-    const vectorResults = await this.ragService.search(query, topK, optionsKey)
-    const keywordResults = this.shouldRunKeyword(options)
-      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
-      : []
-    const merged = this.mergeResults(vectorResults, keywordResults)
-    const filtered = await this.applySearchOptions(merged, query, options)
-    return {
-      total: merged.length,
-      filtered: filtered.length,
-      results: filtered,
-    }
-  }
-
-  private buildSearchOptionsKey(options: KnowledgeSearchOptions) {
-    const normalized = {
-      scoreThreshold: typeof options.scoreThreshold === 'number' ? options.scoreThreshold : null,
-      hybrid: Boolean(options.hybrid),
-      rerank: Boolean(options.rerank),
-      vectorWeight: typeof options.vectorWeight === 'number' ? options.vectorWeight : null,
-      keywordWeight: typeof options.keywordWeight === 'number' ? options.keywordWeight : null,
-      keywordMode: options.keywordMode || 'bm25',
-    }
-    return Buffer.from(JSON.stringify(normalized)).toString('base64')
-  }
-
-  private async applySearchOptions(
-    results: SearchResult[],
-    query: string,
-    options: KnowledgeSearchOptions
-  ) {
-    let filtered: SearchResult[] = results
-
-    const keywords = query
-      .split(/\s+/)
-      .map(word => word.trim())
-      .filter(Boolean)
-
-    const vectorWeight = typeof options.vectorWeight === 'number' ? options.vectorWeight : 1
-    const keywordWeight = typeof options.keywordWeight === 'number' ? options.keywordWeight : 0.1
-    const keywordMode = options.keywordMode || 'bm25'
-
-    if (this.shouldRunKeyword(options) && keywordMode === 'bm25' && keywords.length > 0) {
-      filtered = await this.applyBm25Scores(filtered, keywords)
-    }
-
-    filtered = filtered.map(item => {
-      const keywordScore = item.keywordScore || 0
-      const fusedScore = vectorWeight * (item.similarity || 0) + keywordWeight * keywordScore
-      return {
-        ...item,
-        fusedScore,
-      }
-    })
-
-    const useFusedThreshold = options.hybrid || keywordWeight > 0
-
-    if (typeof options.scoreThreshold === 'number') {
-      filtered = filtered.filter(item => {
-        const score = useFusedThreshold ? item.fusedScore ?? 0 : item.similarity
-        return score >= options.scoreThreshold
-      })
-    }
-
-    if (options.rerank || options.hybrid) {
-      filtered = [...filtered].sort((a, b) => {
-        const aScore = a.fusedScore ?? a.similarity
-        const bScore = b.fusedScore ?? b.similarity
-        return bScore - aScore
-      })
-    }
-
-    return filtered
-  }
-
-  private shouldRunKeyword(options: KnowledgeSearchOptions) {
-    if (options.hybrid) return true
-    if (typeof options.keywordWeight === 'number' && options.keywordWeight > 0) return true
-    return false
-  }
-
-  private mergeResults(vectorResults: SearchResult[], keywordResults: SearchResult[]) {
-    const merged = new Map<string, SearchResult>()
-    vectorResults.forEach(item => {
-      merged.set(item.id, { ...item })
-    })
-    keywordResults.forEach(item => {
-      const existing = merged.get(item.id)
-      if (existing) {
-        merged.set(item.id, {
-          ...existing,
-          keywordScore: item.keywordScore ?? existing.keywordScore,
-        })
-      } else {
-        merged.set(item.id, { ...item })
-      }
-    })
-    return Array.from(merged.values())
-  }
-
-  private async applyBm25Scores(results: SearchResult[], keywords: string[]) {
-    const trimmed = keywords
-      .map(word => word.trim())
-      .filter(Boolean)
-      .map(word => word.slice(0, 50))
-
-    if (trimmed.length === 0) {
-      return results
-    }
-
-    const corpusStats = await this.chunkRepo.query(
-      `SELECT COUNT(*)::int as total_docs, AVG(LENGTH(content))::float as avg_len FROM document_chunks`
-    )
-
-    const totalDocs = Number(corpusStats?.[0]?.total_docs || 0)
-    const avgLen = Number(corpusStats?.[0]?.avg_len || 0)
-
-    if (!totalDocs || !avgLen) {
-      return results
-    }
-
-    const dfMap = new Map<string, number>()
-    for (const term of trimmed) {
-      const dfRows = await this.chunkRepo.query(
-        `SELECT COUNT(*)::int as df FROM document_chunks WHERE content ILIKE $1`,
-        [`%${term}%`]
-      )
-      const df = Number(dfRows?.[0]?.df || 0)
-      dfMap.set(term, df)
-    }
-
-    const k1 = 1.5
-    const b = 0.75
-
-    return results.map(item => {
-      const text = item.content || ''
-      const dl = text.length || 1
-      let score = 0
-      for (const term of trimmed) {
-        const df = dfMap.get(term) || 0
-        if (!df) continue
-        const tf = this.countOccurrences(text, term)
-        if (!tf) continue
-        const idf = Math.log((totalDocs - df + 0.5) / (df + 0.5) + 1)
-        const denom = tf + k1 * (1 - b + (b * dl) / avgLen)
-        score += idf * ((tf * (k1 + 1)) / denom)
-      }
-      return {
-        ...item,
-        keywordScore: score,
-      }
-    })
-  }
-
-  private countOccurrences(text: string, term: string) {
-    if (!term) return 0
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const regex = new RegExp(escaped, 'gi')
-    const matches = text.match(regex)
-    return matches ? matches.length : 0
+    return this.searchService.searchWithStats(query, topK, options)
   }
 
   // 文本分块：固定长度 + 重叠窗口

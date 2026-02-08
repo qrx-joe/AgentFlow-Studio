@@ -44,7 +44,7 @@ export class KnowledgeController {
     @Body('rerank') rerank?: boolean,
     @Body('vectorWeight') vectorWeight?: number,
     @Body('keywordWeight') keywordWeight?: number,
-    @Body('keywordMode') keywordMode?: 'bm25' | 'tsrank'
+    @Body('keywordMode') keywordMode?: 'bm25' | 'tsrank' | 'trgm'
   ) {
     return this.knowledgeService.searchWithStats(query, topK || 3, {
       scoreThreshold,

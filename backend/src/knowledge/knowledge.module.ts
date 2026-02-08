@@ -6,11 +6,13 @@ import { DocumentEntity } from './entities/document.entity'
 import { DocumentChunkEntity } from './entities/document-chunk.entity'
 import { EmbeddingService } from './embedding/embedding.service'
 import { RagService } from './rag/rag.service'
+import { Bm25Service } from './rag/bm25.service'
+import { KnowledgeSearchService } from './search/knowledge-search.service'
 
 @Module({
   imports: [TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity])],
   controllers: [KnowledgeController],
-  providers: [KnowledgeService, EmbeddingService, RagService],
+  providers: [KnowledgeService, EmbeddingService, RagService, Bm25Service, KnowledgeSearchService],
   exports: [KnowledgeService],
 })
 export class KnowledgeModule {}

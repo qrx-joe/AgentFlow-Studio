@@ -8,6 +8,9 @@ const topK = ref(3)
 const scoreThreshold = ref(0)
 const hybrid = ref(false)
 const rerank = ref(false)
+const vectorWeight = ref(1)
+const keywordWeight = ref(0)
+const keywordMode = ref<'bm25' | 'tsrank' | 'trgm'>('bm25')
 const chunkSize = ref(500)
 const overlap = ref(50)
 const showDocDrawer = ref(false)
@@ -37,6 +40,9 @@ const handleSearch = async () => {
     scoreThreshold: scoreThreshold.value,
     hybrid: hybrid.value,
     rerank: rerank.value,
+    vectorWeight: vectorWeight.value,
+    keywordWeight: keywordWeight.value,
+    keywordMode: keywordMode.value,
   })
 }
 
@@ -163,24 +169,40 @@ const highlightKeywords = (text: string) => {
     <div class="panel">
       <div class="title">RAG 检索</div>
       <div class="search">
-        <el-input v-model="searchQuery" placeholder="输入检索问题" />
-        <el-input-number v-model="topK" :min="1" :max="10" />
-        <el-input-number v-model="scoreThreshold" :min="0" :max="1" :step="0.05" />
-        <el-switch v-model="hybrid" active-text="混合" />
-        <el-switch v-model="rerank" active-text="重排" />
-        <el-button type="success" :loading="knowledgeStore.searching" @click="handleSearch">检索</el-button>
+        <div class="search-row">
+          <el-input v-model="searchQuery" placeholder="输入检索问题" />
+          <el-input-number v-model="topK" :min="1" :max="10" />
+          <el-input-number v-model="scoreThreshold" :min="0" :max="1" :step="0.05" />
+          <el-switch v-model="hybrid" active-text="混合" />
+          <el-switch v-model="rerank" active-text="重排" />
+          <el-button type="success" :loading="knowledgeStore.searching" @click="handleSearch">检索</el-button>
+        </div>
+        <div class="search-row">
+          <span class="config-label">向量权重</span>
+          <el-input-number v-model="vectorWeight" :min="0" :max="2" :step="0.05" />
+          <span class="config-label">关键词权重</span>
+          <el-input-number v-model="keywordWeight" :min="0" :max="2" :step="0.05" />
+          <span class="config-label">关键词模式</span>
+          <el-select v-model="keywordMode" style="width: 140px">
+            <el-option label="BM25" value="bm25" />
+            <el-option label="TS Rank" value="tsrank" />
+            <el-option label="Trigram" value="trgm" />
+          </el-select>
+        </div>
       </div>
 
       <div class="result" v-if="knowledgeStore.searchResults.length">
         <div class="stats">
           过滤前：{{ knowledgeStore.searchStats.total }} | 过滤后：{{ knowledgeStore.searchStats.filtered }}
           | threshold: {{ scoreThreshold }} | hybrid: {{ hybrid ? 'on' : 'off' }} | rerank: {{ rerank ? 'on' : 'off' }}
+          | mode: {{ keywordMode }} | vw: {{ vectorWeight }} | kw: {{ keywordWeight }}
         </div>
         <div v-for="item in knowledgeStore.searchResults" :key="item.id" class="result-item">
           <div class="meta">
             相似度：{{ item.similarity.toFixed(3) }}
             <span v-if="item.fusedScore !== undefined">| 融合分：{{ item.fusedScore.toFixed(3) }}</span>
             <span v-if="item.keywordHits !== undefined">| 关键词命中：{{ item.keywordHits }}</span>
+            <span v-if="item.keywordScore !== undefined">| 关键词分：{{ item.keywordScore.toFixed(3) }}</span>
           </div>
           <div class="score-bar">
             <div
@@ -259,8 +281,16 @@ const highlightKeywords = (text: string) => {
 
 .search {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .config {

@@ -16,5 +16,5 @@ export interface KnowledgeSearchOptions {
   rerank?: boolean
   vectorWeight?: number
   keywordWeight?: number
-  keywordMode?: 'bm25' | 'tsrank'
+  keywordMode?: 'bm25' | 'tsrank' | 'trgm'
 }
