@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { useKnowledgeStore } from '@/stores/knowledge'
 
 const knowledgeStore = useKnowledgeStore()
@@ -13,9 +13,12 @@ const overlap = ref(50)
 const showDocDrawer = ref(false)
 const selectedDoc = ref<any>(null)
 const chunkLimit = ref(5)
+const focusKey = 'knowledgeDocFocus'
 
 onMounted(() => {
-  knowledgeStore.fetchDocuments()
+  knowledgeStore.fetchDocuments().then(() => {
+    focusFromStorage()
+  })
 })
 
 const handleUpload = async (file: any) => {
@@ -39,6 +42,46 @@ const openDocDetail = async (doc: any) => {
   selectedDoc.value = doc
   showDocDrawer.value = true
   await knowledgeStore.fetchDocumentChunks(doc.id, chunkLimit.value)
+}
+
+const openDocDetailById = async (docId: string) => {
+  const doc = knowledgeStore.documents.find(item => item.id === docId)
+  if (doc) {
+    await openDocDetail(doc)
+  }
+}
+
+const focusFromStorage = async () => {
+  const docId = localStorage.getItem(focusKey)
+  if (!docId) return
+  localStorage.removeItem(focusKey)
+  await nextTick()
+  await openDocDetailById(docId)
+}
+
+const escapeHtml = (text: string) => {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+const highlightKeywords = (text: string) => {
+  const keywords = searchQuery.value
+    .split(/\s+/)
+    .map(word => word.trim())
+    .filter(Boolean)
+
+  let html = escapeHtml(text)
+  for (const word of keywords) {
+    const safeWord = escapeHtml(word)
+    if (safeWord && html.includes(safeWord)) {
+      html = html.split(safeWord).join(`<mark class="hit">${safeWord}</mark>`)
+    }
+  }
+  return html
 }
 </script>
 
@@ -116,7 +159,13 @@ const openDocDetail = async (doc: any) => {
             <span v-if="item.fusedScore !== undefined">| 融合分：{{ item.fusedScore.toFixed(3) }}</span>
             <span v-if="item.keywordHits !== undefined">| 关键词命中：{{ item.keywordHits }}</span>
           </div>
-          <div class="content">{{ item.content }}</div>
+          <div class="score-bar">
+            <div
+              class="score-fill"
+              :style="{ width: `${Math.min((item.fusedScore ?? item.similarity) / 1.5, 1) * 100}%` }"
+            ></div>
+          </div>
+          <div class="content" v-html="highlightKeywords(item.content)"></div>
         </div>
       </div>
       <div v-else class="empty">暂无检索结果</div>
@@ -301,6 +350,26 @@ const openDocDetail = async (doc: any) => {
 .content {
   font-size: 13px;
   color: #334155;
+}
+
+.score-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 6px 0 8px;
+}
+
+.score-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8 0%, #16a34a 100%);
+}
+
+.hit {
+  background: #fef9c3;
+  color: #854d0e;
+  padding: 0 2px;
+  border-radius: 4px;
 }
 
 .empty {

@@ -6,6 +6,7 @@ import '@vue-flow/core/dist/style.css'
 // import '@vue-flow/controls/dist/style.css'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
+import BranchEdge from '@/components/workflow/BranchEdge.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { useWorkflowStore } from '@/stores/workflow'
@@ -43,6 +44,8 @@ const lastReplayEdges = ref<string[]>([])
 const trailStyleCache = new Map<string, any>()
 const snapshots = ref<Array<{ id: string; label: string; edgeIds: string[] }>>([])
 const selectedSnapshotId = ref('')
+const applySnapshotMeta = ref(false)
+
 
 // 注册自定义节点类型
 const nodeTypes = {
@@ -52,6 +55,11 @@ const nodeTypes = {
   condition: ConditionNode,
   code: CodeNode,
   end: EndNode,
+}
+
+const edgeTypes = {
+  default: BranchEdge,
+  step: BranchEdge,
 }
 
 const vueFlow = useVueFlow()
@@ -907,6 +915,48 @@ const exportReplayScript = () => {
   URL.revokeObjectURL(url)
 }
 
+const exportReplayJson = (logs?: string[]) => {
+  const sourceLogs = logs || workflowStore.executionLogs
+  if (!sourceLogs.length) {
+    ElMessage.warning('暂无可导出的回放日志')
+    return
+  }
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    steps: getNodeIdsFromLogs(sourceLogs),
+    logs: sourceLogs,
+  }
+  const filename = `replay-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const exportReplayTxt = (logs?: string[]) => {
+  const sourceLogs = logs || workflowStore.executionLogs
+  if (!sourceLogs.length) {
+    ElMessage.warning('暂无可导出的回放日志')
+    return
+  }
+  const content = sourceLogs.join('\n')
+  const filename = `replay-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 const exportReplayScriptFromExecution = () => {
   if (!selectedExecution.value?.logs?.length) {
     ElMessage.warning('该执行记录没有可导出的日志')
@@ -955,6 +1005,22 @@ const exportReplayScriptFromExecution = () => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+const exportReplayJsonFromExecution = () => {
+  if (!selectedExecution.value?.logs?.length) {
+    ElMessage.warning('该执行记录没有可导出的日志')
+    return
+  }
+  exportReplayJson(selectedExecution.value.logs)
+}
+
+const exportReplayTxtFromExecution = () => {
+  if (!selectedExecution.value?.logs?.length) {
+    ElMessage.warning('该执行记录没有可导出的日志')
+    return
+  }
+  exportReplayTxt(selectedExecution.value.logs)
 }
 
 const buildNodeConfigSummary = (logs: string[]) => {

@@ -36,6 +36,8 @@ defineEmits<{
   (e: 'exportAllSnapshots'): void
   (e: 'update:applySnapshotMeta', value: boolean): void
   (e: 'exportReplayScript'): void
+  (e: 'exportReplayJson'): void
+  (e: 'exportReplayTxt'): void
 }>()
 </script>
 
@@ -113,6 +115,8 @@ defineEmits<{
       <el-button size="small" type="primary" plain @click="$emit('importSnapshot')">导入</el-button>
       <el-button size="small" type="primary" plain @click="$emit('exportAllSnapshots')">导出全部</el-button>
       <el-button size="small" type="primary" plain @click="$emit('exportReplayScript')">导出脚本</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('exportReplayJson')">导出JSON</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('exportReplayTxt')">导出TXT</el-button>
     </div>
     <el-button disabled>撤销</el-button>
   </div>

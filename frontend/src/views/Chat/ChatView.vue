@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 
 const chatStore = useChatStore()
@@ -7,6 +8,8 @@ const input = ref('')
 const showSourceDrawer = ref(false)
 const selectedSource = ref<any>(null)
 const activeMessageId = ref('')
+const router = useRouter()
+const focusKey = 'knowledgeDocFocus'
 
 onMounted(() => {
   chatStore.fetchSessions()
@@ -36,6 +39,15 @@ const handleSelectSource = (messageId: string, source: any) => {
       target.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   })
+}
+
+const goToDocument = () => {
+  if (!selectedSource.value?.documentId) {
+    return
+  }
+  // 保存目标文档 ID，进入知识库页后自动打开详情
+  localStorage.setItem(focusKey, selectedSource.value.documentId)
+  router.push('/knowledge')
 }
 
 const escapeHtml = (text: string) => {
@@ -155,6 +167,11 @@ const handleContentClick = (msg: any, event: MouseEvent) => {
         <div class="detail-item" v-if="selectedSource.content">
           <div class="label">内容片段</div>
           <pre class="snippet">{{ selectedSource.content }}</pre>
+        </div>
+        <div class="detail-actions">
+          <el-button size="small" type="primary" :disabled="!selectedSource.documentId" @click="goToDocument">
+            查看文档详情
+          </el-button>
         </div>
       </div>
     </el-drawer>
@@ -315,5 +332,11 @@ const handleContentClick = (msg: any, event: MouseEvent) => {
   border-radius: 8px;
   width: 100%;
   overflow: auto;
+}
+
+.detail-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
