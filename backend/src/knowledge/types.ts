@@ -6,3 +6,9 @@ export interface SearchResult {
   content: string
   similarity: number
 }
+
+export interface KnowledgeSearchOptions {
+  scoreThreshold?: number
+  hybrid?: boolean
+  rerank?: boolean
+}

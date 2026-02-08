@@ -14,9 +14,15 @@ export const workflowApi = {
 // 知识库 API
 export const knowledgeApi = {
   list: () => request.get('/knowledge/documents'),
-  upload: (file: File) => {
+  upload: (file: File, options?: { chunkSize?: number; overlap?: number }) => {
     const formData = new FormData()
     formData.append('file', file)
+    if (options?.chunkSize !== undefined) {
+      formData.append('chunkSize', String(options.chunkSize))
+    }
+    if (options?.overlap !== undefined) {
+      formData.append('overlap', String(options.overlap))
+    }
     return request.post('/knowledge/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })

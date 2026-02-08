@@ -5,13 +5,18 @@ import { useKnowledgeStore } from '@/stores/knowledge'
 const knowledgeStore = useKnowledgeStore()
 const searchQuery = ref('')
 const topK = ref(3)
+const chunkSize = ref(500)
+const overlap = ref(50)
 
 onMounted(() => {
   knowledgeStore.fetchDocuments()
 })
 
 const handleUpload = async (file: any) => {
-  await knowledgeStore.uploadDocument(file.raw)
+  await knowledgeStore.uploadDocument(file.raw, {
+    chunkSize: chunkSize.value,
+    overlap: overlap.value,
+  })
   return false
 }
 
@@ -28,6 +33,13 @@ const handleSearch = async () => {
       <el-upload :before-upload="handleUpload" :show-file-list="false">
         <el-button type="primary" :loading="knowledgeStore.uploading">上传文档</el-button>
       </el-upload>
+
+      <div class="config">
+        <el-input-number v-model="chunkSize" :min="100" :max="2000" :step="50" />
+        <span class="config-label">分块大小</span>
+        <el-input-number v-model="overlap" :min="0" :max="500" :step="10" />
+        <span class="config-label">重叠</span>
+      </div>
 
       <el-table :data="knowledgeStore.documents" style="width: 100%" v-loading="knowledgeStore.loading">
         <el-table-column prop="filename" label="文件名" />
@@ -84,6 +96,19 @@ const handleSearch = async () => {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.config-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-right: 8px;
 }
 
 .result-item {

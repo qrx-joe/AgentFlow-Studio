@@ -70,7 +70,12 @@ export class WorkflowEngine {
         // 调用知识库检索
         context.variables[node.id] = await this.knowledgeService.search(
           context.input,
-          node.data?.topK || 3
+          node.data?.topK || 3,
+          {
+            scoreThreshold: node.data?.scoreThreshold,
+            hybrid: node.data?.hybrid,
+            rerank: node.data?.rerank,
+          }
         )
         return
 

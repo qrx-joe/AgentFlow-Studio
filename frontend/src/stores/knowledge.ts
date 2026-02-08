@@ -23,10 +23,10 @@ export const useKnowledgeStore = defineStore('knowledge', {
       }
     },
 
-    async uploadDocument(file: File) {
+    async uploadDocument(file: File, options?: { chunkSize?: number; overlap?: number }) {
       this.uploading = true
       try {
-        await knowledgeApi.upload(file)
+        await knowledgeApi.upload(file, options)
         await this.fetchDocuments()
       } finally {
         this.uploading = false

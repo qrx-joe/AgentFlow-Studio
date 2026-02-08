@@ -14,8 +14,15 @@ export class KnowledgeController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadDocument(@UploadedFile() file: Express.Multer.File) {
-    return this.knowledgeService.uploadDocument(file)
+  uploadDocument(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('chunkSize') chunkSize?: string,
+    @Body('overlap') overlap?: string
+  ) {
+    return this.knowledgeService.uploadDocument(file, {
+      chunkSize: chunkSize ? Number(chunkSize) : undefined,
+      overlap: overlap ? Number(overlap) : undefined,
+    })
   }
 
   @Delete('documents/:id')

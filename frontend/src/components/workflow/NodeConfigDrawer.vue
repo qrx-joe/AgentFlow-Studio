@@ -20,6 +20,11 @@ const form = reactive({
   model: 'gpt-4o-mini',
   prompt: '',
   topK: 3,
+  scoreThreshold: 0.0,
+  rerank: false,
+  hybrid: false,
+  chunkSize: 500,
+  overlap: 50,
   variableKey: '',
   expectedValue: '',
   trueTarget: '',
@@ -34,6 +39,11 @@ watch(
     form.model = node.data?.model || 'gpt-4o-mini'
     form.prompt = node.data?.prompt || ''
     form.topK = node.data?.topK || 3
+    form.scoreThreshold = node.data?.scoreThreshold ?? 0.0
+    form.rerank = Boolean(node.data?.rerank)
+    form.hybrid = Boolean(node.data?.hybrid)
+    form.chunkSize = node.data?.chunkSize ?? 500
+    form.overlap = node.data?.overlap ?? 50
     form.variableKey = node.data?.variableKey || ''
     form.expectedValue = node.data?.expectedValue || ''
     form.trueTarget = node.data?.trueTarget || ''
@@ -54,6 +64,11 @@ const handleSave = () => {
     model: form.model,
     prompt: form.prompt,
     topK: form.topK,
+    scoreThreshold: form.scoreThreshold,
+    rerank: form.rerank,
+    hybrid: form.hybrid,
+    chunkSize: form.chunkSize,
+    overlap: form.overlap,
     variableKey: form.variableKey,
     expectedValue: form.expectedValue,
     trueTarget: form.trueTarget,
@@ -82,6 +97,21 @@ const handleSave = () => {
       <template v-if="node?.type === 'knowledge'">
         <el-form-item label="TopK">
           <el-input-number v-model="form.topK" :min="1" :max="10" />
+        </el-form-item>
+        <el-form-item label="阈值">
+          <el-input-number v-model="form.scoreThreshold" :min="0" :max="1" :step="0.05" />
+        </el-form-item>
+        <el-form-item label="混合检索">
+          <el-switch v-model="form.hybrid" />
+        </el-form-item>
+        <el-form-item label="重排序">
+          <el-switch v-model="form.rerank" />
+        </el-form-item>
+        <el-form-item label="分块大小">
+          <el-input-number v-model="form.chunkSize" :min="100" :max="2000" :step="50" />
+        </el-form-item>
+        <el-form-item label="重叠">
+          <el-input-number v-model="form.overlap" :min="0" :max="500" :step="10" />
         </el-form-item>
       </template>
 

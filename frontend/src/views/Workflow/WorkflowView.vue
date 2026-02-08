@@ -446,6 +446,10 @@ watch(selectedSnapshotId, (value) => {
   }
 })
 
+watch(applySnapshotMeta, (value) => {
+  localStorage.setItem(snapshotApplyKey, String(value))
+})
+
 const validateWorkflow = () => {
   const nodes = workflowStore.nodes
   const edges = workflowStore.edges
@@ -703,7 +707,16 @@ const saveSnapshot = () => {
   }
   const id = `snapshot-${Date.now()}`
   const label = `快照 ${new Date().toLocaleTimeString()}`
-  snapshots.value.unshift({ id, label, edgeIds })
+  snapshots.value.unshift({
+    id,
+    label,
+    edgeIds,
+    meta: {
+      replaySpeed: replaySpeed.value,
+      preserveTrail: preserveTrail.value,
+      compareLast: compareLast.value,
+    },
+  })
   selectedSnapshotId.value = id
   persistSnapshots()
   localStorage.setItem(snapshotSelectionKey, id)
@@ -723,6 +736,19 @@ const applySnapshotCompare = (snapshotId: string) => {
   const snapshot = snapshots.value.find(item => item.id === snapshotId)
   if (!snapshot) return
   applyCompareEdges(snapshot.edgeIds)
+
+  // 同步回放配置（若快照带 meta）
+  if (snapshot.meta) {
+    if (typeof snapshot.meta.replaySpeed === 'number') {
+      replaySpeed.value = snapshot.meta.replaySpeed
+    }
+    if (typeof snapshot.meta.preserveTrail === 'boolean') {
+      preserveTrail.value = snapshot.meta.preserveTrail
+    }
+    if (typeof snapshot.meta.compareLast === 'boolean') {
+      compareLast.value = snapshot.meta.compareLast
+    }
+  }
 }
 
 const deleteSnapshot = async () => {
@@ -788,8 +814,16 @@ const exportSnapshot = () => {
   }
   const snapshot = snapshots.value.find(item => item.id === selectedSnapshotId.value)
   if (!snapshot) return
+  const payload = {
+    ...snapshot,
+    meta: {
+      replaySpeed: replaySpeed.value,
+      preserveTrail: preserveTrail.value,
+      compareLast: compareLast.value,
+    },
+  }
   const filename = `${snapshot.label.replace(/\s+/g, '_')}.json`
-  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' })
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -798,6 +832,184 @@ const exportSnapshot = () => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+const exportAllSnapshots = () => {
+  if (snapshots.value.length === 0) {
+    ElMessage.warning('暂无快照可导出')
+    return
+  }
+  const filename = `snapshots-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  const payload = snapshots.value.map(item => ({
+    ...item,
+    meta: item.meta || {
+      replaySpeed: replaySpeed.value,
+      preserveTrail: preserveTrail.value,
+      compareLast: compareLast.value,
+    },
+  }))
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const exportReplayScript = () => {
+  const logs = workflowStore.executionLogs
+  if (!logs.length) {
+    ElMessage.warning('暂无可导出的回放日志')
+    return
+  }
+
+  const steps = logs
+    .filter(line => line.includes('执行节点：'))
+    .map((line, index) => {
+      const nodeId = getNodeIdFromLog(line)
+      const node = workflowStore.nodes.find(item => item.id === nodeId)
+      const nodeName = node?.data?.label || node?.type || '未知节点'
+      return `${index + 1}. 执行节点：${nodeName} (${nodeId})`
+    })
+
+  const summary = buildNodeConfigSummary(logs)
+
+  const content = [
+    '# 工作流回放脚本',
+    '',
+    `- 导出时间：${new Date().toLocaleString()}`,
+    `- 步骤数量：${steps.length}`,
+    '',
+    '## 节点配置摘要',
+    ...summary,
+    '',
+    '## 执行步骤',
+    ...steps,
+    '',
+    '## 原始日志',
+    '```',
+    ...logs,
+    '```',
+  ].join('\n')
+
+  const filename = `replay-script-${new Date().toISOString().replace(/[:.]/g, '-')}.md`
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const exportReplayScriptFromExecution = () => {
+  if (!selectedExecution.value?.logs?.length) {
+    ElMessage.warning('该执行记录没有可导出的日志')
+    return
+  }
+
+  const logs = selectedExecution.value.logs
+  const steps = logs
+    .filter(line => line.includes('执行节点：'))
+    .map((line, index) => {
+      const nodeId = getNodeIdFromLog(line)
+      const node = workflowStore.nodes.find(item => item.id === nodeId)
+      const nodeName = node?.data?.label || node?.type || '未知节点'
+      return `${index + 1}. 执行节点：${nodeName} (${nodeId})`
+    })
+
+  const summary = buildNodeConfigSummary(logs)
+
+  const content = [
+    '# 工作流回放脚本（执行记录）',
+    '',
+    `- 记录ID：${selectedExecution.value.id}`,
+    `- 状态：${selectedExecution.value.status}`,
+    `- 开始时间：${selectedExecution.value.startedAt}`,
+    `- 结束时间：${selectedExecution.value.completedAt || '-'}`,
+    '',
+    '## 节点配置摘要',
+    ...summary,
+    '',
+    '## 执行步骤',
+    ...steps,
+    '',
+    '## 原始日志',
+    '```',
+    ...logs,
+    '```',
+  ].join('\n')
+
+  const filename = `replay-execution-${selectedExecution.value.id}.md`
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const buildNodeConfigSummary = (logs: string[]) => {
+  const nodeIds = logs
+    .filter(line => line.includes('执行节点：'))
+    .map(line => getNodeIdFromLog(line))
+    .filter(Boolean)
+
+  const uniqueNodeIds = Array.from(new Set(nodeIds))
+
+  if (uniqueNodeIds.length === 0) {
+    return ['- 无节点配置可展示']
+  }
+
+  return uniqueNodeIds.map((nodeId, index) => {
+    const node = workflowStore.nodes.find(item => item.id === nodeId)
+    if (!node) {
+      return `${index + 1}. ${nodeId}（未找到节点）`
+    }
+
+    const name = node.data?.label || node.type
+
+    if (node.type === 'llm') {
+      const model = node.data?.model || '未配置'
+      const prompt = node.data?.prompt ? String(node.data.prompt) : '未配置'
+      return `${index + 1}. LLM ${name} (${nodeId}) | model=${model} | prompt=${prompt}`
+    }
+
+    if (node.type === 'knowledge') {
+      const topK = node.data?.topK ?? 3
+      const scoreThreshold = node.data?.scoreThreshold ?? '未配置'
+      const filters = node.data?.filters ? JSON.stringify(node.data.filters) : '未配置'
+      return `${index + 1}. 知识检索 ${name} (${nodeId}) | topK=${topK} | scoreThreshold=${scoreThreshold} | filters=${filters}`
+    }
+
+    if (node.type === 'condition') {
+      const variableKey = node.data?.variableKey || '未配置'
+      const expectedValue = node.data?.expectedValue || '未配置'
+      return `${index + 1}. 条件 ${name} (${nodeId}) | key=${variableKey} | expected=${expectedValue}`
+    }
+
+    if (node.type === 'code') {
+      return `${index + 1}. 代码 ${name} (${nodeId})`
+    }
+
+    if (node.type === 'trigger') {
+      return `${index + 1}. 触发 ${name} (${nodeId})`
+    }
+
+    if (node.type === 'end') {
+      return `${index + 1}. 结束 ${name} (${nodeId})`
+    }
+
+    return `${index + 1}. ${name} (${nodeId})`
+  })
 }
 
 const handleImportSnapshot = () => {
@@ -829,7 +1041,13 @@ const handleImportSnapshot = () => {
           id: item.id,
           label: item.label || `快照 ${item.id.slice(-4)}`,
           edgeIds: item.edgeIds,
+          meta: item.meta,
         }))
+
+        // 自动选中最新导入的第一个快照（可由开关控制）
+        if (applySnapshotMeta.value && validSnapshots[0]?.id) {
+          selectedSnapshotId.value = validSnapshots[0].id
+        }
 
         persistSnapshots()
         ElMessage.success('快照导入成功')
@@ -845,6 +1063,7 @@ const handleImportSnapshot = () => {
 // 快照持久化（本地缓存）
 const snapshotKey = 'workflowReplaySnapshots'
 const snapshotSelectionKey = 'workflowReplaySnapshotSelected'
+const snapshotApplyKey = 'workflowReplaySnapshotApplyMeta'
 
 const loadSnapshots = () => {
   try {
@@ -855,6 +1074,10 @@ const loadSnapshots = () => {
     const selected = localStorage.getItem(snapshotSelectionKey)
     if (selected) {
       selectedSnapshotId.value = selected
+    }
+    const applyMeta = localStorage.getItem(snapshotApplyKey)
+    if (applyMeta) {
+      applySnapshotMeta.value = applyMeta === 'true'
     }
   } catch {
     snapshots.value = []
@@ -1061,6 +1284,7 @@ const getNodeIdFromLog = (line: string) => {
         v-model:compareLast="compareLast"
         :snapshot-options="snapshotOptions"
         v-model:selectedSnapshotId="selectedSnapshotId"
+        v-model:applySnapshotMeta="applySnapshotMeta"
         @save="handleSaveWorkflow"
         @run="handleRunWorkflow"
         @clear="handleClear"
@@ -1073,6 +1297,9 @@ const getNodeIdFromLog = (line: string) => {
         @rename-snapshot="renameSnapshot"
         @clear-snapshots="clearSnapshots"
         @export-snapshot="exportSnapshot"
+        @export-all-snapshots="exportAllSnapshots"
+        @import-snapshot="handleImportSnapshot"
+        @export-replay-script="exportReplayScript"
       />
 
       <div class="canvas" @dragover="onDragOver" @drop="onDrop">
@@ -1158,6 +1385,7 @@ const getNodeIdFromLog = (line: string) => {
           <el-button @click="handleCopyExecution">复制详情</el-button>
           <el-button type="primary" @click="handleDownloadLogs">下载日志</el-button>
           <el-button type="success" @click="startReplayFromExecution">回放该记录</el-button>
+          <el-button type="primary" plain @click="exportReplayScriptFromExecution">导出脚本</el-button>
         </div>
       </div>
     </el-dialog>

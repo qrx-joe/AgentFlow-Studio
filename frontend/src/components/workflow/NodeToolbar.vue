@@ -11,6 +11,7 @@ defineProps<{
   compareLast: boolean
   snapshotOptions: Array<{ label: string; value: string }>
   selectedSnapshotId: string
+  applySnapshotMeta: boolean
 }>()
 
 defineEmits<{
@@ -32,6 +33,9 @@ defineEmits<{
   (e: 'clearSnapshots'): void
   (e: 'exportSnapshot'): void
   (e: 'importSnapshot'): void
+  (e: 'exportAllSnapshots'): void
+  (e: 'update:applySnapshotMeta', value: boolean): void
+  (e: 'exportReplayScript'): void
 }>()
 </script>
 
@@ -97,11 +101,18 @@ defineEmits<{
           :value="option.value"
         />
       </el-select>
+      <el-switch
+        :model-value="applySnapshotMeta"
+        active-text="应用配置"
+        @update:model-value="$emit('update:applySnapshotMeta', $event)"
+      />
       <el-button size="small" @click="$emit('renameSnapshot')">重命名</el-button>
       <el-button size="small" type="danger" @click="$emit('deleteSnapshot')">删除</el-button>
       <el-button size="small" type="danger" plain @click="$emit('clearSnapshots')">清空</el-button>
       <el-button size="small" type="primary" plain @click="$emit('exportSnapshot')">导出</el-button>
       <el-button size="small" type="primary" plain @click="$emit('importSnapshot')">导入</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('exportAllSnapshots')">导出全部</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('exportReplayScript')">导出脚本</el-button>
     </div>
     <el-button disabled>撤销</el-button>
   </div>
