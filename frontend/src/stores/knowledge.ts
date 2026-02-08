@@ -10,6 +10,7 @@ export const useKnowledgeStore = defineStore('knowledge', {
     loading: false,
     uploading: false,
     searching: false,
+    searchStats: { total: 0, filtered: 0 },
   }),
 
   actions: {
@@ -42,7 +43,11 @@ export const useKnowledgeStore = defineStore('knowledge', {
       this.searching = true
       try {
         const response = await knowledgeApi.search(query, topK)
-        this.searchResults = response
+        this.searchResults = response.results || []
+        this.searchStats = {
+          total: response.total || 0,
+          filtered: response.filtered || 0,
+        }
       } finally {
         this.searching = false
       }
@@ -50,6 +55,7 @@ export const useKnowledgeStore = defineStore('knowledge', {
 
     clearSearch() {
       this.searchResults = []
+      this.searchStats = { total: 0, filtered: 0 }
     },
   },
 })

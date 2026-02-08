@@ -44,6 +44,20 @@ const handleSearch = async () => {
       <el-table :data="knowledgeStore.documents" style="width: 100%" v-loading="knowledgeStore.loading">
         <el-table-column prop="filename" label="文件名" />
         <el-table-column prop="fileType" label="类型" width="100" />
+        <el-table-column label="分块参数" width="320">
+          <template #default="scope">
+            <div class="meta">
+              <span class="meta-item">size: {{ scope.row.metadata?.chunkSize ?? '-' }}</span>
+              <span class="meta-item">overlap: {{ scope.row.metadata?.overlap ?? '-' }}</span>
+              <span class="meta-item">chunks: {{ scope.row.metadata?.chunkCount ?? '-' }}</span>
+              <span class="meta-item">chars: {{ scope.row.metadata?.charCount ?? '-' }}</span>
+              <span class="meta-item">dim: {{ scope.row.metadata?.embeddingDim ?? '-' }}</span>
+              <span class="meta-item">chunkMs: {{ scope.row.metadata?.chunkMs ?? '-' }}</span>
+              <span class="meta-item">embedMs: {{ scope.row.metadata?.embedMs ?? '-' }}</span>
+              <span class="meta-item">processMs: {{ scope.row.metadata?.processMs ?? '-' }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="上传时间" width="180" />
         <el-table-column label="操作" width="120">
           <template #default="scope">
@@ -62,6 +76,9 @@ const handleSearch = async () => {
       </div>
 
       <div class="result" v-if="knowledgeStore.searchResults.length">
+        <div class="stats">
+          过滤前：{{ knowledgeStore.searchStats.total }} | 过滤后：{{ knowledgeStore.searchStats.filtered }}
+        </div>
         <div v-for="item in knowledgeStore.searchResults" :key="item.id" class="result-item">
           <div class="meta">相似度：{{ item.similarity.toFixed(3) }}</div>
           <div class="content">{{ item.content }}</div>
@@ -111,10 +128,28 @@ const handleSearch = async () => {
   margin-right: 8px;
 }
 
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.meta-item {
+  line-height: 1.2;
+}
+
 .result-item {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 10px;
+  margin-bottom: 8px;
+}
+
+.stats {
+  font-size: 12px;
+  color: #64748b;
   margin-bottom: 8px;
 }
 

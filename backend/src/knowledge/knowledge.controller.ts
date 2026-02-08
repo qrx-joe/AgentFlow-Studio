@@ -32,6 +32,6 @@ export class KnowledgeController {
 
   @Post('search')
   search(@Body('query') query: string, @Body('topK') topK: number) {
-    return this.knowledgeService.search(query, topK || 3)
+    return this.knowledgeService.searchWithStats(query, topK || 3)
   }
 }

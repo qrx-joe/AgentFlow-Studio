@@ -44,6 +44,7 @@ export interface DocumentItem {
   filename: string
   fileType?: string
   fileSize?: number
+  metadata?: Record<string, any>
   createdAt?: string
 }
 

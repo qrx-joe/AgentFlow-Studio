@@ -37,6 +37,34 @@ const handleSelectSource = (messageId: string, source: any) => {
     }
   })
 }
+
+const escapeHtml = (text: string) => {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+const renderContent = (msg: any) => {
+  const raw = String(msg.content || '')
+  let html = escapeHtml(raw)
+
+  const snippets = (msg.sources || [])
+    .map((item: any) => String(item.content || '').trim())
+    .filter(Boolean)
+    .map(snippet => snippet.length > 80 ? snippet.slice(0, 80) : snippet)
+
+  for (const snippet of snippets) {
+    const safeSnippet = escapeHtml(snippet)
+    if (safeSnippet && html.includes(safeSnippet)) {
+      html = html.replace(safeSnippet, `<mark class="highlight">${safeSnippet}</mark>`)
+    }
+  }
+
+  return html.replace(/\n/g, '<br />')
+}
 </script>
 
 <template>
@@ -68,7 +96,12 @@ const handleSelectSource = (messageId: string, source: any) => {
         >
           <div class="role">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
           <div class="bubble" :class="{ highlight: msg.id === activeMessageId }">
-            <div class="content">{{ msg.content }}</div>
+            <div
+              v-if="msg.role === 'assistant'"
+              class="content"
+              v-html="renderContent(msg)"
+            />
+            <div v-else class="content">{{ msg.content }}</div>
             <div v-if="msg.sources?.length" class="sources">
               <div
                 v-for="(src, index) in msg.sources"
@@ -194,6 +227,13 @@ const handleSelectSource = (messageId: string, source: any) => {
 .content {
   font-size: 13px;
   color: #0f172a;
+}
+
+.highlight {
+  background: #fef9c3;
+  color: #854d0e;
+  padding: 0 2px;
+  border-radius: 4px;
 }
 
 .sources {

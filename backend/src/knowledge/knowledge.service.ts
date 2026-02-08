@@ -29,21 +29,34 @@ export class KnowledgeService {
     file: Express.Multer.File,
     options: { chunkSize?: number; overlap?: number } = {}
   ) {
+    const startTime = Date.now()
     // 1. 保存文档元信息
     const document = await this.documentRepo.save({
       filename: file.originalname,
       fileType: file.mimetype,
       fileSize: file.size,
       content: file.buffer.toString('utf-8'),
+      metadata: {
+        chunkSize: options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500,
+        overlap: options.overlap && options.overlap >= 0 ? options.overlap : 50,
+      },
     })
 
     // 2. 分块并生成向量
     const chunkSize = options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500
     const overlap = options.overlap && options.overlap >= 0 ? options.overlap : 50
+    const chunkStart = Date.now()
     const chunks = this.splitIntoChunks(document.content || '', chunkSize, overlap)
+    const chunkMs = Date.now() - chunkStart
+    const charCount = (document.content || '').length
+    const embedStart = Date.now()
+    let embeddingDim = Number(process.env.EMBEDDING_DIMENSION || 1536)
     for (let i = 0; i < chunks.length; i += 1) {
       const chunk = chunks[i]
       const embedding = await this.embeddingService.embed(chunk)
+      if (Array.isArray(embedding) && embedding.length > 0) {
+        embeddingDim = embedding.length
+      }
       await this.chunkRepo.save({
         documentId: document.id,
         content: chunk,
@@ -51,12 +64,44 @@ export class KnowledgeService {
         embedding,
       })
     }
+    const embedMs = Date.now() - embedStart
+
+    // 4. 更新元信息（分块数量、字符数）
+    await this.documentRepo.update(document.id, {
+      metadata: {
+        ...document.metadata,
+        chunkCount: chunks.length,
+        charCount,
+        chunkMs,
+        embedMs,
+        processMs: Date.now() - startTime,
+        embeddingDim,
+      },
+    })
 
     return document
   }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
     const results = await this.ragService.search(query, topK)
+    return this.applySearchOptions(results, query, options)
+  }
+
+  async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
+    const results = await this.ragService.search(query, topK)
+    const filtered = this.applySearchOptions(results, query, options)
+    return {
+      total: results.length,
+      filtered: filtered.length,
+      results: filtered,
+    }
+  }
+
+  private applySearchOptions(
+    results: SearchResult[],
+    query: string,
+    options: KnowledgeSearchOptions
+  ) {
     let filtered: SearchResult[] = results
 
     // 相似度阈值过滤

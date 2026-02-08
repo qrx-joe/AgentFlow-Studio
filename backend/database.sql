@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS documents (
     file_type VARCHAR(50),
     file_size INTEGER,
     content TEXT,
+    metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
