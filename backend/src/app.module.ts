@@ -7,6 +7,7 @@ import { KnowledgeModule } from './knowledge/knowledge.module'
 import { ChatModule } from './chat/chat.module'
 import { AgentModule } from './agent/agent.module'
 import { AppCacheModule } from './common/cache/cache.module'
+import { MetricsModule } from './metrics/metrics.module'
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AppCacheModule } from './common/cache/cache.module'
     KnowledgeModule,
     ChatModule,
     AgentModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

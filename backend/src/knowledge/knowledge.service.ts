@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { DocumentEntity } from './entities/document.entity'
 import { DocumentChunkEntity } from './entities/document-chunk.entity'
 import { EmbeddingService } from './embedding/embedding.service'
+import { MetricsService } from '../metrics/metrics.service'
 import { KnowledgeSearchService } from './search/knowledge-search.service'
 import type { KnowledgeSearchOptions } from './types'
 
@@ -13,7 +14,8 @@ export class KnowledgeService {
     @InjectRepository(DocumentEntity) private documentRepo: Repository<DocumentEntity>,
     @InjectRepository(DocumentChunkEntity) private chunkRepo: Repository<DocumentChunkEntity>,
     private embeddingService: EmbeddingService,
-    private searchService: KnowledgeSearchService
+    private searchService: KnowledgeSearchService,
+    private metricsService: MetricsService
   ) {}
 
   async listDocuments() {
@@ -91,11 +93,54 @@ export class KnowledgeService {
   }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    return this.searchService.search(query, topK, options)
+    const start = Date.now()
+    const result = await this.searchService.search(query, topK, options)
+    this.metricsService.recordKnowledgeSearch(Date.now() - start)
+    return result
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    return this.searchService.searchWithStats(query, topK, options)
+    const start = Date.now()
+    const result = await this.searchService.searchWithStats(query, topK, options)
+    this.metricsService.recordKnowledgeSearch(Date.now() - start)
+    return result
+  }
+
+  async evaluate(
+    querySet: Array<{ query: string; expectedDocumentIds: string[] }>,
+    options: KnowledgeSearchOptions,
+    topK = 3
+  ) {
+    let hitCount = 0
+    let mrrTotal = 0
+    let evaluated = 0
+    const perQuery: Array<{ query: string; rank?: number; hit: boolean }> = []
+
+    for (const item of querySet) {
+      if (!item.query || !item.expectedDocumentIds?.length) {
+        continue
+      }
+      const result = await this.searchService.search(item.query, topK, options)
+      const docIds = result.map(row => row.documentId)
+      const hitIndex = docIds.findIndex(id => item.expectedDocumentIds.includes(id))
+      evaluated += 1
+      if (hitIndex >= 0) {
+        hitCount += 1
+        mrrTotal += 1 / (hitIndex + 1)
+      }
+      perQuery.push({
+        query: item.query,
+        rank: hitIndex >= 0 ? hitIndex + 1 : undefined,
+        hit: hitIndex >= 0,
+      })
+    }
+
+    return {
+      hitRate: evaluated ? hitCount / evaluated : 0,
+      mrr: evaluated ? mrrTotal / evaluated : 0,
+      evaluated,
+      perQuery,
+    }
   }
 
   // 文本分块：固定长度 + 重叠窗口

@@ -5,6 +5,7 @@ import KnowledgeDocumentsPanel from '@/components/knowledge/KnowledgeDocumentsPa
 import KnowledgeSearchPanel from '@/components/knowledge/KnowledgeSearchPanel.vue'
 import KnowledgeResults from '@/components/knowledge/KnowledgeResults.vue'
 import KnowledgeDocDrawer from '@/components/knowledge/KnowledgeDocDrawer.vue'
+import KnowledgeEvalPanel from '@/components/knowledge/KnowledgeEvalPanel.vue'
 
 const knowledgeStore = useKnowledgeStore()
 const searchQuery = ref('')
@@ -149,6 +150,8 @@ const highlightChunk = async () => {
       :focused-chunk-id="focusedChunkId"
       @refresh="refreshChunks"
     />
+
+    <KnowledgeEvalPanel />
   </div>
 </template>
 

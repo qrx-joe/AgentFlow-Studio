@@ -38,7 +38,10 @@ export class WorkflowEngine {
           throw new Error('工作流执行步数过多，可能存在循环')
         }
 
-        await this.executeNode(currentNode, context)
+        const nodeResult = await this.executeNodeWithPolicy(currentNode, context)
+        if (nodeResult === 'failed') {
+          throw new Error(`节点 ${currentNode.id} 执行失败`)
+        }
 
         if (currentNode.type === 'end') {
           break
@@ -101,6 +104,58 @@ export class WorkflowEngine {
         context.logs.push('到达结束节点')
         return
     }
+  }
+
+  private async executeNodeWithPolicy(node: WorkflowNode, context: ExecutionContext) {
+    const retryCount = Number(node.data?.retryCount || 0)
+    const retryDelayMs = Number(node.data?.retryDelayMs || 0)
+    const timeoutMs = Number(node.data?.timeoutMs || 0)
+    const onError = node.data?.onError === 'skip' ? 'skip' : 'fail'
+
+    for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+      try {
+        if (timeoutMs > 0) {
+          await this.withTimeout(this.executeNode(node, context), timeoutMs)
+        } else {
+          await this.executeNode(node, context)
+        }
+        return 'ok'
+      } catch (error: any) {
+        const message = error?.message || '执行失败'
+        context.logs.push(`节点 ${node.id} 执行失败（${attempt + 1}/${retryCount + 1}）：${message}`)
+        if (attempt < retryCount && retryDelayMs > 0) {
+          await this.sleep(retryDelayMs)
+        }
+      }
+    }
+
+    if (onError === 'skip') {
+      if (context.variables[node.id] !== undefined) {
+        delete context.variables[node.id]
+      }
+      context.logs.push(`节点 ${node.id} 已跳过（失败后策略）`)
+      return 'skipped'
+    }
+
+    return 'failed'
+  }
+
+  private async withTimeout<T>(task: Promise<T>, timeoutMs: number) {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('节点执行超时')), timeoutMs)
+    })
+    try {
+      return await Promise.race([task, timeout])
+    } finally {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }
+
+  private async sleep(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms))
   }
 
   // 选择下一个节点：普通节点取第一条边，条件节点分流

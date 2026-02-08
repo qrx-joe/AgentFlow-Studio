@@ -29,6 +29,12 @@ const router = createRouter({
           name: 'Chat',
           component: () => import('@/views/Chat/ChatView.vue'),
           meta: { title: '智能对话' }
+        },
+        {
+          path: 'monitoring',
+          name: 'Monitoring',
+          component: () => import('@/views/Monitoring/MonitoringView.vue'),
+          meta: { title: '系统监控' }
         }
       ]
     }

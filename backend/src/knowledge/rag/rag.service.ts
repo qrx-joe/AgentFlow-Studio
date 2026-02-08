@@ -6,6 +6,7 @@ import { Repository } from 'typeorm'
 import { DocumentChunkEntity } from '../entities/document-chunk.entity'
 import { EmbeddingService } from '../embedding/embedding.service'
 import type { SearchResult } from '../types'
+import { MetricsService } from '../../metrics/metrics.service'
 
 // RAG 检索服务：使用 pgvector 进行相似度搜索
 @Injectable()
@@ -18,7 +19,8 @@ export class RagService {
     @InjectRepository(DocumentChunkEntity)
     private chunkRepo: Repository<DocumentChunkEntity>,
     private embeddingService: EmbeddingService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private metricsService: MetricsService
   ) {}
 
   async search(query: string, topK = 3, cacheKeySuffix = ''): Promise<SearchResult[]> {
@@ -27,14 +29,17 @@ export class RagService {
 
     const memoryHit = this.readMemoryCache(cacheKey)
     if (memoryHit) {
+      this.metricsService.recordRagCacheHit()
       return memoryHit
     }
 
     const cached = await this.cacheManager.get<SearchResult[]>(cacheKey)
     if (cached) {
       this.writeMemoryCache(cacheKey, cached)
+      this.metricsService.recordRagCacheHit()
       return cached
     }
+    this.metricsService.recordRagCacheMiss()
 
     const queryEmbedding = await this.embeddingService.embed(query)
 
@@ -78,14 +83,17 @@ export class RagService {
 
     const memoryHit = this.readMemoryCache(cacheKey)
     if (memoryHit) {
+      this.metricsService.recordRagCacheHit()
       return memoryHit
     }
 
     const cached = await this.cacheManager.get<SearchResult[]>(cacheKey)
     if (cached) {
       this.writeMemoryCache(cacheKey, cached)
+      this.metricsService.recordRagCacheHit()
       return cached
     }
+    this.metricsService.recordRagCacheMiss()
 
     const results =
       mode === 'trgm'

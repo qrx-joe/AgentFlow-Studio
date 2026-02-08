@@ -40,8 +40,33 @@ export const knowledgeApi = {
       keywordMode?: 'bm25' | 'tsrank' | 'trgm'
     }
   ) => request.post('/knowledge/search', { query, topK, ...options }),
+  eval: (payload: {
+    queries: Array<{ query: string; expectedDocumentIds: string[] }>
+    topK?: number
+    baseline?: {
+      scoreThreshold?: number
+      hybrid?: boolean
+      rerank?: boolean
+      vectorWeight?: number
+      keywordWeight?: number
+      keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+    }
+    compare?: {
+      scoreThreshold?: number
+      hybrid?: boolean
+      rerank?: boolean
+      vectorWeight?: number
+      keywordWeight?: number
+      keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+    }
+  }) => request.post('/knowledge/eval', payload),
   listChunks: (id: string, limit: number = 5) =>
     request.get(`/knowledge/documents/${id}/chunks`, { params: { limit } }),
+}
+
+// 监控 API
+export const metricsApi = {
+  summary: () => request.get('/metrics/summary'),
 }
 
 // 对话 API

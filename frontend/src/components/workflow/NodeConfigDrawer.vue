@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import type { WorkflowNode } from '@/types'
+import NodePolicyFields from '@/components/workflow/NodePolicyFields.vue'
 
 // 配置面板：双击节点后编辑其参数
 const props = defineProps<{
@@ -29,6 +30,10 @@ const form = reactive({
   expectedValue: '',
   trueTarget: '',
   falseTarget: '',
+  timeoutMs: 0,
+  retryCount: 0,
+  retryDelayMs: 0,
+  onError: 'fail',
 })
 
 watch(
@@ -48,6 +53,10 @@ watch(
     form.expectedValue = node.data?.expectedValue || ''
     form.trueTarget = node.data?.trueTarget || ''
     form.falseTarget = node.data?.falseTarget || ''
+    form.timeoutMs = node.data?.timeoutMs ?? 0
+    form.retryCount = node.data?.retryCount ?? 0
+    form.retryDelayMs = node.data?.retryDelayMs ?? 0
+    form.onError = node.data?.onError === 'skip' ? 'skip' : 'fail'
   },
   { immediate: true }
 )
@@ -73,6 +82,10 @@ const handleSave = () => {
     expectedValue: form.expectedValue,
     trueTarget: form.trueTarget,
     falseTarget: form.falseTarget,
+    timeoutMs: form.timeoutMs,
+    retryCount: form.retryCount,
+    retryDelayMs: form.retryDelayMs,
+    onError: form.onError,
   })
   visible.value = false
 }
@@ -158,6 +171,7 @@ const handleSave = () => {
           </el-select>
         </el-form-item>
       </template>
+      <NodePolicyFields :form="form" />
     </el-form>
 
     <div class="actions">

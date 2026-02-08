@@ -9,6 +9,7 @@ const menus = [
   { name: '工作流编排', path: '/workflow' },
   { name: '知识库管理', path: '/knowledge' },
   { name: '智能对话', path: '/chat' },
+  { name: '系统监控', path: '/monitoring' },
 ]
 
 const handleSelect = (path: string) => {

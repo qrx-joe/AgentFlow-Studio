@@ -55,4 +55,36 @@ export class KnowledgeController {
       keywordMode,
     })
   }
+
+  @Post('eval')
+  async evaluate(
+    @Body('queries') queries: Array<{ query: string; expectedDocumentIds: string[] }>,
+    @Body('topK') topK?: number,
+    @Body('baseline') baseline?: {
+      scoreThreshold?: number
+      hybrid?: boolean
+      rerank?: boolean
+      vectorWeight?: number
+      keywordWeight?: number
+      keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+    },
+    @Body('compare') compare?: {
+      scoreThreshold?: number
+      hybrid?: boolean
+      rerank?: boolean
+      vectorWeight?: number
+      keywordWeight?: number
+      keywordMode?: 'bm25' | 'tsrank' | 'trgm'
+    }
+  ) {
+    const baselineResult = await this.knowledgeService.evaluate(queries || [], baseline || {}, topK || 3)
+    const compareResult = compare
+      ? await this.knowledgeService.evaluate(queries || [], compare, topK || 3)
+      : null
+
+    return {
+      baseline: baselineResult,
+      compare: compareResult,
+    }
+  }
 }
