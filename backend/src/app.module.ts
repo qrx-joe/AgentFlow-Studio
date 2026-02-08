@@ -6,6 +6,7 @@ import { WorkflowModule } from './workflow/workflow.module'
 import { KnowledgeModule } from './knowledge/knowledge.module'
 import { ChatModule } from './chat/chat.module'
 import { AgentModule } from './agent/agent.module'
+import { AppCacheModule } from './common/cache/cache.module'
 
 @Module({
   imports: [
@@ -18,8 +19,19 @@ import { AgentModule } from './agent/agent.module'
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       synchronize: false,
+      extra: {
+        max: 20,
+        min: 5,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      },
+      cache: {
+        duration: 30000,
+      },
       logging: process.env.NODE_ENV === 'development',
     }),
+
+    AppCacheModule,
 
     WorkflowModule,
     KnowledgeModule,
