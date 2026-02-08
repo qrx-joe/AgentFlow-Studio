@@ -94,7 +94,7 @@ export class KnowledgeService {
     const optionsKey = this.buildSearchOptionsKey(options)
     const vectorResults = await this.ragService.search(query, topK, optionsKey)
     const keywordResults = this.shouldRunKeyword(options)
-      ? await this.ragService.searchKeyword(query, topK, optionsKey)
+      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
       : []
     const merged = this.mergeResults(vectorResults, keywordResults)
     return this.applySearchOptions(merged, query, options)
@@ -104,7 +104,7 @@ export class KnowledgeService {
     const optionsKey = this.buildSearchOptionsKey(options)
     const vectorResults = await this.ragService.search(query, topK, optionsKey)
     const keywordResults = this.shouldRunKeyword(options)
-      ? await this.ragService.searchKeyword(query, topK, optionsKey)
+      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
       : []
     const merged = this.mergeResults(vectorResults, keywordResults)
     const filtered = await this.applySearchOptions(merged, query, options)

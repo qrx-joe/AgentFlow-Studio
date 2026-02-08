@@ -14,4 +14,7 @@ export interface KnowledgeSearchOptions {
   scoreThreshold?: number
   hybrid?: boolean
   rerank?: boolean
+  vectorWeight?: number
+  keywordWeight?: number
+  keywordMode?: 'bm25' | 'tsrank'
 }

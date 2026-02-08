@@ -68,6 +68,10 @@ WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id 
 ON document_chunks(document_id);
 
+-- 创建全文索引（关键词检索）
+CREATE INDEX IF NOT EXISTS idx_document_chunks_content_tsv
+ON document_chunks USING GIN (to_tsvector('simple', content));
+
 -- ========================================
 -- 会话表
 -- ========================================

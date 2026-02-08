@@ -41,12 +41,18 @@ export class KnowledgeController {
     @Body('topK') topK: number,
     @Body('scoreThreshold') scoreThreshold?: number,
     @Body('hybrid') hybrid?: boolean,
-    @Body('rerank') rerank?: boolean
+    @Body('rerank') rerank?: boolean,
+    @Body('vectorWeight') vectorWeight?: number,
+    @Body('keywordWeight') keywordWeight?: number,
+    @Body('keywordMode') keywordMode?: 'bm25' | 'tsrank'
   ) {
     return this.knowledgeService.searchWithStats(query, topK || 3, {
       scoreThreshold,
       hybrid,
       rerank,
+      vectorWeight,
+      keywordWeight,
+      keywordMode,
     })
   }
 }

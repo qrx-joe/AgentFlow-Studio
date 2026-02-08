@@ -63,7 +63,12 @@ export class RagService {
     return mapped
   }
 
-  async searchKeyword(query: string, topK = 3, cacheKeySuffix = ''): Promise<SearchResult[]> {
+  async searchKeyword(
+    query: string,
+    topK = 3,
+    cacheKeySuffix = '',
+    mode: 'bm25' | 'tsrank' = 'bm25'
+  ): Promise<SearchResult[]> {
     if (!query || !query.trim()) {
       return []
     }
@@ -82,10 +87,11 @@ export class RagService {
       return cached
     }
 
+    const rankFn = mode === 'tsrank' ? 'ts_rank' : 'ts_rank_cd'
     const results = await this.chunkRepo.query(
       `
       SELECT id, content, document_id,
-             ts_rank_cd(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
+             ${rankFn}(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
       FROM document_chunks
       WHERE to_tsvector('simple', content) @@ plainto_tsquery('simple', $2)
       ORDER BY keyword_score DESC
