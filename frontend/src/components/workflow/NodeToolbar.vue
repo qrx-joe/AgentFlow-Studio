@@ -7,6 +7,10 @@ defineProps<{
   replaySpeed: number
   replayProgress: number
   replayTotal: number
+  preserveTrail: boolean
+  compareLast: boolean
+  snapshotOptions: Array<{ label: string; value: string }>
+  selectedSnapshotId: string
 }>()
 
 defineEmits<{
@@ -18,6 +22,16 @@ defineEmits<{
   (e: 'stopReplay'): void
   (e: 'update:replaySpeed', value: number): void
   (e: 'seekReplay', value: number): void
+  (e: 'update:preserveTrail', value: boolean): void
+  (e: 'update:compareLast', value: boolean): void
+  (e: 'clearTrail'): void
+  (e: 'saveSnapshot'): void
+  (e: 'update:selectedSnapshotId', value: string): void
+  (e: 'deleteSnapshot'): void
+  (e: 'renameSnapshot'): void
+  (e: 'clearSnapshots'): void
+  (e: 'exportSnapshot'): void
+  (e: 'importSnapshot'): void
 }>()
 </script>
 
@@ -54,6 +68,40 @@ defineEmits<{
         @change="$emit('seekReplay', $event)"
       />
       <span class="progress-value">{{ replayTotal === 0 ? 0 : replayProgress + 1 }}/{{ replayTotal }}</span>
+    </div>
+    <div class="trail-control">
+      <el-switch
+        :model-value="preserveTrail"
+        active-text="保留轨迹"
+        @update:model-value="$emit('update:preserveTrail', $event)"
+      />
+      <el-switch
+        :model-value="compareLast"
+        active-text="对比上次"
+        @update:model-value="$emit('update:compareLast', $event)"
+      />
+      <el-button size="small" @click="$emit('clearTrail')">清除轨迹</el-button>
+      <el-button size="small" type="primary" @click="$emit('saveSnapshot')">保存快照</el-button>
+      <el-select
+        class="snapshot"
+        :model-value="selectedSnapshotId"
+        placeholder="选择快照"
+        size="small"
+        clearable
+        @update:model-value="$emit('update:selectedSnapshotId', $event)"
+      >
+        <el-option
+          v-for="option in snapshotOptions"
+          :key="option.value"
+          :label="option.label"
+          :value="option.value"
+        />
+      </el-select>
+      <el-button size="small" @click="$emit('renameSnapshot')">重命名</el-button>
+      <el-button size="small" type="danger" @click="$emit('deleteSnapshot')">删除</el-button>
+      <el-button size="small" type="danger" plain @click="$emit('clearSnapshots')">清空</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('exportSnapshot')">导出</el-button>
+      <el-button size="small" type="primary" plain @click="$emit('importSnapshot')">导入</el-button>
     </div>
     <el-button disabled>撤销</el-button>
   </div>
@@ -108,5 +156,15 @@ defineEmits<{
 .progress-value {
   font-size: 12px;
   color: #334155;
+}
+
+.trail-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.snapshot {
+  width: 140px;
 }
 </style>

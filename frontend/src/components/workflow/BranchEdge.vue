@@ -98,6 +98,16 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
   animation-duration: 0.5s;
 }
 
+.edge-trail {
+  stroke-opacity: 0.9;
+}
+
+.edge-compare {
+  stroke: #64748b;
+  stroke-dasharray: 2 4;
+  opacity: 0.7;
+}
+
 .edge-label {
   pointer-events: none;
 }

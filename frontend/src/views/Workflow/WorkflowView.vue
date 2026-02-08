@@ -6,7 +6,7 @@ import '@vue-flow/background/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { useWorkflowStore } from '@/stores/workflow'
 import NodePalette from '@/components/workflow/NodePalette.vue'
@@ -36,6 +36,13 @@ const replayProgress = ref(0)
 const replayTotal = ref(0)
 const replayNodes = ref<string[]>([])
 const lastHighlightedEdgeId = ref('')
+const preserveTrail = ref(true)
+const compareLast = ref(false)
+const replayEdges = ref<Set<string>>(new Set())
+const lastReplayEdges = ref<string[]>([])
+const trailStyleCache = new Map<string, any>()
+const snapshots = ref<Array<{ id: string; label: string; edgeIds: string[] }>>([])
+const selectedSnapshotId = ref('')
 
 // 注册自定义节点类型
 const nodeTypes = {
@@ -335,6 +342,16 @@ const startReplay = (logs?: string[]) => {
 
   stopReplay()
   replaying.value = true
+  replayEdges.value.clear()
+
+  // 若启用对比，上一次回放路径作为参考轨迹
+  workflowStore.edges = workflowStore.edges.map(edge => ({
+    ...edge,
+    class: removeClass(edge.class, 'edge-compare'),
+  }))
+  if (compareLast.value && lastReplayEdges.value.length > 0) {
+    applyCompareEdges(lastReplayEdges.value)
+  }
 
   replayNodes.value = nodeIds
   replayTotal.value = nodeIds.length
@@ -346,7 +363,10 @@ const startReplay = (logs?: string[]) => {
     const nodeId = replayNodes.value[replayProgress.value]
     if (nodeId) {
       highlightNode(nodeId)
-      highlightEdgeByNodes(previousId, nodeId)
+      const edgeId = highlightEdgeByNodes(previousId, nodeId)
+      if (edgeId && preserveTrail.value) {
+        addTrailEdge(edgeId, replayProgress.value)
+      }
     }
     previousId = nodeId
     replayProgress.value += 1
@@ -369,6 +389,9 @@ const stopReplay = () => {
   replayProgress.value = 0
   replayTotal.value = 0
   restoreEdgeHighlight()
+  if (replayEdges.value.size > 0) {
+    lastReplayEdges.value = Array.from(replayEdges.value)
+  }
 }
 
 const startReplayFromExecution = () => {
@@ -387,7 +410,10 @@ const seekReplay = (index: number) => {
   if (nodeId) {
     highlightNode(nodeId)
     const previous = replayNodes.value[clamped - 1]
-    highlightEdgeByNodes(previous, nodeId)
+    const edgeId = highlightEdgeByNodes(previous, nodeId)
+    if (edgeId && preserveTrail.value) {
+      addTrailEdge(edgeId, clamped)
+    }
   }
 }
 
@@ -404,6 +430,19 @@ watch(replaySpeed, (value) => {
   if (replaying.value) {
     stopReplay()
     startReplay()
+  }
+})
+
+watch(selectedSnapshotId, (value) => {
+  if (value) {
+    applySnapshotCompare(value)
+    localStorage.setItem(snapshotSelectionKey, value)
+  } else {
+    workflowStore.edges = workflowStore.edges.map(edge => ({
+      ...edge,
+      class: removeClass(edge.class, 'edge-compare'),
+    }))
+    localStorage.removeItem(snapshotSelectionKey)
   }
 })
 
@@ -585,6 +624,249 @@ const restoreEdgeHighlight = () => {
   lastHighlightedEdgeId.value = ''
 }
 
+const mergeClass = (base: any, add: string) => {
+  const set = new Set(String(base || '').split(' ').filter(Boolean))
+  set.add(add)
+  return Array.from(set).join(' ')
+}
+
+const getGradientColor = (index: number, total: number) => {
+  if (total <= 1) return '#38bdf8'
+  const startHue = 200
+  const endHue = 120
+  const hue = startHue - ((startHue - endHue) * index) / (total - 1)
+  return `hsl(${hue}, 70%, 45%)`
+}
+
+const removeClass = (base: any, remove: string) => {
+  const set = new Set(String(base || '').split(' ').filter(Boolean))
+  set.delete(remove)
+  return Array.from(set).join(' ')
+}
+
+const addTrailEdge = (edgeId: string, orderIndex: number) => {
+  replayEdges.value.add(edgeId)
+  workflowStore.edges = workflowStore.edges.map(edge => {
+    if (edge.id !== edgeId) return edge
+    if (!trailStyleCache.has(edgeId)) {
+      trailStyleCache.set(edgeId, edge.style || null)
+    }
+    return {
+      ...edge,
+      style: {
+        ...edge.style,
+        stroke: getGradientColor(orderIndex, replayTotal.value || 1),
+      },
+      class: mergeClass(edge.class, 'edge-trail'),
+    }
+  })
+}
+
+const applyCompareEdges = (edgeIds: string[]) => {
+  workflowStore.edges = workflowStore.edges.map(edge => {
+    if (!edgeIds.includes(edge.id)) return edge
+    return {
+      ...edge,
+      class: mergeClass(edge.class, 'edge-compare'),
+    }
+  })
+}
+
+const clearTrail = () => {
+  // 恢复轨迹连线的原始样式
+  workflowStore.edges = workflowStore.edges.map(edge => {
+    if (trailStyleCache.has(edge.id)) {
+      const cached = trailStyleCache.get(edge.id)
+      return {
+        ...edge,
+        style: cached || undefined,
+        class: removeClass(edge.class, 'edge-trail'),
+      }
+    }
+    return {
+      ...edge,
+      class: removeClass(edge.class, 'edge-trail'),
+    }
+  })
+
+  replayEdges.value.clear()
+  lastReplayEdges.value = []
+  trailStyleCache.clear()
+  persistSnapshots()
+}
+
+const saveSnapshot = () => {
+  const edgeIds = Array.from(replayEdges.value)
+  if (edgeIds.length === 0) {
+    ElMessage.warning('当前没有可保存的轨迹')
+    return
+  }
+  const id = `snapshot-${Date.now()}`
+  const label = `快照 ${new Date().toLocaleTimeString()}`
+  snapshots.value.unshift({ id, label, edgeIds })
+  selectedSnapshotId.value = id
+  persistSnapshots()
+  localStorage.setItem(snapshotSelectionKey, id)
+}
+
+const snapshotOptions = computed(() => snapshots.value.map(item => ({
+  label: item.label,
+  value: item.id,
+})))
+
+const applySnapshotCompare = (snapshotId: string) => {
+  workflowStore.edges = workflowStore.edges.map(edge => ({
+    ...edge,
+    class: removeClass(edge.class, 'edge-compare'),
+  }))
+
+  const snapshot = snapshots.value.find(item => item.id === snapshotId)
+  if (!snapshot) return
+  applyCompareEdges(snapshot.edgeIds)
+}
+
+const deleteSnapshot = async () => {
+  if (!selectedSnapshotId.value) {
+    ElMessage.warning('请选择要删除的快照')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认删除当前快照吗？', '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    snapshots.value = snapshots.value.filter(item => item.id !== selectedSnapshotId.value)
+    selectedSnapshotId.value = ''
+    persistSnapshots()
+    localStorage.removeItem(snapshotSelectionKey)
+    ElMessage.success('已删除快照')
+  } catch {
+    // 用户取消
+  }
+}
+
+const renameSnapshot = () => {
+  if (!selectedSnapshotId.value) {
+    ElMessage.warning('请选择要重命名的快照')
+    return
+  }
+  const target = snapshots.value.find(item => item.id === selectedSnapshotId.value)
+  if (!target) return
+  const nextName = window.prompt('请输入新的快照名称', target.label)
+  if (!nextName || !nextName.trim()) return
+  target.label = nextName.trim()
+  snapshots.value = [...snapshots.value]
+  persistSnapshots()
+}
+
+const clearSnapshots = async () => {
+  if (snapshots.value.length === 0) {
+    ElMessage.warning('暂无快照可清空')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认清空所有快照吗？', '清空确认', {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    snapshots.value = []
+    selectedSnapshotId.value = ''
+    persistSnapshots()
+    localStorage.removeItem(snapshotSelectionKey)
+    ElMessage.success('已清空所有快照')
+  } catch {
+    // 用户取消
+  }
+}
+
+const exportSnapshot = () => {
+  if (!selectedSnapshotId.value) {
+    ElMessage.warning('请选择要导出的快照')
+    return
+  }
+  const snapshot = snapshots.value.find(item => item.id === selectedSnapshotId.value)
+  if (!snapshot) return
+  const filename = `${snapshot.label.replace(/\s+/g, '_')}.json`
+  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const handleImportSnapshot = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'application/json'
+  input.onchange = () => {
+    const file = input.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result))
+        const payloads = Array.isArray(data) ? data : [data]
+
+        const validSnapshots = payloads.filter(item => {
+          return item && typeof item.id === 'string' && Array.isArray(item.edgeIds)
+        })
+
+        if (validSnapshots.length === 0) {
+          ElMessage.warning('未检测到有效的快照数据')
+          return
+        }
+
+        const existingIds = new Set(snapshots.value.map(item => item.id))
+        const merged = [...validSnapshots.filter(item => !existingIds.has(item.id)), ...snapshots.value]
+
+        snapshots.value = merged.map(item => ({
+          id: item.id,
+          label: item.label || `快照 ${item.id.slice(-4)}`,
+          edgeIds: item.edgeIds,
+        }))
+
+        persistSnapshots()
+        ElMessage.success('快照导入成功')
+      } catch {
+        ElMessage.error('快照导入失败，请检查文件格式')
+      }
+    }
+    reader.readAsText(file)
+  }
+  input.click()
+}
+
+// 快照持久化（本地缓存）
+const snapshotKey = 'workflowReplaySnapshots'
+const snapshotSelectionKey = 'workflowReplaySnapshotSelected'
+
+const loadSnapshots = () => {
+  try {
+    const raw = localStorage.getItem(snapshotKey)
+    if (raw) {
+      snapshots.value = JSON.parse(raw)
+    }
+    const selected = localStorage.getItem(snapshotSelectionKey)
+    if (selected) {
+      selectedSnapshotId.value = selected
+    }
+  } catch {
+    snapshots.value = []
+  }
+}
+
+const persistSnapshots = () => {
+  localStorage.setItem(snapshotKey, JSON.stringify(snapshots.value))
+}
+
+loadSnapshots()
+
 const highlightEdgeByNodes = (sourceId: string | undefined, targetId: string | undefined) => {
   if (!sourceId || !targetId) return
   const edge = workflowStore.edges.find(item => item.source === sourceId && item.target === targetId)
@@ -606,7 +888,7 @@ const highlightEdgeByNodes = (sourceId: string | undefined, targetId: string | u
         strokeWidth: 3,
         filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.6))',
       },
-      class: 'edge-highlight',
+      class: mergeClass(item.class, 'edge-highlight'),
     }
   })
 
@@ -614,6 +896,8 @@ const highlightEdgeByNodes = (sourceId: string | undefined, targetId: string | u
   edgeHighlightTimer = window.setTimeout(() => {
     restoreEdgeHighlight()
   }, 2000)
+
+  return edge.id
 }
 
 const handleRestoreViewport = () => {
@@ -773,12 +1057,22 @@ const getNodeIdFromLog = (line: string) => {
         v-model:replaySpeed="replaySpeed"
         :replay-progress="replayProgress"
         :replay-total="replayTotal"
+        v-model:preserveTrail="preserveTrail"
+        v-model:compareLast="compareLast"
+        :snapshot-options="snapshotOptions"
+        v-model:selectedSnapshotId="selectedSnapshotId"
         @save="handleSaveWorkflow"
         @run="handleRunWorkflow"
         @clear="handleClear"
         @replay="startReplay"
         @stop-replay="stopReplay"
         @seek-replay="seekReplay"
+        @clear-trail="clearTrail"
+        @save-snapshot="saveSnapshot"
+        @delete-snapshot="deleteSnapshot"
+        @rename-snapshot="renameSnapshot"
+        @clear-snapshots="clearSnapshots"
+        @export-snapshot="exportSnapshot"
       />
 
       <div class="canvas" @dragover="onDragOver" @drop="onDrop">
