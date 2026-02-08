@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Install backend deps
+        run: pnpm -C backend install
+
+      - name: Install frontend deps
+        run: pnpm -C frontend install
+
+      - name: Build backend
+        run: pnpm -C backend build
+
+      - name: Backend workflow test
+        run: pnpm -C backend test:workflow
+
+      - name: Build frontend
+        run: pnpm -C frontend build:ci

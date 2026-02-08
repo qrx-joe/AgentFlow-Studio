@@ -56,7 +56,15 @@ watch(
     form.timeoutMs = node.data?.timeoutMs ?? 0
     form.retryCount = node.data?.retryCount ?? 0
     form.retryDelayMs = node.data?.retryDelayMs ?? 0
-    form.onError = node.data?.onError === 'skip' ? 'skip' : 'fail'
+    if (
+      node.data?.onError === 'skip' ||
+      node.data?.onError === 'rollback' ||
+      node.data?.onError === 'compensate'
+    ) {
+      form.onError = node.data.onError
+    } else {
+      form.onError = 'fail'
+    }
   },
   { immediate: true }
 )

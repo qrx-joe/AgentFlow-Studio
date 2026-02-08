@@ -21,6 +21,7 @@ export class WorkflowEngine {
       input,
       variables: {},
       logs: [],
+      compensations: [],
     }
 
     try {
@@ -110,15 +111,22 @@ export class WorkflowEngine {
     const retryCount = Number(node.data?.retryCount || 0)
     const retryDelayMs = Number(node.data?.retryDelayMs || 0)
     const timeoutMs = Number(node.data?.timeoutMs || 0)
-    const onError = node.data?.onError === 'skip' ? 'skip' : 'fail'
+    const onError = node.data?.onError === 'skip' || node.data?.onError === 'rollback'
+      ? node.data?.onError
+      : 'fail'
+    const snapshot = { ...context.variables }
 
     for (let attempt = 0; attempt <= retryCount; attempt += 1) {
       try {
+        if (attempt > 0) {
+          context.variables = { ...snapshot }
+        }
         if (timeoutMs > 0) {
           await this.withTimeout(this.executeNode(node, context), timeoutMs)
         } else {
           await this.executeNode(node, context)
         }
+        this.registerCompensation(node, context)
         return 'ok'
       } catch (error: any) {
         const message = error?.message || '执行失败'
@@ -129,6 +137,16 @@ export class WorkflowEngine {
       }
     }
 
+    if (node.data?.onError === 'compensate') {
+      await this.runCompensations(context)
+      context.logs.push(`节点 ${node.id} 已触发补偿（失败后策略）`)
+      return 'failed'
+    }
+    if (onError === 'rollback') {
+      context.variables = { ...snapshot }
+      context.logs.push(`节点 ${node.id} 已回滚（失败后策略）`)
+      return 'failed'
+    }
     if (onError === 'skip') {
       if (context.variables[node.id] !== undefined) {
         delete context.variables[node.id]
@@ -138,6 +156,27 @@ export class WorkflowEngine {
     }
 
     return 'failed'
+  }
+
+  private registerCompensation(node: WorkflowNode, context: ExecutionContext) {
+    if (context.variables[node.id] === undefined) return
+    context.compensations.push(() => {
+      if (context.variables[node.id] !== undefined) {
+        delete context.variables[node.id]
+      }
+    })
+  }
+
+  private async runCompensations(context: ExecutionContext) {
+    const stack = [...context.compensations].reverse()
+    for (const task of stack) {
+      try {
+        await task()
+      } catch {
+        context.logs.push('补偿执行失败')
+      }
+    }
+    context.compensations = []
   }
 
   private async withTimeout<T>(task: Promise<T>, timeoutMs: number) {

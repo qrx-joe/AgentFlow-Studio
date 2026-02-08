@@ -25,6 +25,8 @@ const props = defineProps<{
       <el-select v-model="props.form.onError" style="width: 140px">
         <el-option label="失败终止" value="fail" />
         <el-option label="失败跳过" value="skip" />
+        <el-option label="回滚终止" value="rollback" />
+        <el-option label="补偿终止" value="compensate" />
       </el-select>
     </el-form-item>
   </div>

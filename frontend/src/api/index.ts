@@ -66,7 +66,8 @@ export const knowledgeApi = {
 
 // 监控 API
 export const metricsApi = {
-  summary: () => request.get('/metrics/summary'),
+  summary: (days: number = 7, thresholds?: { failureRate?: number; cacheHitRate?: number }) =>
+    request.get('/metrics/summary', { params: { days, ...thresholds } }),
 }
 
 // 对话 API
