@@ -53,6 +53,9 @@ export interface SearchResult {
   documentId: string
   content: string
   similarity: number
+  keywordHits?: number
+  keywordScore?: number
+  fusedScore?: number
 }
 
 export interface MessageSource {

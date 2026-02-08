@@ -20,6 +20,14 @@ export class KnowledgeService {
     return this.documentRepo.find({ order: { createdAt: 'DESC' } })
   }
 
+  async listDocumentChunks(documentId: string, limit = 5) {
+    return this.chunkRepo.find({
+      where: { documentId },
+      order: { chunkIndex: 'ASC' },
+      take: limit,
+    })
+  }
+
   async deleteDocument(id: string) {
     await this.documentRepo.delete(id)
     return { id }
@@ -104,31 +112,41 @@ export class KnowledgeService {
   ) {
     let filtered: SearchResult[] = results
 
+    const keywords = query
+      .split(/\s+/)
+      .map(word => word.trim())
+      .filter(Boolean)
+
     // 相似度阈值过滤
     if (typeof options.scoreThreshold === 'number') {
       filtered = filtered.filter(item => item.similarity >= options.scoreThreshold)
     }
 
     // 混合检索：引入简单关键词匹配分
-    if (options.hybrid) {
-      const keywords = query
-        .split(/\s+/)
-        .map(word => word.trim())
-        .filter(Boolean)
-
-      filtered = filtered.map(item => {
-        const text = item.content || ''
-        const keywordHits = keywords.reduce((count, word) => {
-          return count + (text.includes(word) ? 1 : 0)
-        }, 0)
-        const keywordScore = keywords.length > 0 ? keywordHits / keywords.length : 0
-        return { ...item, similarity: item.similarity + keywordScore * 0.1 }
-      })
-    }
+    filtered = filtered.map(item => {
+      const text = item.content || ''
+      const keywordHits = keywords.reduce((count, word) => {
+        return count + (text.includes(word) ? 1 : 0)
+      }, 0)
+      const keywordScore = keywords.length > 0 ? keywordHits / keywords.length : 0
+      const fusedScore = options.hybrid
+        ? item.similarity + keywordScore * 0.1
+        : item.similarity
+      return {
+        ...item,
+        keywordHits,
+        keywordScore,
+        fusedScore,
+      }
+    })
 
     // 重排序：按融合分数降序
     if (options.rerank || options.hybrid) {
-      filtered = [...filtered].sort((a, b) => b.similarity - a.similarity)
+      filtered = [...filtered].sort((a, b) => {
+        const aScore = a.fusedScore ?? a.similarity
+        const bScore = b.fusedScore ?? b.similarity
+        return bScore - aScore
+      })
     }
 
     return filtered

@@ -11,6 +11,8 @@ export const useKnowledgeStore = defineStore('knowledge', {
     uploading: false,
     searching: false,
     searchStats: { total: 0, filtered: 0 },
+    documentChunks: [] as Array<{ id: string; content: string; chunkIndex: number }>,
+    chunkLoading: false,
   }),
 
   actions: {
@@ -60,6 +62,16 @@ export const useKnowledgeStore = defineStore('knowledge', {
     clearSearch() {
       this.searchResults = []
       this.searchStats = { total: 0, filtered: 0 }
+    },
+
+    async fetchDocumentChunks(id: string, limit: number = 5) {
+      this.chunkLoading = true
+      try {
+        const response = await knowledgeApi.listChunks(id, limit)
+        this.documentChunks = response
+      } finally {
+        this.chunkLoading = false
+      }
     },
   },
 })

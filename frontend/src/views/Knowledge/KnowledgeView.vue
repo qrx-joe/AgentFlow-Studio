@@ -10,6 +10,9 @@ const hybrid = ref(false)
 const rerank = ref(false)
 const chunkSize = ref(500)
 const overlap = ref(50)
+const showDocDrawer = ref(false)
+const selectedDoc = ref<any>(null)
+const chunkLimit = ref(5)
 
 onMounted(() => {
   knowledgeStore.fetchDocuments()
@@ -30,6 +33,12 @@ const handleSearch = async () => {
     hybrid: hybrid.value,
     rerank: rerank.value,
   })
+}
+
+const openDocDetail = async (doc: any) => {
+  selectedDoc.value = doc
+  showDocDrawer.value = true
+  await knowledgeStore.fetchDocumentChunks(doc.id, chunkLimit.value)
 }
 </script>
 
@@ -78,6 +87,7 @@ const handleSearch = async () => {
         <el-table-column prop="createdAt" label="上传时间" width="180" />
         <el-table-column label="操作" width="120">
           <template #default="scope">
+            <el-button size="small" @click="openDocDetail(scope.row)">详情</el-button>
             <el-button size="small" type="danger" @click="knowledgeStore.deleteDocument(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
@@ -101,12 +111,51 @@ const handleSearch = async () => {
           | threshold: {{ scoreThreshold }} | hybrid: {{ hybrid ? 'on' : 'off' }} | rerank: {{ rerank ? 'on' : 'off' }}
         </div>
         <div v-for="item in knowledgeStore.searchResults" :key="item.id" class="result-item">
-          <div class="meta">相似度：{{ item.similarity.toFixed(3) }}</div>
+          <div class="meta">
+            相似度：{{ item.similarity.toFixed(3) }}
+            <span v-if="item.fusedScore !== undefined">| 融合分：{{ item.fusedScore.toFixed(3) }}</span>
+            <span v-if="item.keywordHits !== undefined">| 关键词命中：{{ item.keywordHits }}</span>
+          </div>
           <div class="content">{{ item.content }}</div>
         </div>
       </div>
       <div v-else class="empty">暂无检索结果</div>
     </div>
+
+    <el-drawer v-model="showDocDrawer" title="文档详情" size="420px">
+      <div v-if="selectedDoc" class="doc-detail">
+        <div class="detail-row"><span class="label">文件名</span>{{ selectedDoc.filename }}</div>
+        <div class="detail-row"><span class="label">类型</span>{{ selectedDoc.fileType || '-' }}</div>
+        <div class="detail-row"><span class="label">大小</span>{{ selectedDoc.fileSize || '-' }}</div>
+
+        <div class="detail-section">
+          <div class="section-title">分块参数</div>
+          <div class="detail-row"><span class="label">size</span>{{ selectedDoc.metadata?.chunkSize ?? '-' }}</div>
+          <div class="detail-row"><span class="label">overlap</span>{{ selectedDoc.metadata?.overlap ?? '-' }}</div>
+          <div class="detail-row"><span class="label">chunks</span>{{ selectedDoc.metadata?.chunkCount ?? '-' }}</div>
+          <div class="detail-row"><span class="label">chars</span>{{ selectedDoc.metadata?.charCount ?? '-' }}</div>
+          <div class="detail-row"><span class="label">dim</span>{{ selectedDoc.metadata?.embeddingDim ?? '-' }}</div>
+          <div class="detail-row"><span class="label">chunkMs</span>{{ selectedDoc.metadata?.chunkMs ?? '-' }}</div>
+          <div class="detail-row"><span class="label">embedMs</span>{{ selectedDoc.metadata?.embedMs ?? '-' }}</div>
+          <div class="detail-row"><span class="label">processMs</span>{{ selectedDoc.metadata?.processMs ?? '-' }}</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="section-title">分块示例</div>
+          <div class="chunk-config">
+            <el-input-number v-model="chunkLimit" :min="1" :max="20" :step="1" />
+            <el-button size="small" @click="knowledgeStore.fetchDocumentChunks(selectedDoc.id, chunkLimit)">刷新</el-button>
+          </div>
+          <div v-if="knowledgeStore.chunkLoading" class="loading">加载中...</div>
+          <div v-else class="chunks">
+            <div v-for="chunk in knowledgeStore.documentChunks" :key="chunk.id" class="chunk-item">
+              <div class="chunk-title">#{{ chunk.chunkIndex }}</div>
+              <div class="chunk-content">{{ chunk.content }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -177,6 +226,70 @@ const handleSearch = async () => {
   font-size: 12px;
   color: #64748b;
   margin-bottom: 8px;
+}
+
+.doc-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  font-size: 12px;
+  color: #334155;
+}
+
+.label {
+  display: inline-block;
+  width: 90px;
+  color: #64748b;
+}
+
+.detail-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.chunk-config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chunks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chunk-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.chunk-title {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.chunk-content {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.loading {
+  font-size: 12px;
+  color: #64748b;
 }
 
 .meta {

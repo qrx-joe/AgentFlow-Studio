@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Body, UseInterceptors, UploadedFile } from '@nestjs/common'
+import { Controller, Delete, Get, Param, Post, Body, UseInterceptors, UploadedFile, Query } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { KnowledgeService } from './knowledge.service'
 
@@ -10,6 +10,11 @@ export class KnowledgeController {
   @Get('documents')
   listDocuments() {
     return this.knowledgeService.listDocuments()
+  }
+
+  @Get('documents/:id/chunks')
+  listDocumentChunks(@Param('id') id: string, @Query('limit') limit?: string) {
+    return this.knowledgeService.listDocumentChunks(id, limit ? Number(limit) : 5)
   }
 
   @Post('upload')
