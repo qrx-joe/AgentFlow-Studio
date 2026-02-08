@@ -14,6 +14,8 @@ const showDocDrawer = ref(false)
 const selectedDoc = ref<any>(null)
 const chunkLimit = ref(5)
 const focusKey = 'knowledgeDocFocus'
+const focusSnippet = ref('')
+const focusedChunkId = ref('')
 
 onMounted(() => {
   knowledgeStore.fetchDocuments().then(() => {
@@ -42,6 +44,7 @@ const openDocDetail = async (doc: any) => {
   selectedDoc.value = doc
   showDocDrawer.value = true
   await knowledgeStore.fetchDocumentChunks(doc.id, chunkLimit.value)
+  await highlightChunk()
 }
 
 const openDocDetailById = async (docId: string) => {
@@ -52,11 +55,31 @@ const openDocDetailById = async (docId: string) => {
 }
 
 const focusFromStorage = async () => {
-  const docId = localStorage.getItem(focusKey)
-  if (!docId) return
+  const raw = localStorage.getItem(focusKey)
+  if (!raw) return
   localStorage.removeItem(focusKey)
+  try {
+    const payload = JSON.parse(raw)
+    focusSnippet.value = String(payload?.snippet || '')
+    await nextTick()
+    await openDocDetailById(payload?.docId)
+  } catch {
+    // 忽略非法数据
+  }
+}
+
+const highlightChunk = async () => {
+  if (!focusSnippet.value) return
+  const target = knowledgeStore.documentChunks.find(chunk =>
+    String(chunk.content || '').includes(focusSnippet.value)
+  )
+  if (!target) return
+  focusedChunkId.value = target.id
   await nextTick()
-  await openDocDetailById(docId)
+  const el = document.getElementById(`chunk-${target.id}`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 
 const escapeHtml = (text: string) => {
@@ -197,7 +220,13 @@ const highlightKeywords = (text: string) => {
           </div>
           <div v-if="knowledgeStore.chunkLoading" class="loading">加载中...</div>
           <div v-else class="chunks">
-            <div v-for="chunk in knowledgeStore.documentChunks" :key="chunk.id" class="chunk-item">
+            <div
+              v-for="chunk in knowledgeStore.documentChunks"
+              :key="chunk.id"
+              :id="`chunk-${chunk.id}`"
+              class="chunk-item"
+              :class="{ focused: chunk.id === focusedChunkId }"
+            >
               <div class="chunk-title">#{{ chunk.chunkIndex }}</div>
               <div class="chunk-content">{{ chunk.content }}</div>
             </div>
@@ -323,6 +352,11 @@ const highlightKeywords = (text: string) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 8px;
+}
+
+.chunk-item.focused {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 
 .chunk-title {

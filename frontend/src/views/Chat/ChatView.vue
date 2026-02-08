@@ -46,7 +46,13 @@ const goToDocument = () => {
     return
   }
   // 保存目标文档 ID，进入知识库页后自动打开详情
-  localStorage.setItem(focusKey, selectedSource.value.documentId)
+  localStorage.setItem(
+    focusKey,
+    JSON.stringify({
+      docId: selectedSource.value.documentId,
+      snippet: selectedSource.value.content || '',
+    })
+  )
   router.push('/knowledge')
 }
 

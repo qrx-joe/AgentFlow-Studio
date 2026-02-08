@@ -41,6 +41,7 @@ const preserveTrail = ref(true)
 const compareLast = ref(false)
 const replayEdges = ref<Set<string>>(new Set())
 const lastReplayEdges = ref<string[]>([])
+const executionFilterStatus = ref('')
 const trailStyleCache = new Map<string, any>()
 const snapshots = ref<Array<{ id: string; label: string; edgeIds: string[] }>>([])
 const selectedSnapshotId = ref('')
@@ -735,6 +736,11 @@ const snapshotOptions = computed(() => snapshots.value.map(item => ({
   value: item.id,
 })))
 
+const filteredExecutions = computed(() => {
+  if (!executionFilterStatus.value) return workflowStore.executions
+  return workflowStore.executions.filter(item => item.status === executionFilterStatus.value)
+})
+
 const applySnapshotCompare = (snapshotId: string) => {
   workflowStore.edges = workflowStore.edges.map(edge => ({
     ...edge,
@@ -997,6 +1003,79 @@ const exportReplayScriptFromExecution = () => {
 
   const filename = `replay-execution-${selectedExecution.value.id}.md`
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const exportExecutionHistory = (format: 'md' | 'json' | 'txt') => {
+  const list = filteredExecutions.value
+  if (!list.length) {
+    ElMessage.warning('暂无可导出的执行记录')
+    return
+  }
+
+  if (format === 'json') {
+    const payload = list.map(item => ({
+      id: item.id,
+      status: item.status,
+      startedAt: item.startedAt,
+      completedAt: item.completedAt,
+      errorMessage: item.errorMessage,
+      logs: item.logs,
+    }))
+    const filename = `executions-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    return
+  }
+
+  if (format === 'txt') {
+    const content = list.map(item => (
+      `id=${item.id}\nstatus=${item.status}\nstartedAt=${item.startedAt}\ncompletedAt=${item.completedAt || ''}\n` +
+      `error=${item.errorMessage || ''}\nlogs=\n${(item.logs || []).join('\n')}\n\n`
+    )).join('\n')
+    const filename = `executions-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    return
+  }
+
+  const md = [
+    '# 执行记录导出',
+    '',
+    `- 导出时间：${new Date().toLocaleString()}`,
+    `- 记录数量：${list.length}`,
+    '',
+    ...list.map((item, index) => {
+      const header = `## ${index + 1}. ${item.id}`
+      const meta = `- status: ${item.status}\n- startedAt: ${item.startedAt}\n- completedAt: ${item.completedAt || '-'}\n- error: ${item.errorMessage || '-'}`
+      const logs = ['```', ...(item.logs || []), '```'].join('\n')
+      return [header, meta, logs].join('\n')
+    }),
+  ].join('\n')
+
+  const filename = `executions-${new Date().toISOString().replace(/[:.]/g, '-')}.md`
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -1333,8 +1412,11 @@ const getNodeIdFromLog = (line: string) => {
         @select-node="highlightNode"
       />
       <ExecutionHistory
-        :executions="workflowStore.executions"
+        :executions="filteredExecutions"
+        :filter-status="executionFilterStatus"
         @select="handleSelectExecution"
+        @filter-change="executionFilterStatus = $event"
+        @export="exportExecutionHistory"
       />
     </div>
 

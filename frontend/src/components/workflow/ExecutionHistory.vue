@@ -2,17 +2,35 @@
 import type { WorkflowExecution } from '@/types'
 
 // 执行历史面板：展示最近执行记录
-const props = defineProps<{ executions: WorkflowExecution[] }>()
+const props = defineProps<{ executions: WorkflowExecution[]; filterStatus: string }>()
 
 const emit = defineEmits<{
   (e: 'select', execution: WorkflowExecution): void
+  (e: 'filter-change', value: string): void
+  (e: 'export', format: 'json' | 'txt' | 'md'): void
 }>()
 </script>
 
 <template>
   <div class="history">
     <div class="title">执行历史</div>
-    <div v-if="executions.length === 0" class="empty">暂无记录</div>
+    <div class="toolbar">
+      <el-select
+        size="small"
+        :model-value="props.filterStatus"
+        placeholder="状态筛选"
+        @update:model-value="emit('filter-change', $event)"
+      >
+        <el-option label="全部" value="" />
+        <el-option label="完成" value="completed" />
+        <el-option label="失败" value="failed" />
+        <el-option label="运行中" value="running" />
+      </el-select>
+      <el-button size="small" @click="emit('export', 'md')">导出MD</el-button>
+      <el-button size="small" @click="emit('export', 'json')">导出JSON</el-button>
+      <el-button size="small" @click="emit('export', 'txt')">导出TXT</el-button>
+    </div>
+    <div v-if="props.executions.length === 0" class="empty">暂无记录</div>
     <div v-else class="list">
       <div
         v-for="item in props.executions"
@@ -43,6 +61,13 @@ const emit = defineEmits<{
 .title {
   font-weight: 600;
   font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
