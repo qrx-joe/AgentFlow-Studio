@@ -1,21 +1,15 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import type { WorkflowNode } from '@/types'
+import { ElMessage } from 'element-plus'
 import NodePolicyFields from '@/components/workflow/NodePolicyFields.vue'
-
-// 配置面板：双击节点后编辑其参数
 const props = defineProps<{
   modelValue: boolean
   node?: WorkflowNode
   nodeOptions?: Array<{ label: string; value: string }>
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'save', nodeId: string, data: Record<string, any>): void
-}>()
-
-// 使用局部表单避免直接修改原对象
+const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void; (e: 'save', nodeId: string, data: Record<string, any>): void }>()
 const form = reactive({
   label: '',
   model: 'gpt-4o-mini',
@@ -34,8 +28,9 @@ const form = reactive({
   retryCount: 0,
   retryDelayMs: 0,
   onError: 'fail',
+  compensateKeys: '',
+  compensationActionsText: '',
 })
-
 watch(
   () => props.node,
   (node) => {
@@ -56,6 +51,12 @@ watch(
     form.timeoutMs = node.data?.timeoutMs ?? 0
     form.retryCount = node.data?.retryCount ?? 0
     form.retryDelayMs = node.data?.retryDelayMs ?? 0
+    form.compensateKeys = Array.isArray(node.data?.compensateKeys)
+      ? node.data.compensateKeys.join(',')
+      : ''
+    form.compensationActionsText = Array.isArray(node.data?.compensationActions)
+      ? JSON.stringify(node.data.compensationActions, null, 2)
+      : ''
     if (
       node.data?.onError === 'skip' ||
       node.data?.onError === 'rollback' ||
@@ -68,14 +69,26 @@ watch(
   },
   { immediate: true }
 )
-
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
 })
-
 const handleSave = () => {
   if (!props.node) return
+  let compensationActions: Array<Record<string, any>> = []
+  if (form.compensationActionsText.trim()) {
+    try {
+      const parsed = JSON.parse(form.compensationActionsText)
+      if (!Array.isArray(parsed)) {
+        ElMessage.warning('补偿动作必须是 JSON 数组')
+        return
+      }
+      compensationActions = parsed
+    } catch {
+      ElMessage.warning('补偿动作 JSON 解析失败')
+      return
+    }
+  }
   emit('save', props.node.id, {
     label: form.label,
     model: form.model,
@@ -94,6 +107,11 @@ const handleSave = () => {
     retryCount: form.retryCount,
     retryDelayMs: form.retryDelayMs,
     onError: form.onError,
+    compensateKeys: form.compensateKeys
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean),
+    compensationActions,
   })
   visible.value = false
 }
@@ -114,7 +132,6 @@ const handleSave = () => {
           <el-input v-model="form.prompt" type="textarea" :rows="4" />
         </el-form-item>
       </template>
-
       <template v-if="node?.type === 'knowledge'">
         <el-form-item label="TopK">
           <el-input-number v-model="form.topK" :min="1" :max="10" />
@@ -135,7 +152,6 @@ const handleSave = () => {
           <el-input-number v-model="form.overlap" :min="0" :max="500" :step="10" />
         </el-form-item>
       </template>
-
       <template v-if="node?.type === 'condition'">
         <el-form-item label="变量Key">
           <el-input v-model="form.variableKey" placeholder="如：node-1" />
@@ -149,45 +165,22 @@ const handleSave = () => {
           </div>
         </el-form-item>
         <el-form-item label="True目标">
-          <el-select
-            v-model="form.trueTarget"
-            placeholder="选择 True 分支目标"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="option in props.nodeOptions || []"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
+          <el-select v-model="form.trueTarget" placeholder="选择 True 分支目标" clearable filterable>
+            <el-option v-for="option in props.nodeOptions || []" :key="option.value" :label="option.label" :value="option.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="False目标">
-          <el-select
-            v-model="form.falseTarget"
-            placeholder="选择 False 分支目标"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="option in props.nodeOptions || []"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
+          <el-select v-model="form.falseTarget" placeholder="选择 False 分支目标" clearable filterable>
+            <el-option v-for="option in props.nodeOptions || []" :key="option.value" :label="option.label" :value="option.value" />
           </el-select>
         </el-form-item>
-      </template>
-      <NodePolicyFields :form="form" />
+      </template><NodePolicyFields :form="form" />
     </el-form>
-
     <div class="actions">
       <el-button type="primary" @click="handleSave">保存配置</el-button>
     </div>
   </el-drawer>
 </template>
-
 <style scoped>
 .actions {
   display: flex;

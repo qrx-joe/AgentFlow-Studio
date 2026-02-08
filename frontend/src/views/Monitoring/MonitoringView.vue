@@ -1,12 +1,30 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { metricsApi } from '@/api'
+import MonitoringToolbar from '@/components/monitoring/MonitoringToolbar.vue'
+import MonitoringDailyTable from '@/components/monitoring/MonitoringDailyTable.vue'
+import MonitoringTrends from '@/components/monitoring/MonitoringTrends.vue'
 
 const loading = ref(false)
 const summary = ref<any>(null)
 const days = ref(7)
 const failureThreshold = ref(0.2)
 const cacheHitThreshold = ref(0.6)
+
+const dailyLabels = computed(() => (summary.value?.daily || []).map((item: any) => item.date))
+const dailyWorkflowTotal = computed(() => (summary.value?.daily || []).map((item: any) => item.workflowTotal))
+const dailyFailureRate = computed(() =>
+  (summary.value?.daily || []).map((item: any) =>
+    item.workflowTotal ? item.workflowFailed / item.workflowTotal : 0
+  )
+)
+const dailyCacheHitRate = computed(() =>
+  (summary.value?.daily || []).map((item: any) =>
+    (item.ragCacheHits + item.ragCacheMisses)
+      ? item.ragCacheHits / (item.ragCacheHits + item.ragCacheMisses)
+      : 0
+  )
+)
 
 const load = async () => {
   loading.value = true
@@ -20,20 +38,46 @@ const load = async () => {
   }
 }
 
+const exportCsv = () => {
+  const rows = summary.value?.daily || []
+  if (!rows.length) return
+  const header = ['date', 'workflowTotal', 'workflowFailed', 'workflowDurationMs', 'knowledgeTotal', 'knowledgeDurationMs', 'ragCacheHits', 'ragCacheMisses']
+  const lines = [header.join(',')]
+  rows.forEach((item: any) => {
+    lines.push([
+      item.date,
+      item.workflowTotal,
+      item.workflowFailed,
+      item.workflowDurationMs,
+      item.knowledgeTotal,
+      item.knowledgeDurationMs,
+      item.ragCacheHits,
+      item.ragCacheMisses,
+    ].join(','))
+  })
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `metrics-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 onMounted(load)
 </script>
 
 <template>
   <div class="page" v-loading="loading">
-    <div class="toolbar">
-      <span class="label">时间范围(天)</span>
-      <el-input-number v-model="days" :min="1" :max="30" :step="1" />
-      <span class="label">失败阈值</span>
-      <el-input-number v-model="failureThreshold" :min="0" :max="1" :step="0.05" />
-      <span class="label">缓存阈值</span>
-      <el-input-number v-model="cacheHitThreshold" :min="0" :max="1" :step="0.05" />
-      <el-button size="small" @click="load">刷新</el-button>
-    </div>
+    <MonitoringToolbar
+      v-model:days="days"
+      v-model:failure-threshold="failureThreshold"
+      v-model:cache-hit-threshold="cacheHitThreshold"
+      @refresh="load"
+      @export="exportCsv"
+    />
 
     <div v-if="summary?.alerts?.length" class="alert">
       <div v-for="(item, index) in summary.alerts" :key="index" class="alert-item">
@@ -62,30 +106,17 @@ onMounted(load)
 
     <div class="card full">
       <div class="title">每日统计</div>
-      <div v-if="summary?.daily?.length" class="table">
-        <div class="row header">
-          <span>日期</span>
-          <span>工作流</span>
-          <span>失败</span>
-          <span>检索</span>
-          <span>缓存命中率</span>
-        </div>
-        <div v-for="item in summary.daily" :key="item.date" class="row">
-          <span>{{ item.date }}</span>
-          <span>{{ item.workflowTotal }}</span>
-          <span>{{ item.workflowFailed }}</span>
-          <span>{{ item.knowledgeTotal }}</span>
-          <span>
-            {{
-              ((item.ragCacheHits + item.ragCacheMisses)
-                ? (item.ragCacheHits / (item.ragCacheHits + item.ragCacheMisses))
-                : 0
-              ).toFixed(2)
-            }}
-          </span>
-        </div>
-      </div>
-      <div v-else class="muted">暂无数据</div>
+      <MonitoringDailyTable :daily="summary?.daily || []" />
+    </div>
+
+    <div class="card full">
+      <div class="title">趋势图</div>
+      <MonitoringTrends
+        :labels="dailyLabels"
+        :workflow-values="dailyWorkflowTotal"
+        :failure-rate-values="dailyFailureRate"
+        :cache-hit-values="dailyCacheHitRate"
+      />
     </div>
   </div>
 </template>
@@ -97,17 +128,6 @@ onMounted(load)
   gap: 16px;
 }
 
-.toolbar {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.label {
-  font-size: 12px;
-  color: #64748b;
-}
 
 .card {
   background: #ffffff;
@@ -133,28 +153,6 @@ onMounted(load)
   color: #334155;
 }
 
-.table {
-  display: grid;
-  gap: 6px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr repeat(4, 0.6fr);
-  gap: 8px;
-  font-size: 12px;
-  color: #334155;
-}
-
-.row.header {
-  font-weight: 600;
-  color: #64748b;
-}
-
-.muted {
-  font-size: 12px;
-  color: #94a3b8;
-}
 </style>
 .alert {
   grid-column: 1 / -1;

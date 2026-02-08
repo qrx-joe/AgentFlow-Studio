@@ -95,14 +95,14 @@ export class KnowledgeService {
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
     const start = Date.now()
     const result = await this.searchService.search(query, topK, options)
-    this.metricsService.recordKnowledgeSearch(Date.now() - start)
+    void this.metricsService.recordKnowledgeSearch(Date.now() - start)
     return result
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
     const start = Date.now()
     const result = await this.searchService.searchWithStats(query, topK, options)
-    this.metricsService.recordKnowledgeSearch(Date.now() - start)
+    void this.metricsService.recordKnowledgeSearch(Date.now() - start)
     return result
   }
 

@@ -7,6 +7,7 @@ import { WorkflowExecutionEntity } from './entities/workflow-execution.entity'
 import { AgentModule } from '../agent/agent.module'
 import { KnowledgeModule } from '../knowledge/knowledge.module'
 import { MetricsModule } from '../metrics/metrics.module'
+import { CompensationExecutor } from './engine/compensation-executor'
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { MetricsModule } from '../metrics/metrics.module'
     MetricsModule,
   ],
   controllers: [WorkflowController],
-  providers: [WorkflowService],
+  providers: [WorkflowService, CompensationExecutor],
   exports: [WorkflowService],
 })
 export class WorkflowModule {}

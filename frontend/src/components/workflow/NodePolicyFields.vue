@@ -4,7 +4,9 @@ const props = defineProps<{
     timeoutMs: number
     retryCount: number
     retryDelayMs: number
-    onError: 'fail' | 'skip'
+    onError: 'fail' | 'skip' | 'rollback' | 'compensate'
+    compensateKeys: string
+    compensationActionsText: string
   }
 }>()
 </script>
@@ -28,6 +30,17 @@ const props = defineProps<{
         <el-option label="回滚终止" value="rollback" />
         <el-option label="补偿终止" value="compensate" />
       </el-select>
+    </el-form-item>
+    <el-form-item label="补偿变量">
+      <el-input v-model="props.form.compensateKeys" placeholder="变量Key，逗号分隔" />
+    </el-form-item>
+    <el-form-item label="补偿动作">
+      <el-input
+        v-model="props.form.compensationActionsText"
+        type="textarea"
+        :rows="3"
+        placeholder='JSON 数组，例如：[{"type":"log","message":"cleanup"}]'
+      />
     </el-form-item>
   </div>
 </template>

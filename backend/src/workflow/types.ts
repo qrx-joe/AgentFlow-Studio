@@ -28,6 +28,7 @@ export interface ExecutionContext {
   input: string
   variables: Record<string, any>
   logs: string[]
+  compensations: Array<() => void | Promise<void>>
 }
 
 export interface ExecutionResult {

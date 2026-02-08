@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "test:workflow": "ts-node scripts/test-workflow.ts",
     "rag:build-terms": "node scripts/rag-build-term-stats.mjs",
     "rag:eval": "node scripts/rag-eval.mjs",
     "start": "nest start",

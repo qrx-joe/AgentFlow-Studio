@@ -1,4 +1,5 @@
 import { ExecutionContext, ExecutionResult, WorkflowDefinition, WorkflowNode } from '../types'
+import { CompensationExecutor, CompensationAction } from './compensation-executor'
 import { AgentService } from '../../agent/agent.service'
 import { KnowledgeService } from '../../knowledge/knowledge.service'
 
@@ -10,7 +11,8 @@ export class WorkflowEngine {
   constructor(
     private workflow: WorkflowDefinition,
     private agentService: AgentService,
-    private knowledgeService: KnowledgeService
+    private knowledgeService: KnowledgeService,
+    private compensationExecutor: CompensationExecutor
   ) {
     this.nodes = new Map(workflow.nodes.map((n) => [n.id, n]))
     this.edges = workflow.edges
@@ -159,11 +161,24 @@ export class WorkflowEngine {
   }
 
   private registerCompensation(node: WorkflowNode, context: ExecutionContext) {
-    if (context.variables[node.id] === undefined) return
-    context.compensations.push(() => {
-      if (context.variables[node.id] !== undefined) {
-        delete context.variables[node.id]
+    const keys = Array.isArray(node.data?.compensateKeys) ? node.data.compensateKeys : []
+    const actions = Array.isArray(node.data?.compensationActions) ? node.data.compensationActions : []
+
+    if (actions.length === 0 && keys.length === 0 && context.variables[node.id] === undefined) return
+
+    context.compensations.push(async () => {
+      if (actions.length > 0) {
+        for (const action of actions) {
+          await this.executeCompensationAction(action, context)
+        }
       }
+
+      const targets = keys.length > 0 ? keys : [node.id]
+      targets.forEach(key => {
+        if (context.variables[key] !== undefined) {
+          delete context.variables[key]
+        }
+      })
     })
   }
 
@@ -177,6 +192,10 @@ export class WorkflowEngine {
       }
     }
     context.compensations = []
+  }
+
+  private async executeCompensationAction(action: CompensationAction, context: ExecutionContext) {
+    await this.compensationExecutor.execute(action, context, context.logs)
   }
 
   private async withTimeout<T>(task: Promise<T>, timeoutMs: number) {

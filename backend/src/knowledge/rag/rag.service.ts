@@ -29,17 +29,17 @@ export class RagService {
 
     const memoryHit = this.readMemoryCache(cacheKey)
     if (memoryHit) {
-      this.metricsService.recordRagCacheHit()
+      void this.metricsService.recordRagCacheHit()
       return memoryHit
     }
 
     const cached = await this.cacheManager.get<SearchResult[]>(cacheKey)
     if (cached) {
       this.writeMemoryCache(cacheKey, cached)
-      this.metricsService.recordRagCacheHit()
+      void this.metricsService.recordRagCacheHit()
       return cached
     }
-    this.metricsService.recordRagCacheMiss()
+    void this.metricsService.recordRagCacheMiss()
 
     const queryEmbedding = await this.embeddingService.embed(query)
 
@@ -83,7 +83,7 @@ export class RagService {
 
     const memoryHit = this.readMemoryCache(cacheKey)
     if (memoryHit) {
-      this.metricsService.recordRagCacheHit()
+      void this.metricsService.recordRagCacheHit()
       return memoryHit
     }
 
@@ -93,7 +93,7 @@ export class RagService {
       this.metricsService.recordRagCacheHit()
       return cached
     }
-    this.metricsService.recordRagCacheMiss()
+    void this.metricsService.recordRagCacheMiss()
 
     const results =
       mode === 'trgm'

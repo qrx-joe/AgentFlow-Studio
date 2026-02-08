@@ -11,6 +11,7 @@ import { KnowledgeService } from '../knowledge/knowledge.service'
 import { WorkflowDefinition } from './types'
 import { BusinessException, ErrorCodes } from '../common/exceptions/business.exception'
 import { MetricsService } from '../metrics/metrics.service'
+import { CompensationExecutor } from './engine/compensation-executor'
 
 @Injectable()
 export class WorkflowService {
@@ -20,7 +21,8 @@ export class WorkflowService {
     private executionRepo: Repository<WorkflowExecutionEntity>,
     private agentService: AgentService,
     private knowledgeService: KnowledgeService,
-    private metricsService: MetricsService
+    private metricsService: MetricsService,
+    private compensationExecutor: CompensationExecutor
   ) {}
 
   async findAll() {
@@ -81,10 +83,15 @@ export class WorkflowService {
       logs: [],
     })
 
-    const engine = new WorkflowEngine(definition, this.agentService, this.knowledgeService)
+    const engine = new WorkflowEngine(
+      definition,
+      this.agentService,
+      this.knowledgeService,
+      this.compensationExecutor
+    )
     const start = Date.now()
     const result = await engine.execute(input || '')
-    this.metricsService.recordWorkflowExecution(Date.now() - start, result.status)
+    void this.metricsService.recordWorkflowExecution(Date.now() - start, result.status)
 
     // 更新执行结果
     await this.executionRepo.update(execution.id, {
