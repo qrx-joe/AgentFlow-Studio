@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { RagService } from '../rag/rag.service'
-import { Bm25Service } from '../rag/bm25.service'
+
 import type { KnowledgeSearchOptions, SearchResult } from '../types'
 
 @Injectable()
 export class KnowledgeSearchService {
   constructor(
-    private ragService: RagService,
-    private bm25Service: Bm25Service
+    private ragService: RagService
   ) { }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
@@ -15,7 +14,7 @@ export class KnowledgeSearchService {
     const runKeyword = options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0)
     const vectorResults = await this.ragService.search(query, topK, optionsKey)
     const keywordResults = runKeyword
-      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
+      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'tsrank')
       : []
     const merged = this.mergeResults(vectorResults, keywordResults)
     return this.applySearchOptions(merged, query, options)
@@ -26,7 +25,7 @@ export class KnowledgeSearchService {
     const runKeyword = options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0)
     const vectorResults = await this.ragService.search(query, topK, optionsKey)
     const keywordResults = runKeyword
-      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'bm25')
+      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'tsrank')
       : []
     const merged = this.mergeResults(vectorResults, keywordResults)
     const filtered = await this.applySearchOptions(merged, query, options)
@@ -44,7 +43,7 @@ export class KnowledgeSearchService {
       rerank: Boolean(options.rerank),
       vectorWeight: typeof options.vectorWeight === 'number' ? options.vectorWeight : null,
       keywordWeight: typeof options.keywordWeight === 'number' ? options.keywordWeight : null,
-      keywordMode: options.keywordMode || 'bm25',
+      keywordMode: options.keywordMode || 'tsrank',
     }
     return Buffer.from(JSON.stringify(normalized)).toString('base64')
   }
@@ -64,11 +63,9 @@ export class KnowledgeSearchService {
     const vectorWeight = typeof options.vectorWeight === 'number' ? options.vectorWeight : 1
     const keywordWeight =
       typeof options.keywordWeight === 'number' ? options.keywordWeight : options.hybrid ? 0.1 : 0
-    const keywordMode = options.keywordMode || 'bm25'
+    const keywordMode = options.keywordMode || 'tsrank'
 
-    if ((options.hybrid || keywordWeight > 0) && keywordMode === 'bm25' && keywords.length > 0) {
-      filtered = await this.bm25Service.applyBm25Scores(filtered, keywords)
-    }
+
 
     filtered = filtered.map(item => {
       const text = item.content || ''

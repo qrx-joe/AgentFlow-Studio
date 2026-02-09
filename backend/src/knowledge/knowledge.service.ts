@@ -8,6 +8,8 @@ import { MetricsService } from '../metrics/metrics.service'
 import { KnowledgeSearchService } from './search/knowledge-search.service'
 import type { KnowledgeSearchOptions } from './types'
 
+import { RecursiveCharacterTextSplitter } from './utils/text-splitter'
+
 @Injectable()
 export class KnowledgeService {
   constructor(
@@ -54,9 +56,15 @@ export class KnowledgeService {
 
     // 2. 分块并生成向量
     const chunkSize = options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500
-    const overlap = options.overlap && options.overlap >= 0 ? options.overlap : 50
+    const chunkOverlap = options.overlap && options.overlap >= 0 ? options.overlap : 50
     const chunkStart = Date.now()
-    const chunks = this.splitIntoChunks(document.content || '', chunkSize, overlap)
+
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize,
+      chunkOverlap,
+    })
+    const chunks = splitter.splitText(document.content || '')
+
     const chunkMs = Date.now() - chunkStart
     const charCount = (document.content || '').length
     const embedStart = Date.now()
@@ -76,7 +84,6 @@ export class KnowledgeService {
     }
     const embedMs = Date.now() - embedStart
 
-    // 4. 更新元信息（分块数量、字符数）
     // 4. 更新元信息（分块数量、字符数）
     document.metadata = {
       ...document.metadata,
@@ -127,6 +134,7 @@ export class KnowledgeService {
       if (hitIndex >= 0) {
         hitCount += 1
         mrrTotal += 1 / (hitIndex + 1)
+
       }
       perQuery.push({
         query: item.query,
@@ -141,17 +149,5 @@ export class KnowledgeService {
       evaluated,
       perQuery,
     }
-  }
-
-  // 文本分块：固定长度 + 重叠窗口
-  private splitIntoChunks(text: string, size: number, overlap: number) {
-    const chunks: string[] = []
-    let start = 0
-    while (start < text.length) {
-      const end = Math.min(start + size, text.length)
-      chunks.push(text.slice(start, end))
-      start = end - overlap
-    }
-    return chunks
   }
 }
