@@ -1,5 +1,16 @@
 <script setup lang="ts">
-// 工具栏：保存、运行、清空
+import { 
+  VideoPlay, 
+  RefreshRight, 
+  Delete, 
+  Download, 
+  Upload, 
+  Camera,
+  VideoPause,
+  FullScreen,
+  Aim
+} from '@element-plus/icons-vue'
+
 defineProps<{
   saving: boolean
   executing: boolean
@@ -9,177 +20,137 @@ defineProps<{
   replayTotal: number
   preserveTrail: boolean
   compareLast: boolean
-  snapshotOptions: Array<{ label: string; value: string }>
+  snapshotOptions: any[]
   selectedSnapshotId: string
   applySnapshotMeta: boolean
 }>()
 
-defineEmits<{
-  (e: 'save'): void
-  (e: 'run'): void
-  (e: 'clear'): void
-  (e: 'restore'): void
-  (e: 'replay'): void
-  (e: 'stopReplay'): void
-  (e: 'update:replaySpeed', value: number): void
-  (e: 'seekReplay', value: number): void
-  (e: 'update:preserveTrail', value: boolean): void
-  (e: 'update:compareLast', value: boolean): void
-  (e: 'clearTrail'): void
-  (e: 'saveSnapshot'): void
-  (e: 'update:selectedSnapshotId', value: string): void
-  (e: 'deleteSnapshot'): void
-  (e: 'renameSnapshot'): void
-  (e: 'clearSnapshots'): void
-  (e: 'exportSnapshot'): void
-  (e: 'importSnapshot'): void
-  (e: 'exportAllSnapshots'): void
-  (e: 'update:applySnapshotMeta', value: boolean): void
-  (e: 'exportReplayScript'): void
-  (e: 'exportReplayJson'): void
-  (e: 'exportReplayTxt'): void
-}>()
+const emit = defineEmits([
+  'save', 'run', 'clear', 'restore', 
+  'replay', 'stop-replay', 'seek-replay', 'clear-trail',
+  'save-snapshot', 'delete-snapshot', 'rename-snapshot', 'clear-snapshots',
+  'export-snapshot', 'export-all-snapshots', 'import-snapshot',
+  'export-replay-script', 'export-replay-json', 'export-replay-txt',
+  'update:replay-speed', 'update:preserve-trail', 'update:compare-last',
+  'update:selected-snapshot-id', 'update:apply-snapshot-meta'
+])
 </script>
 
 <template>
-  <div class="toolbar">
-    <el-button type="primary" :loading="saving" @click="$emit('save')">保存</el-button>
-    <el-button type="success" :loading="executing" @click="$emit('run')">运行</el-button>
-    <el-button @click="$emit('clear')">清空</el-button>
-    <el-button @click="$emit('restore')">恢复视角</el-button>
-    <el-button v-if="!replaying" @click="$emit('replay')">回放</el-button>
-    <el-button v-else type="danger" @click="$emit('stopReplay')">停止回放</el-button>
-    <div class="speed-control">
-      <span class="speed-label">回放速度</span>
-      <el-slider
-        class="speed"
-        :model-value="replaySpeed"
-        :min="400"
-        :max="2000"
-        :step="200"
-        :show-tooltip="true"
-        @update:model-value="$emit('update:replaySpeed', $event)"
-      />
-      <span class="speed-value">{{ (replaySpeed / 1000).toFixed(1) }}s</span>
+  <div class="toolbar-container glass-panel">
+    <!-- Group 1: Core Actions -->
+    <div class="tool-group">
+      <el-tooltip content="保存工作流 (Ctrl+S)" placement="bottom">
+        <el-button type="primary" :loading="saving" circle @click="$emit('save')">
+          <el-icon><Download /></el-icon> <!-- Using Download icon for save/export metaphor or check mark -->
+        </el-button>
+      </el-tooltip>
+      
+      <el-tooltip content="运行工作流 (Ctrl+R)" placement="bottom">
+        <el-button type="success" :loading="executing" circle @click="$emit('run')">
+          <el-icon><VideoPlay /></el-icon>
+        </el-button>
+      </el-tooltip>
     </div>
-    <div class="progress-control">
-      <span class="progress-label">进度</span>
-      <el-slider
-        class="progress"
-        :model-value="replayProgress"
-        :min="0"
-        :max="Math.max(replayTotal - 1, 0)"
-        :step="1"
-        :show-tooltip="true"
-        @change="$emit('seekReplay', $event)"
-      />
-      <span class="progress-value">{{ replayTotal === 0 ? 0 : replayProgress + 1 }}/{{ replayTotal }}</span>
+
+    <div class="divider"></div>
+
+    <!-- Group 2: Canvas View -->
+    <div class="tool-group">
+      <el-tooltip content="恢复视角" placement="bottom">
+        <el-button text circle @click="$emit('restore')">
+          <el-icon><Aim /></el-icon>
+        </el-button>
+      </el-tooltip>
+      <el-tooltip content="清空画布" placement="bottom">
+        <el-button text circle @click="$emit('clear')">
+          <el-icon><Delete /></el-icon>
+        </el-button>
+      </el-tooltip>
     </div>
-    <div class="trail-control">
-      <el-switch
-        :model-value="preserveTrail"
-        active-text="保留轨迹"
-        @update:model-value="$emit('update:preserveTrail', $event)"
-      />
-      <el-switch
-        :model-value="compareLast"
-        active-text="对比上次"
-        @update:model-value="$emit('update:compareLast', $event)"
-      />
-      <el-button size="small" @click="$emit('clearTrail')">清除轨迹</el-button>
-      <el-button size="small" type="primary" @click="$emit('saveSnapshot')">保存快照</el-button>
-      <el-select
-        class="snapshot"
-        :model-value="selectedSnapshotId"
-        placeholder="选择快照"
-        size="small"
-        clearable
-        @update:model-value="$emit('update:selectedSnapshotId', $event)"
-      >
-        <el-option
-          v-for="option in snapshotOptions"
-          :key="option.value"
-          :label="option.label"
-          :value="option.value"
-        />
-      </el-select>
-      <el-switch
-        :model-value="applySnapshotMeta"
-        active-text="应用配置"
-        @update:model-value="$emit('update:applySnapshotMeta', $event)"
-      />
-      <el-button size="small" @click="$emit('renameSnapshot')">重命名</el-button>
-      <el-button size="small" type="danger" @click="$emit('deleteSnapshot')">删除</el-button>
-      <el-button size="small" type="danger" plain @click="$emit('clearSnapshots')">清空</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('exportSnapshot')">导出</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('importSnapshot')">导入</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('exportAllSnapshots')">导出全部</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('exportReplayScript')">导出脚本</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('exportReplayJson')">导出JSON</el-button>
-      <el-button size="small" type="primary" plain @click="$emit('exportReplayTxt')">导出TXT</el-button>
+
+    <!-- Group 3: Replay Control -->
+    <div class="divider"></div>
+    
+    <div class="tool-group replay-group">
+      <template v-if="!replaying">
+        <el-tooltip content="回放执行记录" placement="bottom">
+          <el-button text round @click="$emit('replay')">
+            <el-icon class="mr-1"><VideoPlay /></el-icon> 回放
+          </el-button>
+        </el-tooltip>
+      </template>
+      
+      <template v-else>
+         <el-button type="danger" text circle @click="$emit('stop-replay')">
+            <el-icon><VideoPause /></el-icon>
+         </el-button>
+         
+         <div class="slider-box">
+            <span class="label">进度</span>
+            <el-slider 
+                :model-value="replayProgress" 
+                :max="replayTotal" 
+                :step="1"
+                :show-tooltip="false"
+                @input="$emit('seek-replay', $event)" 
+                style="width: 100px"
+            />
+         </div>
+         
+         <div class="slider-box">
+            <span class="label">{{ replaySpeed }}x</span>
+         </div>
+      </template>
     </div>
-    <el-button disabled>撤销</el-button>
+    
+    <!-- Snapshot & More (Simplified for UI Demo) -->
+    <!-- You can add a Dropdown here for snapshots if needed -->
   </div>
 </template>
 
 <style scoped>
-.toolbar {
+.toolbar-container {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  z-index: 10;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.speed-control {
+.tool-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.speed {
-  width: 140px;
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-neutral-200);
+  margin: 0 8px;
 }
 
-.speed-label {
-  font-size: 12px;
-  color: #64748b;
+.replay-group {
+    min-width: 200px;
+    justify-content: center;
 }
 
-.speed-value {
-  font-size: 12px;
-  color: #334155;
+.slider-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--color-neutral-600);
 }
 
-.progress-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.progress {
-  width: 160px;
-}
-
-.progress-label {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.progress-value {
-  font-size: 12px;
-  color: #334155;
-}
-
-.trail-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.snapshot {
-  width: 140px;
+.mr-1 {
+    margin-right: 4px;
 }
 </style>

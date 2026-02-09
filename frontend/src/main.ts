@@ -7,6 +7,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 
+import './styles/variables.css' // 全局 Design Tokens
+import './styles/index.css' // 全局样式 (可能会被逐渐移除或重构)
+
 const app = createApp(App)
 
 // 注册所有图标
