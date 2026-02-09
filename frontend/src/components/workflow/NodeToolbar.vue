@@ -23,6 +23,7 @@ defineProps<{
   snapshotOptions: any[]
   selectedSnapshotId: string
   applySnapshotMeta: boolean
+  minimal?: boolean // New prop
 }>()
 
 const emit = defineEmits([
@@ -39,7 +40,7 @@ const emit = defineEmits([
 <template>
   <div class="toolbar-container glass-panel">
     <!-- Group 1: Core Actions -->
-    <div class="tool-group">
+    <div v-if="!minimal" class="tool-group">
       <el-tooltip content="保存工作流 (Ctrl+S)" placement="bottom">
         <el-button type="primary" :loading="saving" circle @click="$emit('save')">
           <el-icon><Download /></el-icon> <!-- Using Download icon for save/export metaphor or check mark -->
@@ -53,7 +54,7 @@ const emit = defineEmits([
       </el-tooltip>
     </div>
 
-    <div class="divider"></div>
+    <div v-if="!minimal" class="divider"></div>
 
     <!-- Group 2: Canvas View -->
     <div class="tool-group">

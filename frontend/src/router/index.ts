@@ -9,15 +9,13 @@ const router = createRouter({
       component: MainLayout,
       children: [
         {
-          path: '',
-          redirect: '/workflow'
+          path: '', // Default to Dashboard
+          name: 'Dashboard',
+          component: () => import('@/views/Dashboard/DashboardView.vue'),
+          meta: { title: '工作台' }
         },
-        {
-          path: 'workflow',
-          name: 'Workflow',
-          component: () => import('@/views/Workflow/WorkflowView.vue'),
-          meta: { title: '工作流编排' }
-        },
+        // Old workflow path reserved or redirected
+        // { path: 'workflow', redirect: '/' }, 
         {
           path: 'knowledge',
           name: 'Knowledge',
@@ -37,6 +35,13 @@ const router = createRouter({
           meta: { title: '系统监控' }
         }
       ]
+    },
+    // Independent route for Studio (No MainLayout sidebar)
+    {
+      path: '/studio/:id',
+      name: 'Studio',
+      component: () => import('@/views/Workflow/WorkflowView.vue'),
+      meta: { title: 'Workflow Studio' }
     }
   ]
 })

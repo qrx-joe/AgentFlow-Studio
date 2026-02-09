@@ -68,6 +68,7 @@ const emit = defineEmits<{
       :snapshot-options="props.snapshotOptions"
       :selected-snapshot-id="props.selectedSnapshotId"
       :apply-snapshot-meta="props.applySnapshotMeta"
+      :minimal="true"
       @save="emit('save')"
       @run="emit('run')"
       @clear="emit('clear')"

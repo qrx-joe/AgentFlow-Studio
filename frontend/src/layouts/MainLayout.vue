@@ -7,10 +7,10 @@ const route = useRoute()
 const router = useRouter()
 
 const menus = [
-  { name: '工作流编排', path: '/workflow', icon: Connection },
+  { name: '工作台', path: '/', icon: Monitor }, // Changed to Dashboard
   { name: '知识库管理', path: '/knowledge', icon: Files },
   { name: '智能对话', path: '/chat', icon: ChatLineRound },
-  { name: '系统监控', path: '/monitoring', icon: Monitor }, 
+  // { name: '系统监控', path: '/monitor', icon: Monitor }, // 暂未实现路由
 ]
 
 const handleSelect = (path: string) => {

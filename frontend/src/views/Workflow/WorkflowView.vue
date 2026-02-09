@@ -1,33 +1,55 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useVueFlow } from '@vue-flow/core'
 import '@vue-flow/core/dist/style.css'
 import { ElMessage } from 'element-plus'
-import BranchEdge from '@/components/workflow/BranchEdge.vue'
-import NodeConfigDrawer from '@/components/workflow/NodeConfigDrawer.vue'
-import ExecutionDetailDialog from '@/components/workflow/ExecutionDetailDialog.vue'
-import WorkflowSidebarPanel from '@/components/workflow/panels/WorkflowSidebarPanel.vue'
+
+// Layout Components
+import StudioHeader from '@/components/workflow/studio/StudioHeader.vue'
+import ComponentLibrary from '@/components/workflow/studio/ComponentLibrary.vue'
+import PropertiesPanel from '@/components/workflow/studio/PropertiesPanel.vue'
+
+// Canvas
 import WorkflowCanvasPanel from '@/components/workflow/panels/WorkflowCanvasPanel.vue'
+
+// Logic
+import { useWorkflowStore } from '@/stores/workflow'
+import { useWorkflowDragDrop } from '@/composables/workflow/useWorkflowDragDrop'
+import { useWorkflowEdgeHandlers } from '@/composables/workflow/useWorkflowEdgeHandlers'
+// import { useWorkflowExecutions } from '@/composables/workflow/useWorkflowExecutions'
+
+// Node Types
+import BranchEdge from '@/components/workflow/BranchEdge.vue'
 import TriggerNode from '@/components/nodes/TriggerNode.vue'
 import LLMNode from '@/components/nodes/LLMNode.vue'
 import KnowledgeNode from '@/components/nodes/KnowledgeNode.vue'
 import ConditionNode from '@/components/nodes/ConditionNode.vue'
 import CodeNode from '@/components/nodes/CodeNode.vue'
 import EndNode from '@/components/nodes/EndNode.vue'
-import { useWorkflowStore } from '@/stores/workflow'
-import { useWorkflowEdgeHandlers } from '@/composables/workflow/useWorkflowEdgeHandlers'
-import { useWorkflowDragDrop } from '@/composables/workflow/useWorkflowDragDrop'
-import { useWorkflowValidation } from '@/composables/workflow/useWorkflowValidation'
-import { useWorkflowHighlight } from '@/composables/workflow/useWorkflowHighlight'
-import { useWorkflowReplay } from '@/composables/workflow/useWorkflowReplay'
-import { useWorkflowSnapshots } from '@/composables/workflow/useWorkflowSnapshots'
-import { useWorkflowExecutions } from '@/composables/workflow/useWorkflowExecutions'
-import { useWorkflowReplayExports } from '@/composables/workflow/useWorkflowReplayExports'
-import { useWorkflowExecutionExports } from '@/composables/workflow/useWorkflowExecutionExports'
 
+const route = useRoute()
 const workflowStore = useWorkflowStore()
-const selectedNodeId = ref('')
-const showDrawer = ref(false)
+
+// Mock data loading based on ID
+onMounted(() => {
+    const id = route.params.id as string
+    if (id) {
+        // In real app, fetch execution/workflow data here
+        // For now, just set a name
+        const mockNames: Record<string, string> = {
+            '1': '智能客服助手',
+            '2': '文章摘要生成器',
+            '3': '代码审计专家',
+            'new': '未命名应用'
+        }
+        workflowStore.workflowName = mockNames[id] || '如果没找到就是新建应用'
+    }
+})
+const vueFlow = useVueFlow()
+const { onConnect, addEdges, addNodes, project, removeNodes } = vueFlow
+
+// Node & Edge Types
 const nodeTypes = {
   trigger: TriggerNode,
   llm: LLMNode,
@@ -36,149 +58,168 @@ const nodeTypes = {
   code: CodeNode,
   end: EndNode,
 }
-
 const edgeTypes = {
   default: BranchEdge,
   step: BranchEdge,
 }
 
-const vueFlow = useVueFlow()
-const { onConnect, addEdges, addNodes, project, setCenter, fitView } = vueFlow
-const getViewport = (vueFlow as any).getViewport
-const setViewport = (vueFlow as any).setViewport
+// Logic Hooks
 const { handleConnect, handleEdgeClick } = useWorkflowEdgeHandlers(workflowStore, addEdges)
 onConnect(handleConnect)
 const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodes)
-const { validateWorkflow } = useWorkflowValidation(workflowStore)
-const { highlightNode, highlightEdgeByNodes, restoreEdgeHighlight, handleRestoreViewport } =
-  useWorkflowHighlight({ workflowStore, setCenter, fitView, getViewport, setViewport })
-const {
-  replaying,
-  replaySpeed,
-  replayProgress,
-  replayTotal,
-  preserveTrail,
-  compareLast,
-  replayEdges,
-  startReplay,
-  stopReplay,
-  seekReplay,
-  clearTrail,
-  applyCompareEdges,
-  removeCompareEdges,
-} = useWorkflowReplay({ workflowStore, highlightNode, highlightEdgeByNodes, restoreEdgeHighlight })
 
-const {
-  selectedSnapshotId,
-  applySnapshotMeta,
-  snapshotOptions,
-  saveSnapshot,
-  deleteSnapshot,
-  renameSnapshot,
-  clearSnapshots,
-  exportSnapshot,
-  exportAllSnapshots,
-  handleImportSnapshot,
-} = useWorkflowSnapshots({
-  replayEdges,
-  applyCompareEdges,
-  removeCompareEdges,
-  replaySpeed,
-  preserveTrail,
-  compareLast,
+// Selection State
+const selectedNodeId = ref('')
+const selectedNode = computed(() => {
+    return workflowStore.nodes.find(n => n.id === selectedNodeId.value)
 })
 
-const {
-  selectedExecution,
-  showExecutionDialog,
-  executionFilterStatus,
-  handleSelectExecution,
-  formattedExecutionInput,
-  formattedExecutionOutput,
-  executionLogGroups,
-  collapsedGroups,
-  toggleGroup,
-  handleCopyExecution,
-  handleDownloadLogs,
-  filteredExecutions,
-  getNodeIdFromLog,
-} = useWorkflowExecutions(workflowStore)
-
-const { exportReplayScript, exportReplayJson, exportReplayTxt, buildNodeConfigSummary } =
-  useWorkflowReplayExports({ workflowStore, getNodeIdFromLog })
-const {
-  exportReplayScriptFromExecution,
-  exportReplayJsonFromExecution,
-  exportReplayTxtFromExecution,
-  exportExecutionHistory,
-} = useWorkflowExecutionExports({
-  workflowStore,
-  filteredExecutions,
-  selectedExecution,
-  getNodeIdFromLog,
-  buildNodeConfigSummary,
-  exportReplayJson,
-  exportReplayTxt,
-})
-
-const onNodeDoubleClick = (_: any, node: any) => {
-  selectedNodeId.value = node.id
-  showDrawer.value = true
+// Event Handlers
+const onNodeClick = (_: any, node: any) => {
+    selectedNodeId.value = node.id
 }
 
-const handleSaveConfig = (nodeId: string, data: Record<string, any>) => {
-  const node = workflowStore.nodes.find(n => n.id === nodeId)
-  if (node) {
-    node.data = { ...node.data, ...data }
-  }
+const onPaneClick = () => {
+    selectedNodeId.value = ''
 }
 
-const handleSaveWorkflow = async () => {
-  if (!validateWorkflow()) return
-  await workflowStore.saveWorkflow()
-  workflowStore.addLog('工作流已保存')
-  await workflowStore.fetchExecutions()
+const handleUpdateNode = (id: string, data: any) => {
+    const node = workflowStore.nodes.find(n => n.id === id)
+    if (node) {
+        node.data = { ...node.data, ...data }
+    }
 }
 
-const handleRunWorkflow = async () => {
-  if (!validateWorkflow()) return
-  const result = await workflowStore.executeWorkflow('示例输入')
-  workflowStore.addLog(`执行完成：${result?.status || 'success'}`)
+const handleDeleteNode = (id: string) => {
+    removeNodes([id])
+    selectedNodeId.value = ''
 }
 
-const handleClear = () => {
-  workflowStore.setCanvas([], [])
-}
-const startReplayFromExecution = () => {
-  if (!selectedExecution.value?.logs?.length) {
-    ElMessage.warning('该执行记录没有可回放日志')
-    return
-  }
-  startReplay(selectedExecution.value.logs)
+const handleRun = async () => {
+    workflowStore.executing = true
+    try {
+        await workflowStore.executeWorkflow('Test Input')
+        ElMessage.success('执行完成')
+    } catch (e) {
+        ElMessage.error('执行失败')
+    } finally {
+        workflowStore.executing = false
+    }
 }
 
-const conditionTargetOptions = computed(() => {
-  return workflowStore.nodes
-    .filter(node => node.id !== selectedNodeId.value)
-    .map(node => ({ label: `${node.data?.label || node.type} (${node.id})`, value: node.id }))
-})
+const handlePublish = () => {
+    ElMessage.success('应用已发布')
+}
+
+// Replay logic (simplified for layout demo, restore full logic later if needed)
+const replaying = ref(false)
 </script>
 
 <template>
-  <div class="page">
-    <WorkflowSidebarPanel :logs="workflowStore.executionLogs" :executions="filteredExecutions" :filter-status="executionFilterStatus" @select-node="highlightNode" @select-execution="handleSelectExecution" @filter-change="executionFilterStatus = $event" @export="exportExecutionHistory" />
-    <WorkflowCanvasPanel v-model:nodes="workflowStore.nodes" v-model:edges="workflowStore.edges" :node-types="nodeTypes" :edge-types="edgeTypes" :saving="workflowStore.saving" :executing="workflowStore.executing" :replaying="replaying" :replay-speed="replaySpeed" :replay-progress="replayProgress" :replay-total="replayTotal" :preserve-trail="preserveTrail" :compare-last="compareLast" :snapshot-options="snapshotOptions" :selected-snapshot-id="selectedSnapshotId" :apply-snapshot-meta="applySnapshotMeta" :on-drag-over="onDragOver" :on-drop="onDrop" @save="handleSaveWorkflow" @run="handleRunWorkflow" @clear="handleClear" @restore="handleRestoreViewport" @replay="startReplay" @stop-replay="stopReplay" @seek-replay="seekReplay" @clear-trail="clearTrail" @save-snapshot="saveSnapshot" @delete-snapshot="deleteSnapshot" @rename-snapshot="renameSnapshot" @clear-snapshots="clearSnapshots" @export-snapshot="exportSnapshot" @export-all-snapshots="exportAllSnapshots" @import-snapshot="handleImportSnapshot" @export-replay-script="exportReplayScript" @export-replay-json="exportReplayJson" @export-replay-txt="exportReplayTxt" @update:replay-speed="replaySpeed = $event" @update:preserve-trail="preserveTrail = $event" @update:compare-last="compareLast = $event" @update:selected-snapshot-id="selectedSnapshotId = $event" @update:apply-snapshot-meta="applySnapshotMeta = $event" @node-double-click="onNodeDoubleClick" @edge-click="handleEdgeClick" />
-    <NodeConfigDrawer v-model="showDrawer" :node="workflowStore.nodes.find(n => n.id === selectedNodeId)" :node-options="conditionTargetOptions" @save="handleSaveConfig" />
-    <ExecutionDetailDialog v-model="showExecutionDialog" :execution="selectedExecution" :formatted-execution-input="formattedExecutionInput" :formatted-execution-output="formattedExecutionOutput" :execution-log-groups="executionLogGroups" :collapsed-groups="collapsedGroups" @toggle-group="toggleGroup" @select-node="highlightNode" @copy="handleCopyExecution" @download-logs="handleDownloadLogs" @replay="startReplayFromExecution" @export-script="exportReplayScriptFromExecution" @export-json="exportReplayJsonFromExecution" @export-txt="exportReplayTxtFromExecution" />
+  <div class="studio-layout">
+    <StudioHeader 
+        :workflow-name="workflowStore.workflowName" 
+        @run="handleRun"
+        @publish="handlePublish"
+    />
+    
+    <div class="studio-body">
+      <!-- Left: Component Library -->
+      <aside class="studio-left">
+        <ComponentLibrary @drag-start="(_, type) => {}" /> 
+        <!-- Note: drag-start handles dataTransfer internally in ComponentLibrary, 
+             but we need to ensure local onDragStart matches useWorkflowDragDrop expectations if tailored. 
+             Actually ComponentLibrary sets dataTransfer, and onDrop reads it. 
+        -->
+      </aside>
+
+      <!-- Center: Canvas -->
+      <main class="studio-center">
+        <!-- We reuse WorkflowCanvasPanel for the VueFlow wrapper, 
+             but we might need to hide its internal Toolbar since we moved actions to Header 
+        -->
+        <div class="canvas-wrapper" @dragover="onDragOver" @drop="onDrop">
+             <WorkflowCanvasPanel 
+                v-model:nodes="workflowStore.nodes" 
+                v-model:edges="workflowStore.edges"
+                :node-types="nodeTypes"
+                :edge-types="edgeTypes"
+                :saving="false"
+                :executing="workflowStore.executing"
+                :replaying="replaying"
+                :replay-speed="1000"
+                :replay-progress="0"
+                :replay-total="0"
+                :preserve-trail="false"
+                :compare-last="false"
+                :snapshot-options="[]"
+                :selected-snapshot-id="''"
+                :apply-snapshot-meta="false"
+                :on-drag-over="onDragOver"
+                :on-drop="onDrop"
+                @node-double-click="onNodeClick" 
+                @pane-click="onPaneClick"
+             />
+             <!-- Note: WorkflowCanvasPanel currently has a Toolbar inside. 
+                  In Phase 2 we should strip it or make it hideable via props. 
+                  For now we live with duplicate controls or ignore it. 
+             -->
+        </div>
+        
+        <!-- Bottom: Optional Output Panel -->
+        <!-- <div class="studio-bottom"></div> -->
+      </main>
+
+      <!-- Right: Properties -->
+      <aside class="studio-right">
+        <PropertiesPanel 
+            :node="selectedNode" 
+            @update="handleUpdateNode"
+            @delete="handleDeleteNode"
+        />
+      </aside>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.page {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 16px;
-  height: 100%;
+.studio-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-neutral-50);
 }
 
+.studio-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.studio-left {
+  width: 240px;
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.studio-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+}
+
+.canvas-wrapper {
+  flex: 1;
+  background: #f0f4f8; /* slightly darker than standard white for canvas contrast */
+  position: relative;
+}
+
+.studio-right {
+  width: 300px;
+  flex-shrink: 0;
+  z-index: 20;
+}
 </style>
