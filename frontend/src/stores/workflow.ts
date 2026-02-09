@@ -71,12 +71,36 @@ export const useWorkflowStore = defineStore('workflow', {
       }
       this.executing = true
       this.clearLogs()
+
+      // Reset statuses
+      this.nodes.forEach(node => {
+        if (node.data) node.data.status = 'idle'
+      })
+
       try {
         const response = await workflowApi.execute(this.workflowId, input)
         // 将后端返回的执行日志同步到前端面板
         if (Array.isArray(response.logs)) {
           this.executionLogs = response.logs
         }
+
+        // Visualize Execution Steps
+        if (response.steps && Array.isArray(response.steps)) {
+          for (const step of response.steps) {
+            const node = this.nodes.find(n => n.id === step.nodeId)
+            if (node) {
+              // Running state
+              node.data = { ...node.data, status: 'running' }
+
+              // Simulate processing time
+              await new Promise(resolve => setTimeout(resolve, step.duration || 500))
+
+              // Completed state
+              node.data = { ...node.data, status: step.status || 'success', output: step.output }
+            }
+          }
+        }
+
         await this.fetchExecutions()
         return response
       } finally {

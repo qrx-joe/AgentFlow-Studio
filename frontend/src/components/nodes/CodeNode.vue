@@ -14,6 +14,7 @@ defineProps<{
     :icon="VideoPlay"
     color="#6366f1"
     :selected="selected"
+    :status="data.status"
   >
     <div class="code-preview">
         {{ data.code || '// Write code here' }}

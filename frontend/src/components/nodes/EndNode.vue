@@ -14,6 +14,7 @@ defineProps<{
     :icon="SwitchButton"
     color="#ef4444"
     :selected="selected"
+    :status="data.status"
   >
     <div class="node-info">
       流程结束并输出结果

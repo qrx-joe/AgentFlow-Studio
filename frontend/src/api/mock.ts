@@ -80,12 +80,17 @@ export const setupMock = () => {
                                 status: 'completed',
                                 input: body.input,
                                 output: { content: 'Mock execution result' },
+                                steps: [
+                                    { nodeId: 'node-1', status: 'completed', duration: 500, output: { user_input: 'Hello' } },
+                                    { nodeId: 'node-2', status: 'completed', duration: 2000, output: { ai_response: 'Hi there!' } },
+                                    { nodeId: 'node-3', status: 'completed', duration: 100, output: { final: true } }
+                                ],
                                 logs: [
                                     `[${new Date().toLocaleTimeString()}] 开始执行工作流`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：开始 (1)`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：AI 生成 (2)`,
+                                    `[${new Date().toLocaleTimeString()}] 执行节点：开始 (node-1)`,
+                                    `[${new Date().toLocaleTimeString()}] 执行节点：AI 生成 (node-2)`,
                                     `[${new Date().toLocaleTimeString()}] AI 响应：这是一个模拟的回答`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：结束 (3)`,
+                                    `[${new Date().toLocaleTimeString()}] 执行节点：结束 (node-3)`,
                                     `[${new Date().toLocaleTimeString()}] 工作流执行完成`
                                 ],
                                 startedAt: new Date().toISOString(),

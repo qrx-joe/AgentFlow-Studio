@@ -14,6 +14,7 @@ defineProps<{
     :icon="Files"
     color="#10b981"
     :selected="selected"
+    :status="data.status"
   >
     <div class="node-content">
       <div class="param-row">

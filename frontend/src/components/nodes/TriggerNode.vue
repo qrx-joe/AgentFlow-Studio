@@ -14,6 +14,7 @@ defineProps<{
     :icon="Lightning"
     color="#f59e0b"
     :selected="selected"
+    :status="data.status"
   >
     <div class="node-info">
       用户输入消息时触发

@@ -14,6 +14,7 @@ defineProps<{
     :icon="Cpu"
     color="#0ea5e9"
     :selected="selected"
+    :status="data.status"
   >
     <div class="node-content">
       <div class="param-row">

@@ -14,6 +14,7 @@ defineProps<{
     :icon="Connection"
     color="#8b5cf6"
     :selected="selected"
+    :status="data.status"
   >
      <div class="node-content">
       <div class="param-row">
