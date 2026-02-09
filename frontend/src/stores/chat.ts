@@ -70,7 +70,11 @@ export const useChatStore = defineStore('chat', {
         this.messages.push(assistantMessage)
 
         // 使用后端 SSE 流式接口
-        const response = await fetch('/api/chat/messages/stream', {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+        const streamUrl = baseUrl.startsWith('http')
+          ? `${baseUrl}/chat/messages/stream`
+          : `${baseUrl}/chat/messages/stream`
+        const response = await fetch(streamUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId: this.currentSessionId, content }),

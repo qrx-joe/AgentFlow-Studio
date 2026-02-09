@@ -4,6 +4,8 @@ import request from './request'
 // 模拟数据存储
 const mockWorkflows = new Map<string, any>()
 const mockExecutions = new Map<string, any[]>()
+const mockSessions = new Map<string, any>()
+const mockMessages = new Map<string, any[]>()
 
 // 预置一些数据
 const demoWorkflowId = 'demo-workflow-001'
@@ -35,9 +37,13 @@ export const setupMock = () => {
         config.adapter = async (config) => {
             return new Promise((resolve, reject) => {
                 const { url, method, data } = config
+                const normalizedMethod = method?.toLowerCase()
+                // Remove query params AND optional /api prefix for matching
+                const normalizedUrl = url?.split('?')[0].replace(/^\/api/, '')
                 const body = data ? JSON.parse(data) : {}
 
                 console.log(`[Mock] ${method?.toUpperCase()} ${url}`, body)
+                console.log(`[Mock Debug] Normalized: ${normalizedMethod} ${normalizedUrl}`)
 
                 // 模拟延迟
                 setTimeout(() => {
@@ -46,24 +52,25 @@ export const setupMock = () => {
 
                     try {
                         // Workflows
-                        if (url === '/workflows' && method === 'get') {
+                        if (normalizedUrl === '/workflows' && normalizedMethod === 'get') {
                             responseData = Array.from(mockWorkflows.values())
-                        } else if (url?.startsWith('/workflows/') && method === 'get') {
-                            const id = url.split('/')[2]
+                        } else if (normalizedUrl?.startsWith('/workflows/') && normalizedMethod === 'get') {
+                            const id = normalizedUrl.split('/')[2]
                             if (id && mockWorkflows.has(id)) {
                                 responseData = mockWorkflows.get(id)
-                            } else if (url.endsWith('/executions')) {
+                            } else if (normalizedUrl.endsWith('/executions')) {
                                 // List executions
-                                const wfId = url.split('/')[2]
+                                const wfId = normalizedUrl.split('/')[2]
                                 responseData = mockExecutions.get(wfId) || []
                             }
-                        } else if (url === '/workflows' && method === 'post') {
+                        } else if (normalizedUrl === '/workflows' && normalizedMethod === 'post') {
                             const newId = `wf-${Date.now()}`
                             const newWf = { id: newId, ...body, createdAt: new Date().toISOString() }
                             mockWorkflows.set(newId, newWf)
                             responseData = newWf
-                        } else if (url?.startsWith('/workflows/') && method === 'put') {
-                            const id = url.split('/')[2]
+                        } else if (normalizedUrl?.startsWith('/workflows/') && normalizedMethod === 'put') {
+                            // ... put logic
+                            const id = normalizedUrl.split('/')[2]
                             if (mockWorkflows.has(id)) {
                                 const updated = { ...mockWorkflows.get(id), ...body, updatedAt: new Date().toISOString() }
                                 mockWorkflows.set(id, updated)
@@ -71,26 +78,40 @@ export const setupMock = () => {
                             } else {
                                 status = 404
                             }
-                        } else if (url?.endsWith('/execute') && method === 'post') {
-                            const id = url.split('/')[2]
+                        } else if (normalizedUrl?.endsWith('/execute') && normalizedMethod === 'post') {
+                            // ... execute logic
+                            const id = normalizedUrl.split('/')[2]
                             const executionId = `exec-${Date.now()}`
+
+                            // Try to find nodes from stored workflow to make mock steps realistic
+                            let steps = []
+                            if (mockWorkflows.has(id)) {
+                                const wf = mockWorkflows.get(id)
+                                steps = wf.nodes.map((node: any, index: number) => ({
+                                    nodeId: node.id,
+                                    status: 'completed',
+                                    duration: 500,
+                                    output: { result: `Output for ${node.data.label}` }
+                                }))
+                            } else {
+                                // Fallback steps if workflow not found in mock store (e.g. unsaved draft)
+                                steps = [
+                                    { nodeId: 'node-1', status: 'completed', duration: 500, output: { user_input: 'Hello' } },
+                                    { nodeId: 'node-2', status: 'completed', duration: 2000, output: { ai_response: 'Hi there!' } },
+                                    { nodeId: 'node-3', status: 'completed', duration: 100, output: { final: true } }
+                                ]
+                            }
+
                             const execution = {
                                 id: executionId,
                                 workflowId: id,
                                 status: 'completed',
                                 input: body.input,
                                 output: { content: 'Mock execution result' },
-                                steps: [
-                                    { nodeId: 'node-1', status: 'completed', duration: 500, output: { user_input: 'Hello' } },
-                                    { nodeId: 'node-2', status: 'completed', duration: 2000, output: { ai_response: 'Hi there!' } },
-                                    { nodeId: 'node-3', status: 'completed', duration: 100, output: { final: true } }
-                                ],
+                                steps: steps,
                                 logs: [
                                     `[${new Date().toLocaleTimeString()}] 开始执行工作流`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：开始 (node-1)`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：AI 生成 (node-2)`,
-                                    `[${new Date().toLocaleTimeString()}] AI 响应：这是一个模拟的回答`,
-                                    `[${new Date().toLocaleTimeString()}] 执行节点：结束 (node-3)`,
+                                    ...steps.map((s: any) => `[${new Date().toLocaleTimeString()}] 执行节点 ${s.nodeId}`),
                                     `[${new Date().toLocaleTimeString()}] 工作流执行完成`
                                 ],
                                 startedAt: new Date().toISOString(),
@@ -103,13 +124,53 @@ export const setupMock = () => {
                         }
 
                         // Knowledge (Simple mock)
-                        else if (url === '/knowledge/documents' && method === 'get') {
+                        else if (normalizedUrl === '/knowledge/documents' && normalizedMethod === 'get') {
                             responseData = []
                         }
 
-                        // Chat (Simple mock)
-                        else if (url === '/chat/sessions' && method === 'get') {
-                            responseData = []
+                        // Chat (Comprehensive mock)
+                        else if (normalizedUrl === '/chat/sessions' && normalizedMethod === 'get') {
+                            responseData = Array.from(mockSessions.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                        } else if (normalizedUrl === '/chat/sessions' && normalizedMethod === 'post') {
+                            const newSessionId = `session-${Date.now()}`
+                            const newSession = {
+                                id: newSessionId,
+                                title: '新建会话',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            }
+                            mockSessions.set(newSessionId, newSession)
+                            responseData = newSession
+                        } else if (normalizedUrl?.match(/\/chat\/sessions\/.*\/messages/) && normalizedMethod === 'get') {
+                            // GET /chat/sessions/:id/messages
+                            const sessionId = normalizedUrl.split('/')[3]
+                            responseData = mockMessages.get(sessionId) || []
+                        } else if (normalizedUrl === '/chat/messages' && normalizedMethod === 'post') {
+                            const { sessionId, content } = body
+                            const userMsg = {
+                                id: `msg-${Date.now()}`,
+                                role: 'user',
+                                content,
+                                createdAt: new Date().toISOString()
+                            }
+                            const aiMsg = {
+                                id: `msg-${Date.now() + 1}`,
+                                role: 'assistant',
+                                content: `Mock AI Response to: ${content}`,
+                                sources: [],
+                                createdAt: new Date().toISOString()
+                            }
+
+                            const msgs = mockMessages.get(sessionId) || []
+                            msgs.push(userMsg, aiMsg)
+                            mockMessages.set(sessionId, msgs)
+
+                            responseData = aiMsg
+                        } else if (normalizedUrl?.startsWith('/chat/sessions/') && normalizedMethod === 'delete') {
+                            const id = normalizedUrl.split('/')[3]
+                            mockSessions.delete(id)
+                            mockMessages.delete(id)
+                            responseData = { success: true }
                         }
 
                         if (responseData !== null) {
