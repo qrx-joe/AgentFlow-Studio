@@ -89,5 +89,41 @@ export const useWorkflowStore = defineStore('workflow', {
       const response = await workflowApi.listExecutions(this.workflowId)
       this.executions = response
     },
+
+    // 加载预置模板
+    loadTemplate(type: string) {
+      if (type === 'hello-world') {
+        this.nodes = [
+          {
+            id: 'node-1',
+            type: 'trigger',
+            position: { x: 100, y: 200 },
+            data: { label: '用户输入' }
+          },
+          {
+            id: 'node-2',
+            type: 'llm',
+            position: { x: 400, y: 200 },
+            data: {
+              label: 'AI 回复',
+              model: 'gpt-4o',
+              systemPrompt: '你是一个乐于助人的 AI 助手。'
+            }
+          },
+          {
+            id: 'node-3',
+            type: 'end',
+            position: { x: 750, y: 200 },
+            data: { label: '结束' }
+          }
+        ]
+        this.edges = [
+          { id: 'edge-1-2', source: 'node-1', target: 'node-2', sourceHandle: null, targetHandle: null },
+          { id: 'edge-2-3', source: 'node-2', target: 'node-3', sourceHandle: null, targetHandle: null }
+        ]
+        this.workflowName = '新建 AI 应用'
+        this.addLog('已加载 "Hello World" 模板')
+      }
+    }
   },
 })

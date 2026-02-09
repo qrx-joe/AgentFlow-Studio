@@ -35,15 +35,21 @@ const workflowStore = useWorkflowStore()
 onMounted(() => {
     const id = route.params.id as string
     if (id) {
-        // In real app, fetch execution/workflow data here
-        // For now, just set a name
-        const mockNames: Record<string, string> = {
-            '1': '智能客服助手',
-            '2': '文章摘要生成器',
-            '3': '代码审计专家',
-            'new': '未命名应用'
+        if (id === 'new') {
+            workflowStore.loadTemplate('hello-world')
+        } else {
+            // In real app, fetch execution/workflow data here
+            // For now, just set a name
+            const mockNames: Record<string, string> = {
+                '1': '智能客服助手',
+                '2': '文章摘要生成器',
+                '3': '代码审计专家'
+            }
+            workflowStore.workflowName = mockNames[id] || '未命名应用'
+            // Keep existing nodes if any, or load empty? 
+            // For demo, we might want to load template for existing ones too if empty, 
+            // but let's assume existing ones have data (not implemented in mock for now).
         }
-        workflowStore.workflowName = mockNames[id] || '如果没找到就是新建应用'
     }
 })
 const vueFlow = useVueFlow()
