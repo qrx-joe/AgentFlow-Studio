@@ -1,63 +1,59 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
+import { Connection } from '@element-plus/icons-vue'
+import BaseNode from './BaseNode.vue'
 
-// 条件分支节点：用于流程分流
-defineProps<{ data: { label: string } }>()
+defineProps<{ 
+    data: { label: string; expression?: string },
+    selected?: boolean 
+}>()
 </script>
 
 <template>
-  <div class="node condition">
-    <Handle type="target" :position="Position.Left" />
-    <div class="title">⚡ {{ data.label || '条件' }}</div>
-    <!-- True/False 侧标签仅用于提示分支含义，不绑定具体连线 -->
-    <div class="branch">
-      <span class="tag true">True</span>
-      <span class="tag false">False</span>
+  <BaseNode
+    :label="data.label || '条件判断'"
+    :icon="Connection"
+    color="#8b5cf6"
+    :selected="selected"
+  >
+     <div class="node-content">
+      <div class="param-row">
+        <span class="label">If:</span>
+        <span class="value code">{{ data.expression || 'x > 0' }}</span>
+      </div>
+      <div class="branches">
+        <span class="branch true">True</span>
+        <span class="branch false">False</span>
+      </div>
     </div>
-    <Handle type="source" :position="Position.Right" />
-  </div>
+  </BaseNode>
 </template>
 
 <style scoped>
-.node {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  min-width: 140px;
-}
-
-.condition {
-  background: #fee2e2;
-  border-color: #fecaca;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.branch {
+.node-content {
   display: flex;
-  gap: 6px;
-  margin-top: 6px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+.param-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
 }
 
-.tag.true {
-  color: #16a34a;
-  border-color: #86efac;
+.label { color: var(--color-neutral-500); }
+.value.code { 
+    font-family: monospace; 
+    background: var(--color-neutral-100); 
+    padding: 2px 4px; 
+    border-radius: 4px; 
 }
 
-.tag.false {
-  color: #dc2626;
-  border-color: #fecaca;
+.branches {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--color-neutral-400);
 }
 </style>

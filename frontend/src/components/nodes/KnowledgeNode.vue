@@ -1,41 +1,46 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
+import { Files } from '@element-plus/icons-vue'
+import BaseNode from './BaseNode.vue'
 
-// 知识检索节点：执行 RAG 检索
-defineProps<{ data: { label: string; topK?: number } }>()
+defineProps<{ 
+    data: { label: string; dataset?: string; topK?: number },
+    selected?: boolean 
+}>()
 </script>
 
 <template>
-  <div class="node knowledge">
-    <Handle type="target" :position="Position.Left" />
-    <div class="title">📚 {{ data.label || '知识检索' }}</div>
-    <div class="desc">TopK：{{ data.topK || 3 }}</div>
-    <Handle type="source" :position="Position.Right" />
-  </div>
+  <BaseNode
+    :label="data.label || '知识库检索'"
+    :icon="Files"
+    color="#10b981"
+    :selected="selected"
+  >
+    <div class="node-content">
+      <div class="param-row">
+        <span class="label">知识库:</span>
+        <span class="value">{{ data.dataset || '默认' }}</span>
+      </div>
+      <div class="param-row">
+        <span class="label">TopK:</span>
+        <span class="value">{{ data.topK || 3 }}</span>
+      </div>
+    </div>
+  </BaseNode>
 </template>
 
 <style scoped>
-.node {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  min-width: 160px;
+.node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.knowledge {
-  background: #fef9c3;
-  border-color: #fde047;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.desc {
+.param-row {
+  display: flex;
+  justify-content: space-between;
   font-size: 12px;
-  color: #64748b;
 }
+
+.label { color: var(--color-neutral-500); }
+.value { color: var(--color-neutral-800); font-weight: 500; }
 </style>

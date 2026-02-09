@@ -1,34 +1,36 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
+import { VideoPlay } from '@element-plus/icons-vue'
+import BaseNode from './BaseNode.vue'
 
-// 代码节点：执行自定义逻辑（示例占位）
-defineProps<{ data: { label: string } }>()
+defineProps<{ 
+    data: { label: string; code?: string },
+    selected?: boolean 
+}>()
 </script>
 
 <template>
-  <div class="node code">
-    <Handle type="target" :position="Position.Left" />
-    <div class="title">💻 {{ data.label || '代码' }}</div>
-    <Handle type="source" :position="Position.Right" />
-  </div>
+  <BaseNode
+    :label="data.label || '代码执行'"
+    :icon="VideoPlay"
+    color="#6366f1"
+    :selected="selected"
+  >
+    <div class="code-preview">
+        {{ data.code || '// Write code here' }}
+    </div>
+  </BaseNode>
 </template>
 
 <style scoped>
-.node {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  min-width: 140px;
-}
-
-.code {
-  background: #ede9fe;
-  border-color: #c4b5fd;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 13px;
+.code-preview {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--color-neutral-600);
+    background: var(--color-neutral-50);
+    padding: 8px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    max-height: 60px;
+    overflow: hidden;
 }
 </style>

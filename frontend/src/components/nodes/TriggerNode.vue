@@ -1,33 +1,29 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
+import { Lightning } from '@element-plus/icons-vue'
+import BaseNode from './BaseNode.vue'
 
-// 触发节点：工作流入口
-defineProps<{ data: { label: string } }>()
+defineProps<{ 
+    data: { label: string },
+    selected?: boolean 
+}>()
 </script>
 
 <template>
-  <div class="node trigger">
-    <div class="title">▶️ {{ data.label || '触发' }}</div>
-    <Handle type="source" :position="Position.Right" />
-  </div>
+  <BaseNode
+    :label="data.label || '触发器'"
+    :icon="Lightning"
+    color="#f59e0b"
+    :selected="selected"
+  >
+    <div class="node-info">
+      用户输入消息时触发
+    </div>
+  </BaseNode>
 </template>
 
 <style scoped>
-.node {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
-  min-width: 120px;
-}
-
-.trigger {
-  background: #dcfce7;
-  border-color: #86efac;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 13px;
+.node-info {
+  color: var(--color-neutral-500);
+  font-size: 12px;
 }
 </style>
