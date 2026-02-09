@@ -4,10 +4,10 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 @Entity('documents')
 export class DocumentEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'varchar', length: 255 })
-  filename: string
+  filename!: string
 
   @Column({ type: 'varchar', length: 50, nullable: true, name: 'file_type' })
   fileType?: string
@@ -19,8 +19,8 @@ export class DocumentEntity {
   content?: string
 
   @Column({ type: 'jsonb', default: () => "'{}'" })
-  metadata: Record<string, any>
+  metadata!: Record<string, any>
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date
+  createdAt!: Date
 }

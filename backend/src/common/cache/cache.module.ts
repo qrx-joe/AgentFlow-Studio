@@ -5,7 +5,7 @@ import { redisStore } from 'cache-manager-redis-store'
 @Module({
   imports: [
     CacheModule.register({
-      store: redisStore,
+      store: redisStore as any,
       host: process.env.REDIS_HOST || 'localhost',
       port: Number(process.env.REDIS_PORT || 6379),
       ttl: 60 * 5,
@@ -13,4 +13,4 @@ import { redisStore } from 'cache-manager-redis-store'
   ],
   exports: [CacheModule],
 })
-export class AppCacheModule {}
+export class AppCacheModule { }

@@ -16,7 +16,7 @@ export class KnowledgeService {
     private embeddingService: EmbeddingService,
     private searchService: KnowledgeSearchService,
     private metricsService: MetricsService
-  ) {}
+  ) { }
 
   async listDocuments() {
     return this.documentRepo.find({ order: { createdAt: 'DESC' } })
@@ -77,17 +77,17 @@ export class KnowledgeService {
     const embedMs = Date.now() - embedStart
 
     // 4. 更新元信息（分块数量、字符数）
-    await this.documentRepo.update(document.id, {
-      metadata: {
-        ...document.metadata,
-        chunkCount: chunks.length,
-        charCount,
-        chunkMs,
-        embedMs,
-        processMs: Date.now() - startTime,
-        embeddingDim,
-      },
-    })
+    // 4. 更新元信息（分块数量、字符数）
+    document.metadata = {
+      ...document.metadata,
+      chunkCount: chunks.length,
+      charCount,
+      chunkMs,
+      embedMs,
+      processMs: Date.now() - startTime,
+      embeddingDim,
+    }
+    await this.documentRepo.save(document)
 
     return document
   }

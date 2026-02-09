@@ -234,21 +234,27 @@ export class WorkflowEngine {
     const isTrue = this.evaluateCondition(currentNode, context)
 
     // 优先使用配置的目标边 ID
-    if (isTrue && currentNode.data?.trueEdgeId) {
-      const edge = outgoing.find((item: any) => item.id === currentNode.data.trueEdgeId)
+    const trueEdgeId = currentNode.data?.trueEdgeId
+    if (isTrue && trueEdgeId) {
+      const edge = outgoing.find((item: any) => item.id === trueEdgeId)
       if (edge?.target) return edge.target
     }
-    if (!isTrue && currentNode.data?.falseEdgeId) {
-      const edge = outgoing.find((item: any) => item.id === currentNode.data.falseEdgeId)
+
+    const falseEdgeId = currentNode.data?.falseEdgeId
+    if (!isTrue && falseEdgeId) {
+      const edge = outgoing.find((item: any) => item.id === falseEdgeId)
       if (edge?.target) return edge.target
     }
 
     // 兼容旧配置：目标节点优先
-    if (isTrue && currentNode.data?.trueTarget) {
-      return currentNode.data.trueTarget
+    const trueTarget = currentNode.data?.trueTarget
+    if (isTrue && trueTarget) {
+      return trueTarget
     }
-    if (!isTrue && currentNode.data?.falseTarget) {
-      return currentNode.data.falseTarget
+
+    const falseTarget = currentNode.data?.falseTarget
+    if (!isTrue && falseTarget) {
+      return falseTarget
     }
 
     // 根据连线标签/分支类型选择目标

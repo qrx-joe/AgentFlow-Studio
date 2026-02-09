@@ -4,7 +4,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 @Entity('chat_sessions')
 export class ChatSessionEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   title?: string
@@ -13,8 +13,8 @@ export class ChatSessionEntity {
   workflowId?: string
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date
+  createdAt!: Date
 
   @Column({ type: 'timestamp', name: 'updated_at', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt: Date
+  updatedAt!: Date
 }

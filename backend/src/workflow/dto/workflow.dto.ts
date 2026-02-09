@@ -3,18 +3,18 @@ import { IsArray, IsOptional, IsString } from 'class-validator'
 // 创建工作流 DTO
 export class CreateWorkflowDto {
   @IsString()
-  name: string
+  name!: string
 
   @IsOptional()
   @IsString()
   description?: string
 
   @IsArray()
-  nodes: any[]
+  nodes!: any[]
 
   @IsArray()
-  edges: any[]
+  edges!: any[]
 }
 
 // 更新工作流 DTO
-export class UpdateWorkflowDto extends CreateWorkflowDto {}
+export class UpdateWorkflowDto extends CreateWorkflowDto { }

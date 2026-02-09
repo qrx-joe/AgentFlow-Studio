@@ -3,29 +3,29 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 @Entity('metrics_daily')
 export class MetricsDailyEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'date', unique: true })
-  date: string
+  date!: string
 
   @Column({ name: 'workflow_total', type: 'int', default: 0 })
-  workflowTotal: number
+  workflowTotal!: number
 
   @Column({ name: 'workflow_failed', type: 'int', default: 0 })
-  workflowFailed: number
+  workflowFailed!: number
 
   @Column({ name: 'workflow_duration_ms', type: 'bigint', default: 0 })
-  workflowDurationMs: number
+  workflowDurationMs!: number
 
   @Column({ name: 'knowledge_total', type: 'int', default: 0 })
-  knowledgeTotal: number
+  knowledgeTotal!: number
 
   @Column({ name: 'knowledge_duration_ms', type: 'bigint', default: 0 })
-  knowledgeDurationMs: number
+  knowledgeDurationMs!: number
 
   @Column({ name: 'rag_cache_hits', type: 'int', default: 0 })
-  ragCacheHits: number
+  ragCacheHits!: number
 
   @Column({ name: 'rag_cache_misses', type: 'int', default: 0 })
-  ragCacheMisses: number
+  ragCacheMisses!: number
 }

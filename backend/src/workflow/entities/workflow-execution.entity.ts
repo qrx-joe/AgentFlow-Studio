@@ -4,13 +4,13 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 @Entity('workflow_executions')
 export class WorkflowExecutionEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'uuid', name: 'workflow_id' })
-  workflowId: string
+  workflowId!: string
 
   @Column({ type: 'varchar', length: 20 })
-  status: 'pending' | 'running' | 'completed' | 'failed'
+  status!: 'pending' | 'running' | 'completed' | 'failed'
 
   @Column({ type: 'jsonb', nullable: true })
   input?: Record<string, any>
@@ -19,10 +19,10 @@ export class WorkflowExecutionEntity {
   output?: Record<string, any>
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
-  logs: string[]
+  logs!: string[]
 
   @Column({ type: 'timestamp', name: 'started_at', default: () => 'CURRENT_TIMESTAMP' })
-  startedAt: Date
+  startedAt!: Date
 
   @Column({ type: 'timestamp', name: 'completed_at', nullable: true })
   completedAt?: Date

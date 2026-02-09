@@ -8,7 +8,7 @@ export class KnowledgeSearchService {
   constructor(
     private ragService: RagService,
     private bm25Service: Bm25Service
-  ) {}
+  ) { }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
     const optionsKey = this.buildSearchOptionsKey(options)
@@ -88,9 +88,10 @@ export class KnowledgeSearchService {
     const useFusedThreshold = options.hybrid || keywordWeight > 0
 
     if (typeof options.scoreThreshold === 'number') {
+      const scoreThreshold = options.scoreThreshold
       filtered = filtered.filter(item => {
         const score = useFusedThreshold ? item.fusedScore ?? 0 : item.similarity
-        return score >= options.scoreThreshold
+        return score >= scoreThreshold
       })
     }
 
