@@ -3,16 +3,29 @@ import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  try {
+    console.log('[Bootstrap] Starting application...')
+    const app = await NestFactory.create(AppModule, {
+      logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    })
 
-  // 开启跨域，便于前端本地访问
-  app.enableCors()
+    console.log('[Bootstrap] Application created.')
 
-  // 全局异常过滤器，统一返回结构
-  app.useGlobalFilters(new AllExceptionsFilter())
+    // 开启跨域，便于前端本地访问
+    app.enableCors()
+    console.log('[Bootstrap] CORS enabled.')
 
-  const port = process.env.PORT || 3001
-  await app.listen(port)
+    // 全局异常过滤器，统一返回结构
+    app.useGlobalFilters(new AllExceptionsFilter())
+
+    const port = process.env.PORT || 3001
+    console.log(`[Bootstrap] Attempting to listen on port ${port}...`)
+    await app.listen(port)
+    console.log(`[Bootstrap] Application listening on port ${port}`)
+  } catch (err) {
+    console.error('[Bootstrap] Error during startup:', err)
+    process.exit(1)
+  }
 }
 
 bootstrap()

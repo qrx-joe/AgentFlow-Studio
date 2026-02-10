@@ -20,14 +20,9 @@ import { MetricsModule } from './metrics/metrics.module'
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       synchronize: false,
-      extra: {
-        max: 20,
-        min: 5,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
-      },
-      cache: {
-        duration: 30000,
+
+      ssl: {
+        rejectUnauthorized: false,
       },
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -41,4 +36,4 @@ import { MetricsModule } from './metrics/metrics.module'
     MetricsModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -9,9 +9,14 @@ import { RagService } from './rag/rag.service'
 
 import { KnowledgeSearchService } from './search/knowledge-search.service'
 import { MetricsModule } from '../metrics/metrics.module'
+import { AppCacheModule } from '../common/cache/cache.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity]), MetricsModule],
+  imports: [
+    TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity]),
+    MetricsModule,
+    AppCacheModule,
+  ],
   controllers: [KnowledgeController],
   providers: [KnowledgeService, EmbeddingService, RagService, KnowledgeSearchService],
   exports: [KnowledgeService],
