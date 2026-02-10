@@ -2,9 +2,9 @@
 import { Connection } from '@element-plus/icons-vue'
 import BaseNode from './BaseNode.vue'
 
-defineProps<{ 
-    data: { label: string; expression?: string },
-    selected?: boolean 
+defineProps<{
+    data: { label: string; expression?: string; status?: string },
+    selected?: boolean
 }>()
 </script>
 

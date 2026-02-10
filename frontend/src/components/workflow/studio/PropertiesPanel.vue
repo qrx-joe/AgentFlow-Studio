@@ -12,7 +12,6 @@ const props = defineProps<{
 const emit = defineEmits(['update', 'delete'])
 
 // Mock config schema based on node type
-const isTrigger = computed(() => props.node?.type === 'trigger')
 const isLLM = computed(() => props.node?.type === 'llm')
 const isKnowledge = computed(() => props.node?.type === 'knowledge')
 const isCondition = computed(() => props.node?.type === 'condition')

@@ -72,8 +72,8 @@ export const useWorkflowReplayExports = (options: {
     }
 
     const steps = logs
-      .filter(line => line.includes('执行节点：'))
-      .map((line, index) => {
+      .filter((line: string) => line.includes('执行节点：'))
+      .map((line: string, index: number) => {
         const nodeId = getNodeIdFromLog(line)
         const node = workflowStore.nodes.find((item: any) => item.id === nodeId)
         const nodeName = node?.data?.label || node?.type || '未知节点'

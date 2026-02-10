@@ -32,30 +32,30 @@ const onSearch = () => emit('search')
       <el-input
         :model-value="props.searchQuery"
         placeholder="输入检索问题"
-        @update:model-value="value => emit('update:searchQuery', value)"
+        @update:model-value="(value: string) => emit('update:searchQuery', value)"
       />
       <el-input-number
         :model-value="props.topK"
         :min="1"
         :max="10"
-        @update:model-value="value => emit('update:topK', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:topK', Number(value))"
       />
       <el-input-number
         :model-value="props.scoreThreshold"
         :min="0"
         :max="1"
         :step="0.05"
-        @update:model-value="value => emit('update:scoreThreshold', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:scoreThreshold', Number(value))"
       />
       <el-switch
         :model-value="props.hybrid"
         active-text="混合"
-        @update:model-value="value => emit('update:hybrid', value)"
+        @update:model-value="(value: boolean) => emit('update:hybrid', value)"
       />
       <el-switch
         :model-value="props.rerank"
         active-text="重排"
-        @update:model-value="value => emit('update:rerank', value)"
+        @update:model-value="(value: boolean) => emit('update:rerank', value)"
       />
       <el-button type="success" :loading="props.searching" @click="onSearch">检索</el-button>
     </div>
@@ -66,7 +66,7 @@ const onSearch = () => emit('search')
         :min="0"
         :max="2"
         :step="0.05"
-        @update:model-value="value => emit('update:vectorWeight', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:vectorWeight', Number(value))"
       />
       <span class="config-label">关键词权重</span>
       <el-input-number
@@ -74,13 +74,13 @@ const onSearch = () => emit('search')
         :min="0"
         :max="2"
         :step="0.05"
-        @update:model-value="value => emit('update:keywordWeight', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:keywordWeight', Number(value))"
       />
       <span class="config-label">关键词模式</span>
       <el-select
         :model-value="props.keywordMode"
         style="width: 140px"
-        @update:model-value="value => emit('update:keywordMode', value)"
+        @update:model-value="(value: 'bm25' | 'tsrank' | 'trgm') => emit('update:keywordMode', value)"
       >
         <el-option label="BM25" value="bm25" />
         <el-option label="TS Rank" value="tsrank" />

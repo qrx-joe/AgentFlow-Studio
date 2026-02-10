@@ -15,7 +15,7 @@ const emit = defineEmits<{
     :model-value="props.modelValue"
     title="来源详情"
     size="360px"
-    @update:model-value="value => emit('update:modelValue', value)"
+    @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <div v-if="props.selectedSource" class="source-detail">
       <div class="detail-item">

@@ -20,7 +20,7 @@ const emit = defineEmits<{
     :model-value="props.modelValue"
     title="文档详情"
     size="420px"
-    @update:model-value="value => emit('update:modelValue', value)"
+    @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <div v-if="props.selectedDoc" class="doc-detail">
       <div class="detail-row"><span class="label">文件名</span>{{ props.selectedDoc.filename }}</div>
@@ -47,7 +47,7 @@ const emit = defineEmits<{
             :min="1"
             :max="20"
             :step="1"
-            @update:model-value="value => emit('update:chunkLimit', Number(value))"
+            @update:model-value="(value: number | undefined) => emit('update:chunkLimit', Number(value))"
           />
           <el-button size="small" @click="emit('refresh')">刷新</el-button>
         </div>

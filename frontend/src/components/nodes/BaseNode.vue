@@ -16,7 +16,7 @@ const props = defineProps<{
   selected?: boolean
   inputs?: Array<{ id: string; label?: string }>
   outputs?: Array<{ id: string; label?: string }>
-  status?: 'idle' | 'running' | 'success' | 'failed'
+  status?: string
 }>()
 
 const headerStyle = computed(() => ({
@@ -28,20 +28,10 @@ const iconStyle = computed(() => ({
   background: props.color || '#64748b',
   color: '#ffffff'
 }))
-
-// Status Colors
-const statusColor = computed(() => {
-    switch (props.status) {
-        case 'running': return '#3b82f6';
-        case 'success': return '#10b981';
-        case 'failed': return '#ef4444';
-        default: return '#cbd5e1';
-    }
-})
 </script>
 
 <template>
-  <div class="base-node" :class="{ selected: selected, [status]: true }">
+  <div class="base-node" :class="{ selected: selected, running: status === 'running', failed: status === 'failed', success: status === 'success' }">
     <!-- Header -->
     <div class="node-header" :style="headerStyle">
       <div class="icon-box" :style="iconStyle">

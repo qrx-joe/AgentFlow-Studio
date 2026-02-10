@@ -43,7 +43,7 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
 
     <path
       :id="id"
-      :class="['branch-edge', 'flow', props.class]"
+      :class="['branch-edge', 'flow']"
       :d="edgePathData[0]"
       :style="style"
       :marker-end="`url(#${id}-arrow)`"

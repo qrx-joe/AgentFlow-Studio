@@ -27,7 +27,7 @@ const form = reactive({
   timeoutMs: 0,
   retryCount: 0,
   retryDelayMs: 0,
-  onError: 'fail',
+  onError: 'fail' as 'fail' | 'skip' | 'rollback' | 'compensate',
   compensateKeys: '',
   compensationActionsText: '',
 })

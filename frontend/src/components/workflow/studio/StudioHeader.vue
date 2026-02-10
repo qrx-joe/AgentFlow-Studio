@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { 
-  ArrowLeft, 
-  Monitor, 
-  Sunny, 
-  Moon,
-  VideoPlay,
-  CloudUpload
+import {
+  ArrowLeft,
+  VideoPlay
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const isDark = ref(false)
-const saving = ref(false)
 const lastSaved = ref('刚刚')
 
 defineProps<{

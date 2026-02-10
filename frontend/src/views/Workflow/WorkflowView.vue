@@ -70,7 +70,7 @@ const edgeTypes = {
 }
 
 // Logic Hooks
-const { handleConnect, handleEdgeClick } = useWorkflowEdgeHandlers(workflowStore, addEdges)
+const { handleConnect } = useWorkflowEdgeHandlers(workflowStore, addEdges)
 onConnect(handleConnect)
 const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodes)
 
@@ -132,7 +132,7 @@ const replaying = ref(false)
     <div class="studio-body">
       <!-- Left: Component Library -->
       <aside class="studio-left">
-        <ComponentLibrary @drag-start="(_, type) => {}" /> 
+        <ComponentLibrary @drag-start="() => {}" /> 
         <!-- Note: drag-start handles dataTransfer internally in ComponentLibrary, 
              but we need to ensure local onDragStart matches useWorkflowDragDrop expectations if tailored. 
              Actually ComponentLibrary sets dataTransfer, and onDrop reads it. 

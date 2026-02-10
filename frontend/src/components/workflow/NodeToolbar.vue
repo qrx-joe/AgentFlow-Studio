@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { 
-  VideoPlay, 
-  RefreshRight, 
-  Delete, 
-  Download, 
-  Upload, 
-  Camera,
+import {
+  VideoPlay,
+  Delete,
+  Download,
   VideoPause,
-  FullScreen,
   Aim
 } from '@element-plus/icons-vue'
 

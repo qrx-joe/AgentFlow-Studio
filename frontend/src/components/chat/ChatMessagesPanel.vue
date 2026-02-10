@@ -98,7 +98,7 @@ const handleContentClick = (msg: Message, event: MouseEvent) => {
         type="textarea"
         :rows="2"
         placeholder="输入消息..."
-        @update:model-value="value => emit('update:input', value)"
+        @update:model-value="(value: string) => emit('update:input', value)"
       />
       <el-button type="primary" :loading="props.loading" @click="emit('send')">发送</el-button>
       <el-button v-if="props.streaming" type="danger" @click="emit('stop')">停止</el-button>

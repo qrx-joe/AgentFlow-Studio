@@ -100,8 +100,8 @@ const emit = defineEmits<{
         v-model:edges="edges"
         :node-types="props.nodeTypes"
         :edge-types="props.edgeTypes"
-        @node-double-click="(_event, node) => emit('nodeDoubleClick', node)"
-        @edge-click="(_event, edge) => emit('edgeClick', edge)"
+        @node-double-click="(event: any) => emit('nodeDoubleClick', event.node)"
+        @edge-click="(event: any) => emit('edgeClick', event.edge)"
       >
         <Background />
         <Controls />

@@ -1,4 +1,4 @@
-import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
+import type { InternalAxiosRequestConfig } from 'axios'
 import request from './request'
 
 // 模拟数据存储
@@ -87,7 +87,7 @@ export const setupMock = () => {
                             let steps = []
                             if (mockWorkflows.has(id)) {
                                 const wf = mockWorkflows.get(id)
-                                steps = wf.nodes.map((node: any, index: number) => ({
+                                steps = wf.nodes.map((node: any) => ({
                                     nodeId: node.id,
                                     status: 'completed',
                                     duration: 500,

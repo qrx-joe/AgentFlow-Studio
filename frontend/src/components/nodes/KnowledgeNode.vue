@@ -2,9 +2,9 @@
 import { Files } from '@element-plus/icons-vue'
 import BaseNode from './BaseNode.vue'
 
-defineProps<{ 
-    data: { label: string; dataset?: string; topK?: number },
-    selected?: boolean 
+defineProps<{
+    data: { label: string; dataset?: string; topK?: number; status?: string },
+    selected?: boolean
 }>()
 </script>
 

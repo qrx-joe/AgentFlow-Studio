@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { Connection, Files, ChatLineRound, Monitor } from '@element-plus/icons-vue'
+import { Files, ChatLineRound, Monitor } from '@element-plus/icons-vue'
 
 // 主布局：现代化侧边栏与内容区
 const route = useRoute()

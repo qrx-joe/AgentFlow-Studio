@@ -34,7 +34,7 @@ const handleUpload = async (file: any) => {
         :min="100"
         :max="2000"
         :step="50"
-        @update:model-value="value => emit('update:chunkSize', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:chunkSize', Number(value))"
       />
       <span class="config-label">分块大小</span>
       <el-input-number
@@ -42,7 +42,7 @@ const handleUpload = async (file: any) => {
         :min="0"
         :max="500"
         :step="10"
-        @update:model-value="value => emit('update:overlap', Number(value))"
+        @update:model-value="(value: number | undefined) => emit('update:overlap', Number(value))"
       />
       <span class="config-label">重叠</span>
     </div>

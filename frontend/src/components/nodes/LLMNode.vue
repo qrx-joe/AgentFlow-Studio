@@ -2,8 +2,8 @@
 import { Cpu } from '@element-plus/icons-vue'
 import BaseNode from './BaseNode.vue'
 
-defineProps<{ 
-    data: { label: string; model?: string; systemPrompt?: string },
+defineProps<{
+    data: { label: string; model?: string; systemPrompt?: string; status?: string },
     selected?: boolean
 }>()
 </script>

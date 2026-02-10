@@ -26,7 +26,7 @@ const emit = defineEmits<{
     :model-value="props.modelValue"
     title="执行详情"
     width="720px"
-    @update:model-value="value => emit('update:modelValue', value)"
+    @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <div v-if="props.execution" class="execution-detail">
       <div class="section">
