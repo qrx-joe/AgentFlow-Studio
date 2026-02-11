@@ -23,9 +23,7 @@ export const knowledgeApi = {
     if (options?.overlap !== undefined) {
       formData.append('overlap', String(options.overlap))
     }
-    return request.post('/knowledge/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    return request.post('/knowledge/upload', formData)
   },
   remove: (id: string) => request.delete(`/knowledge/documents/${id}`),
   search: (

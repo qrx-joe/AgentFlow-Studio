@@ -24,16 +24,24 @@ export class EmbeddingService {
   }
 
   async embed(text: string): Promise<number[]> {
-    if (this.client) {
-      const model = process.env.EMBEDDING_MODEL || 'text-embedding-3-small'
-      const response = await this.client.embeddings.create({
-        model,
-        input: text,
-      })
-      return response.data[0].embedding as number[]
+    // 运行时再检查一次，兼容 .env 热重载
+    const skip = process.env.SKIP_EMBEDDING_API === 'true'
+
+    if (this.client && !skip) {
+      try {
+        const model = process.env.EMBEDDING_MODEL || 'text-embedding-3-small'
+        const response = await this.client.embeddings.create({
+          model,
+          input: text,
+        })
+        return response.data[0].embedding as number[]
+      } catch (err) {
+        // Embedding API 调用失败时降级为伪向量，保证上传不中断
+        console.warn('[EmbeddingService] API 调用失败，降级为本地伪向量:', (err as Error).message)
+      }
     }
 
-    // 无 API Key 时使用简单的伪向量，保证流程可跑通
+    // 无 API Key / 跳过 / 调用失败 时使用简单的伪向量，保证流程可跑通
     const dim = Number(process.env.EMBEDDING_DIMENSION || 1536)
     const vector = new Array(dim).fill(0)
     for (let i = 0; i < text.length; i += 1) {

@@ -5,7 +5,7 @@ import { KnowledgeService } from './knowledge.service'
 // 知识库 API 控制器
 @Controller('api/knowledge')
 export class KnowledgeController {
-  constructor(private readonly knowledgeService: KnowledgeService) {}
+  constructor(private readonly knowledgeService: KnowledgeService) { }
 
   @Get('documents')
   listDocuments() {
@@ -19,15 +19,34 @@ export class KnowledgeController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadDocument(
+  async uploadDocument(
     @UploadedFile() file: Express.Multer.File,
     @Body('chunkSize') chunkSize?: string,
     @Body('overlap') overlap?: string
   ) {
-    return this.knowledgeService.uploadDocument(file, {
-      chunkSize: chunkSize ? Number(chunkSize) : undefined,
-      overlap: overlap ? Number(overlap) : undefined,
+    console.log('[Upload] Received request:', {
+      hasFile: !!file,
+      filename: file?.originalname,
+      size: file?.size,
+      mimetype: file?.mimetype,
+      chunkSize,
+      overlap,
     })
+    if (!file) {
+      console.error('[Upload] No file received! Check multipart form data.')
+      throw new Error('未收到文件，请检查上传请求')
+    }
+    try {
+      const result = await this.knowledgeService.uploadDocument(file, {
+        chunkSize: chunkSize ? Number(chunkSize) : undefined,
+        overlap: overlap ? Number(overlap) : undefined,
+      })
+      console.log('[Upload] Success:', result.id)
+      return result
+    } catch (err) {
+      console.error('[Upload] Error:', err)
+      throw err
+    }
   }
 
   @Delete('documents/:id')
