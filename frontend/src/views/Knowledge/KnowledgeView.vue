@@ -31,8 +31,8 @@ onMounted(() => {
   })
 })
 
-const handleUpload = async (file: any) => {
-  await knowledgeStore.uploadDocument(file.raw, {
+const handleUpload = async (file: File) => {
+  await knowledgeStore.uploadDocument(file, {
     chunkSize: chunkSize.value,
     overlap: overlap.value,
   })
