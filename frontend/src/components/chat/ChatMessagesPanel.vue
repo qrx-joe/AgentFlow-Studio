@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted } from 'vue'
+import { ref, nextTick, watch } from 'vue'
 import type { Message } from '@/types'
 
 const props = defineProps<{
@@ -44,7 +44,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 const autoResize = () => {
   if (textareaRef.value) {
     textareaRef.value.style.height = 'auto'
-    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 150) + 'px'
+    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 200) + 'px'
   }
 }
 
@@ -54,7 +54,7 @@ const handleInput = (e: Event) => {
   autoResize()
 }
 
-const formatTime = (dateStr: string) => {
+const formatTime = (dateStr?: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
@@ -64,7 +64,7 @@ const formatTime = (dateStr: string) => {
 const renderMarkdown = (text: string) => {
   if (!text) return ''
   let html = text
-    // 转义 HTML
+    // 转义 HTML (基本)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -88,9 +88,11 @@ const renderMarkdown = (text: string) => {
   html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul class="md-list">$1</ul>')
   // 有序列表
   html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-  // 换行
+  // 换行 (保留段落感)
+  html = html.replace(/\n\n/g, '<div class="spacer"></div>')
   html = html.replace(/\n/g, '<br />')
-  // 清理多余 br
+  
+  // 清理
   html = html.replace(/<br \/><\/li>/g, '</li>')
   html = html.replace(/<br \/><pre/g, '<pre')
   html = html.replace(/<\/pre><br \/>/g, '</pre>')
@@ -109,11 +111,13 @@ const renderContent = (msg: Message) => {
 
   for (let i = 0; i < snippets.length; i += 1) {
     const snippet = snippets[i]
+    if (snippet.length < 5) continue // 忽略太短的
     const safeSnippet = snippet
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-    if (safeSnippet && html.includes(safeSnippet)) {
+    
+    if (html.includes(safeSnippet)) {
       html = html.split(safeSnippet).join(
         `<mark class="source-highlight" data-source-index="${i}">${safeSnippet}</mark>`
       )
@@ -150,584 +154,628 @@ const handleQuickPrompt = (text: string) => {
 
 <template>
   <section class="chat-main">
-    <!-- 空状态欢迎页 -->
-    <div v-if="props.messages.length === 0" class="welcome">
-      <div class="welcome-icon">
-        <div class="glow-ring"></div>
-        <span class="ai-logo">🤖</span>
-      </div>
-      <h2 class="welcome-title">你好，有什么我能帮到你的？</h2>
-      <p class="welcome-desc">AgentFlow AI 助手，基于你的知识库进行智能对话</p>
-      <div class="quick-prompts">
-        <button
-          v-for="prompt in quickPrompts"
-          :key="prompt.text"
-          class="quick-prompt"
-          @click="handleQuickPrompt(prompt.text)"
-        >
-          <span class="qp-icon">{{ prompt.icon }}</span>
-          <span class="qp-text">{{ prompt.text }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 消息列表 -->
-    <div v-else ref="messagesContainer" class="messages-container">
-      <div
-        v-for="msg in props.messages"
-        :key="msg.id"
-        :id="`msg-${msg.id}`"
-        class="message-row"
-        :class="[msg.role, { highlighted: msg.id === props.activeMessageId }]"
-      >
-        <div class="avatar" :class="msg.role">
-          <span v-if="msg.role === 'user'">👤</span>
-          <span v-else>🤖</span>
+    <!-- 1. 消息列表区 -->
+    <div ref="messagesContainer" class="messages-scroll-area">
+      <!-- 空状态 -->
+      <div v-if="props.messages.length === 0" class="welcome-container">
+        <div class="welcome-content">
+          <div class="welcome-logo">
+            <span class="ai-emoji">🤖</span>
+            <div class="logo-ring"></div>
+          </div>
+          <h2 class="welcome-title">有什么可以帮你的吗？</h2>
+          <p class="welcome-desc">AgentFlow AI 助手，基于你的知识库进行智能对话</p>
+          <div class="quick-prompts">
+            <button
+              v-for="prompt in quickPrompts"
+              :key="prompt.text"
+              class="quick-prompt"
+              @click="handleQuickPrompt(prompt.text)"
+            >
+              <div class="qp-icon">{{ prompt.icon }}</div>
+              <div class="qp-text">{{ prompt.text }}</div>
+              <div class="qp-arrow">→</div>
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div class="message-body">
-          <div class="message-meta">
-            <span class="role-label">{{ msg.role === 'user' ? '你' : 'AI 助手' }}</span>
-            <span class="msg-time">{{ formatTime(msg.createdAt) }}</span>
+      <!-- 消息流 -->
+      <div v-else class="chat-flow">
+        <div
+          v-for="msg in props.messages"
+          :key="msg.id"
+          :id="`msg-${msg.id}`"
+          class="message-row"
+          :class="[msg.role]"
+        >
+          <!-- 头像 -->
+          <div class="avatar" :class="msg.role">
+            <span v-if="msg.role === 'user'">👤</span>
+            <span v-else>🤖</span>
           </div>
 
-          <div class="bubble" :class="msg.role">
-            <div
-              v-if="msg.role === 'assistant'"
-              class="content markdown-body"
-              v-html="renderContent(msg)"
-              @click="handleContentClick(msg, $event)"
-            />
-            <div v-else class="content">{{ msg.content }}</div>
+          <!-- 消息内容 -->
+          <div class="message-content-wrapper">
+            <div class="message-sender">
+              {{ msg.role === 'user' ? '你' : 'AI 助手' }}
+              <span class="msg-time">{{ formatTime(msg.createdAt) }}</span>
+            </div>
 
-            <!-- 打字光标 -->
-            <span
-              v-if="msg.role === 'assistant' && props.streaming && msg === props.messages[props.messages.length - 1]"
-              class="typing-cursor"
-            >▎</span>
-          </div>
+            <div class="message-bubble" :class="msg.role">
+              <!-- AI 消息（无气泡背景） -->
+              <div
+                v-if="msg.role === 'assistant'"
+                class="markdown-body"
+                v-html="renderContent(msg)"
+                @click="handleContentClick(msg, $event)"
+              />
+              <!-- 用户消息（有气泡背景） -->
+              <div v-else class="user-text">{{ msg.content }}</div>
 
-          <!-- 来源标签 -->
-          <div v-if="msg.sources?.length" class="sources">
-            <div class="sources-label">📚 引用来源</div>
-            <div class="source-chips">
-              <button
-                v-for="(src, index) in msg.sources"
-                :key="index"
-                class="source-chip"
-                @click="emit('selectSource', msg.id, src)"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
+              <!-- 打字光标 -->
+              <span
+                v-if="msg.role === 'assistant' && props.streaming && msg === props.messages[props.messages.length - 1]"
+                class="typing-cursor"
+              >●</span>
+            </div>
+
+            <!-- 来源 (仅 AI) -->
+            <div v-if="msg.role === 'assistant' && msg.sources?.length" class="sources-area">
+              <div class="sources-title">引用来源</div>
+              <div class="source-list">
+                <div
+                  v-for="(src, index) in msg.sources"
+                  :key="index"
+                  class="source-item"
+                  @click="emit('selectSource', msg.id, src)"
+                >
+                  <span class="source-idx">{{ index + 1 }}</span>
+                  <span class="source-name">{{ src.documentId?.slice(0, 8) || '未知文档' }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 底部操作栏 (仅 AI) -->
+            <div v-if="msg.role === 'assistant' && !props.streaming" class="message-actions">
+              <button class="action-btn" title="复制">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
-                {{ src.documentId?.slice(0, 8) || '来源' }} #{{ index + 1 }}
+              </button>
+              <button class="action-btn" title="重新生成">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 生成中提示 -->
-      <div v-if="props.streaming" class="streaming-indicator">
-        <div class="dot-pulse">
-          <span></span><span></span><span></span>
+        <!-- 流式加载中指示 -->
+        <div v-if="props.streaming" class="streaming-status">
+           <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+           </svg>
+           AI 思考中...
         </div>
-        <span class="streaming-text">正在生成回答...</span>
+        
+        <!-- 底部垫高，防止被输入框遮挡 -->
+        <div style="height: 120px;"></div>
       </div>
     </div>
 
-    <!-- 输入区 -->
-    <div class="input-area">
+    <!-- 2. 输入区（悬浮卡片） -->
+    <div class="input-float-container">
       <div class="input-card">
         <textarea
           ref="textareaRef"
           :value="props.input"
-          placeholder="输入消息，Enter 发送，Shift+Enter 换行..."
+          placeholder="问点什么... (Enter 发送)"
           rows="1"
           @input="handleInput"
           @keydown="handleKeydown"
         />
-        <div class="input-actions">
-          <button
-            v-if="props.streaming"
-            class="btn-stop"
-            @click="emit('stop')"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="6" width="12" height="12" rx="2" />
-            </svg>
-            停止
-          </button>
-          <button
-            v-else
-            class="btn-send"
-            :class="{ active: props.input?.trim() }"
-            :disabled="!props.input?.trim() || props.loading"
-            @click="emit('send')"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
+        <div class="input-actions-row">
+          <div class="start-actions">
+            <button class="tool-btn" title="上传附件">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="end-actions">
+            <button
+              v-if="props.streaming"
+              class="send-btn stop"
+              @click="emit('stop')"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </button>
+             <button
+              v-else
+              class="send-btn"
+              :class="{ active: props.input?.trim() }"
+              :disabled="!props.input?.trim() || props.loading"
+              @click="emit('send')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
-      <div class="input-hint">AgentFlow AI · 基于知识库的智能助手</div>
+      <div class="footer-hint">AgentFlow AI 提供技术支持</div>
     </div>
   </section>
 </template>
 
 <style scoped>
 .chat-main {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.04),
-    0 8px 24px rgba(15, 23, 42, 0.06);
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #ffffff; /* Clean white bg */
   overflow: hidden;
 }
 
-/* ===== 欢迎页 ===== */
-.welcome {
+/* ===== 1. 消息滚动区 ===== */
+.messages-scroll-area {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 16px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 0;
 }
 
-.welcome-icon {
+/* 隐藏滚动条但保留功能 (Chrome/Safari) */
+.messages-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.messages-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+}
+.messages-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 欢迎页 */
+.welcome-container {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-content {
+  text-align: center;
+  width: 100%;
+}
+
+.welcome-logo {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  background: #f3f4f6;
+  border-radius: 20px;
 }
 
-.glow-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(99, 102, 241, 0.15) 0%,
-    rgba(59, 130, 246, 0.05) 60%,
-    transparent 70%
-  );
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.2); opacity: 1; }
-}
-
-.ai-logo {
-  font-size: 36px;
-  z-index: 1;
+.ai-emoji {
+  font-size: 32px;
+  position: relative;
+  z-index: 2;
 }
 
 .welcome-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0;
+  color: #111827;
+  margin-bottom: 8px;
 }
 
 .welcome-desc {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 32px;
 }
 
 .quick-prompts {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 24px;
-  width: 100%;
-  max-width: 420px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .quick-prompt {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   text-align: left;
 }
 
 .quick-prompt:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  background: #fff;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .qp-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 8px;
   font-size: 18px;
-  flex-shrink: 0;
+  border: 1px solid #f3f4f6;
 }
 
 .qp-text {
-  font-size: 13px;
-  color: #334155;
+  flex: 1;
+  font-size: 14px;
   font-weight: 500;
+  color: #374151;
 }
 
-/* ===== 消息区 ===== */
-.messages-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 20px;
+.qp-arrow {
+  color: #9ca3af;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all 0.2s;
+}
+
+.quick-prompt:hover .qp-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 对话流容器 - 取 Dify 的居中窄布局 */
+.chat-flow {
+  max-width: 800px; /* 关键：限制宽度 */
+  margin: 0 auto;
+  padding: 40px 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px; /* 消息间距大一点 */
 }
 
-.messages-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.messages-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.messages-container::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 3px;
-}
-
+/* 消息行 */
 .message-row {
   display: flex;
-  gap: 12px;
-  animation: fadeInUp 0.3s ease;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.message-row.highlighted .bubble {
-  outline: 2px solid #38bdf8;
-  outline-offset: 2px;
+.message-row.user {
+  flex-direction: row-reverse;
 }
 
 /* 头像 */
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .avatar.user {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .avatar.assistant {
-  background: linear-gradient(135deg, #10b981, #06b6d4);
+  background: #f0fdf4;
+  color: #16a34a;
 }
 
-/* 消息体 */
-.message-body {
+/* 消息体 Wrapper */
+.message-content-wrapper {
   flex: 1;
   min-width: 0;
-  max-width: 80%;
-}
-
-.message-meta {
+  max-width: 90%; /* 给头像留点空间 */
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.role-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
+.message-row.user .message-content-wrapper {
+  align-items: flex-end;
+}
+
+.message-sender {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .msg-time {
-  font-size: 11px;
-  color: #94a3b8;
+  opacity: 0.5;
+  margin-left: 6px;
+  font-weight: 400;
 }
 
-/* 气泡 */
-.bubble {
-  padding: 14px 18px;
-  border-radius: 4px 16px 16px 16px;
-  font-size: 14px;
+/* 消息内容 (气泡/文本) */
+.message-bubble {
+  font-size: 15px;
   line-height: 1.7;
   word-break: break-word;
 }
 
-.bubble.user {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+/* AI 消息：去气泡化，直接显示 markdown */
+.message-row.assistant .message-bubble {
+  width: 100%;
+  color: #1f2937;
+}
+
+/* 用户消息：蓝色气泡 */
+.message-row.user .message-bubble {
+  background: #2563eb;
   color: #fff;
-  border-radius: 16px 4px 16px 16px;
+  padding: 12px 16px;
+  border-radius: 12px 2px 12px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.bubble.assistant {
-  background: #f1f5f9;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
+.user-text {
+  font-family: inherit;
 }
 
-/* 打字光标 */
-.typing-cursor {
-  display: inline-block;
-  color: #3b82f6;
-  font-weight: 700;
-  animation: blink 0.8s step-end infinite;
+/* 来源 */
+.sources-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  width: 100%;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-/* Markdown 样式 */
-.markdown-body :deep(h2),
-.markdown-body :deep(h3),
-.markdown-body :deep(h4) {
-  margin: 12px 0 6px;
-  color: #0f172a;
-}
-
-.markdown-body :deep(.md-h2) { font-size: 17px; }
-.markdown-body :deep(.md-h3) { font-size: 15px; }
-.markdown-body :deep(.md-h4) { font-size: 14px; }
-
-.markdown-body :deep(.code-block) {
-  background: #0f172a;
-  color: #e2e8f0;
-  padding: 14px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1.6;
-  overflow-x: auto;
-  margin: 8px 0;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-}
-
-.markdown-body :deep(.inline-code) {
-  background: #e0e7ff;
-  color: #4338ca;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-}
-
-.markdown-body :deep(.md-list) {
-  padding-left: 20px;
-  margin: 4px 0;
-}
-
-.markdown-body :deep(strong) {
-  color: #0f172a;
-  font-weight: 600;
-}
-
-.markdown-body :deep(.source-highlight) {
-  background: #fef9c3;
-  color: #854d0e;
-  padding: 0 3px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.markdown-body :deep(.source-highlight:hover) {
-  background: #fde047;
-}
-
-/* 来源标签 */
-.sources {
-  margin-top: 10px;
-}
-
-.sources-label {
+.sources-title {
   font-size: 11px;
-  color: #64748b;
-  font-weight: 500;
+  color: #9ca3af;
+  font-weight: 600;
   margin-bottom: 6px;
+  text-transform: uppercase;
 }
 
-.source-chips {
+.source-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.source-chip {
+.source-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  gap: 6px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 4px 8px;
   cursor: pointer;
-  font-size: 12px;
-  color: #0369a1;
-  font-weight: 500;
   transition: all 0.15s;
 }
 
-.source-chip:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
+.source-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
-/* 流式指示器 */
-.streaming-indicator {
+.source-idx {
+  background: #e5e7eb;
+  color: #4b5563;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
+  justify-content: center;
+  font-weight: 700;
 }
 
-.dot-pulse {
-  display: flex;
-  gap: 4px;
-}
-
-.dot-pulse span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #94a3b8;
-  animation: dotBounce 1.4s ease-in-out infinite;
-}
-
-.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
-.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes dotBounce {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
-}
-
-.streaming-text {
+.source-name {
   font-size: 12px;
-  color: #94a3b8;
+  color: #374151;
 }
 
-/* ===== 输入区 ===== */
-.input-area {
-  padding: 16px 20px 12px;
-  border-top: 1px solid #f1f5f9;
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message-row:hover .message-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Markdown 样式覆盖 (Light) */
+.markdown-body :deep(h2) { font-size: 1.1em; font-weight: 700; margin-top: 16px; }
+.markdown-body :deep(p) { margin: 8px 0; }
+.markdown-body :deep(ul), .markdown-body :deep(ol) { padding-left: 20px; }
+.markdown-body :deep(.code-block) {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+}
+.markdown-body :deep(.inline-code) {
+  background: #f1f5f9;
+  color: #ef4444; /* Red emphasis like Dify sometimes has or Notion */
+  padding: 2px 4px;
+}
+.markdown-body :deep(.source-highlight) {
+  background: rgba(253, 224, 71, 0.4);
+  border-bottom: 2px solid #eab308;
+}
+
+/* 流式加载 */
+.streaming-status {
+  padding-left: 50px; /* Align with text */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.animate-spin {
+  animation: spin 2s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ===== 2. 悬浮输入区 ===== */
+.input-float-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 20px 24px;
+  background: linear-gradient(to top, #ffffff 80%, rgba(255,255,255,0));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .input-card {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Strong shadow */
+  padding: 12px 16px;
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 10px 14px;
+  flex-direction: column;
+  gap: 8px;
   transition: all 0.2s;
 }
 
 .input-card:focus-within {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12);
 }
 
 .input-card textarea {
-  flex: 1;
+  width: 100%;
   border: none;
   outline: none;
-  background: none;
   resize: none;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
-  color: #0f172a;
+  color: #111827;
+  background: transparent;
+  max-height: 200px;
   font-family: inherit;
-  max-height: 150px;
 }
 
 .input-card textarea::placeholder {
-  color: #94a3b8;
+  color: #9ca3af;
 }
 
-.input-actions {
+.input-actions-row {
   display: flex;
-  gap: 6px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.btn-send {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: none;
-  background: #e2e8f0;
-  color: #94a3b8;
-  cursor: pointer;
+.start-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tool-btn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.btn-send.active {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+.tool-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
-.btn-send:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.btn-stop {
+.send-btn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  justify-content: center;
+  border-radius: 8px;
   border: none;
-  background: #fef2f2;
-  color: #dc2626;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
   transition: all 0.2s;
 }
 
-.btn-stop:hover {
-  background: #fee2e2;
+.send-btn.active {
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
 }
 
-.input-hint {
-  text-align: center;
+.send-btn.stop {
+  background: #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+}
+
+.footer-hint {
   font-size: 11px;
-  color: #cbd5e1;
+  color: #d1d5db;
   margin-top: 8px;
 }
 </style>

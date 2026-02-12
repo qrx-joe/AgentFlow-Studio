@@ -93,6 +93,7 @@ const goToDocument = () => {
   gap: 16px;
   height: 100%;
   padding: 0;
+  background-color: #f3f4f6; /* Light gray background for the workspace */
 }
 
 @media (max-width: 768px) {

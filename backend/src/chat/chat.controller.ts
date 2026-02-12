@@ -47,18 +47,15 @@ export class ChatController {
         res.write(`data: ${token}\n\n`)
       })
 
-      // 发送结束事件，包含溯源信息
       res.write(`event: done\n`)
       res.write(`data: ${JSON.stringify({ id: assistant.id, sources: assistant.sources })}\n\n`)
+      res.end()
     } catch (error) {
       console.error('[ChatController] SSE stream error:', error)
-      // 发送错误信息作为 SSE data，前端至少能看到错误提示
       const errMsg = (error as any)?.message || '服务器内部错误'
-      res.write(`data: ⚠️ ${errMsg}\n\n`)
-      res.write(`event: done\n`)
-      res.write(`data: ${JSON.stringify({ id: null, sources: [] })}\n\n`)
+      res.write(`event: error\n`)
+      res.write(`data: ${JSON.stringify({ message: errMsg })}\n\n`)
+      res.end()
     }
-
-    res.end()
   }
 }

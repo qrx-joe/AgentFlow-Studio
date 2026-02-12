@@ -133,7 +133,17 @@ export const useChatStore = defineStore('chat', {
           buffer = parts.pop() || ''
 
           for (const part of parts) {
-            if (part.startsWith('event: done')) {
+            if (part.startsWith('event: error')) {
+              const dataLine = part.split('\n').find(line => line.startsWith('data: '))
+              if (dataLine) {
+                try {
+                  const payload = JSON.parse(dataLine.replace('data: ', ''))
+                  assistantMessage.content += payload.message || '服务器内部错误'
+                } catch {
+                  assistantMessage.content += '服务器内部错误'
+                }
+              }
+            } else if (part.startsWith('event: done')) {
               const dataLine = part.split('\n').find(line => line.startsWith('data: '))
               if (dataLine) {
                 try {

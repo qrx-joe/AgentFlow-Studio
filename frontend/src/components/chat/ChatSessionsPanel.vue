@@ -38,7 +38,7 @@ const handleDelete = (e: Event, id: string) => {
     <div class="sidebar-header">
       <div class="sidebar-logo">
         <div class="logo-icon">💬</div>
-        <span class="logo-text">对话</span>
+        <span class="logo-text">对话历史</span>
       </div>
       <button class="btn-new-chat" @click="emit('create')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,7 +85,11 @@ const handleDelete = (e: Event, id: string) => {
 
 <style scoped>
 .sessions-sidebar {
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  background: #fdfdfd; 
+  /* Dify style light background */
+  border-right: 1px solid #e5e7eb;
+  border-radius: 16px 0 0 16px; /* only left rounded if inside a container, for now keep simple */ 
+  /* Actually standard Dify sidebar is usually full height square, but let's keep rounded for consistency with container */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -98,23 +102,26 @@ const handleDelete = (e: Event, id: string) => {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* border-bottom: 1px solid #f3f4f6; */
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-left: 4px;
 }
 
 .logo-icon {
   font-size: 20px;
+  /* Dify logic: colorful icon */
+  filter: grayscale(0.2);
 }
 
 .logo-text {
   font-size: 16px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: #111827; /* Dark text for light mode */
   letter-spacing: 0.5px;
 }
 
@@ -124,20 +131,20 @@ const handleDelete = (e: Event, id: string) => {
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
+  background: #eff6ff; /* Light blue bg */
+  color: #2563eb; /* Blue text */
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  /* Dify style: clean button */
 }
 
 .btn-new-chat:hover {
+  background: #dbeafe;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
 }
 
 .btn-new-chat:active {
@@ -147,10 +154,10 @@ const handleDelete = (e: Event, id: string) => {
 .session-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px; /* Slightly more gap */
 }
 
 .session-list::-webkit-scrollbar {
@@ -162,7 +169,7 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: #e5e7eb;
   border-radius: 4px;
 }
 
@@ -171,30 +178,33 @@ const handleDelete = (e: Event, id: string) => {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
+  color: #4b5563;
 }
 
 .session-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .session-item.active {
-  background: rgba(59, 130, 246, 0.15);
-  border-left: 3px solid #3b82f6;
+  background: #eff6ff; /* Light blue active bg */
+  color: #1d4ed8; /* Blue active text */
+  /* Remove border-left logic, use full bg */
 }
 
 .session-icon {
-  color: rgba(148, 163, 184, 0.7);
+  color: #9ca3af;
   flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
 .session-item.active .session-icon {
-  color: #60a5fa;
+  color: #3b82f6;
 }
 
 .session-info {
@@ -203,27 +213,26 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-title {
-  font-size: 13px;
-  color: #cbd5e1;
+  font-size: 14px; /* Slightly larger */
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 500;
-}
-
-.session-item.active .session-title {
-  color: #f1f5f9;
 }
 
 .session-time {
   font-size: 11px;
-  color: #475569;
+  color: #9ca3af;
   margin-top: 2px;
+}
+
+.session-item.active .session-time {
+  color: #93c5fd;
 }
 
 .btn-delete {
   opacity: 0;
-  color: #64748b;
+  color: #9ca3af;
   background: none;
   border: none;
   cursor: pointer;
@@ -241,7 +250,7 @@ const handleDelete = (e: Event, id: string) => {
 
 .btn-delete:hover {
   color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  background: #fee2e2;
 }
 
 .empty-sessions {
@@ -256,17 +265,18 @@ const handleDelete = (e: Event, id: string) => {
 
 .empty-icon {
   font-size: 32px;
-  opacity: 0.5;
+  opacity: 0.3;
+  filter: grayscale(1);
 }
 
 .empty-text {
-  color: #64748b;
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
 }
 
 .empty-hint {
-  color: #475569;
+  color: #9ca3af;
   font-size: 12px;
 }
 </style>

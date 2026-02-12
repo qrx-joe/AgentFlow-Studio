@@ -10,6 +10,7 @@ import { ElMessage } from 'element-plus'
 import StudioHeader from '@/components/workflow/studio/StudioHeader.vue'
 import ComponentLibrary from '@/components/workflow/studio/ComponentLibrary.vue'
 import PropertiesPanel from '@/components/workflow/studio/PropertiesPanel.vue'
+import DebugPanel from '@/components/workflow/DebugPanel.vue'
 
 // Canvas
 import WorkflowCanvasPanel from '@/components/workflow/panels/WorkflowCanvasPanel.vue'
@@ -28,6 +29,7 @@ import KnowledgeNode from '@/components/nodes/KnowledgeNode.vue'
 import ConditionNode from '@/components/nodes/ConditionNode.vue'
 import CodeNode from '@/components/nodes/CodeNode.vue'
 import EndNode from '@/components/nodes/EndNode.vue'
+import HttpNode from '@/components/nodes/HttpNode.vue'
 
 const route = useRoute()
 const workflowStore = useWorkflowStore()
@@ -65,6 +67,7 @@ const nodeTypes = {
   condition: ConditionNode,
   code: CodeNode,
   end: EndNode,
+  http: HttpNode,
 }
 const edgeTypes = {
   branch: BranchEdge,
@@ -127,13 +130,26 @@ const handlePublish = () => {
 
 // Replay logic (simplified for layout demo, restore full logic later if needed)
 const replaying = ref(false)
+
+// 调试面板
+const debugPanelVisible = ref(false)
+
+const handleShowDebug = () => {
+  debugPanelVisible.value = true
+}
+
+const handleDebugRun = async (testData: any) => {
+  console.log('[Debug] Running with test data:', testData)
+  // 这里可以调用实际的执行逻辑
+  await handleRun()
+}
 </script>
 
 <template>
   <div class="studio-layout">
-    <StudioHeader 
-        :workflow-name="workflowStore.workflowName" 
-        @run="handleRun"
+    <StudioHeader
+        :workflow-name="workflowStore.workflowName"
+        @run="handleShowDebug"
         @publish="handlePublish"
     />
     
@@ -194,6 +210,12 @@ const replaying = ref(false)
         />
       </aside>
     </div>
+
+    <!-- 调试面板 -->
+    <DebugPanel
+      v-model:visible="debugPanelVisible"
+      @run="handleDebugRun"
+    />
   </div>
 </template>
 

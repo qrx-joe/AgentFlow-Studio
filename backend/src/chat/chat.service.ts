@@ -36,7 +36,8 @@ export class ChatService {
   }
 
   async sendMessage(payload: { sessionId: string; content: string }) {
-    const { sessionId, content } = payload
+    const { content } = payload
+    const sessionId = await this.ensureSession(payload.sessionId)
 
     // 0. 拉取最近对话，构建多轮上下文
     const history = await this.messageRepo.find({
@@ -93,7 +94,8 @@ export class ChatService {
     payload: { sessionId: string; content: string },
     onToken: (token: string) => void
   ) {
-    const { sessionId, content } = payload
+    const { content } = payload
+    const sessionId = await this.ensureSession(payload.sessionId)
 
     // 0. 拉取最近对话，构建多轮上下文
     const history = await this.messageRepo.find({
@@ -157,5 +159,15 @@ export class ChatService {
     })
 
     return assistant
+  }
+
+  private async ensureSession(sessionId?: string) {
+    if (sessionId) {
+      const existing = await this.sessionRepo.findOne({ where: { id: sessionId } })
+      if (existing) return existing.id
+    }
+    const session = this.sessionRepo.create({ title: '新会话' })
+    const saved = await this.sessionRepo.save(session)
+    return saved.id
   }
 }
