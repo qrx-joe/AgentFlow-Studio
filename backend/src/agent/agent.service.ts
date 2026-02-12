@@ -7,11 +7,12 @@ export class AgentService {
   private client?: OpenAI
 
   constructor() {
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
+    const baseURL = process.env.DEEPSEEK_BASE_URL || process.env.OPENAI_BASE_URL
     if (apiKey) {
       this.client = new OpenAI({
         apiKey,
-        baseURL: process.env.OPENAI_BASE_URL,
+        baseURL,
       })
     }
   }
@@ -45,7 +46,8 @@ export class AgentService {
         return content
       } catch (error) {
         console.error('[AgentService] LLM API call failed:', error)
-        return `抱歉，AI 服务暂时不可用：${error.message}`
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        return `抱歉，AI 服务暂时不可用：${errorMessage}`
       }
     }
 
@@ -85,7 +87,8 @@ export class AgentService {
         return
       } catch (error) {
         console.error('[AgentService] LLM stream API call failed:', error)
-        yield `抱歉，AI 服务暂时不可用：${error.message}`
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        yield `抱歉，AI 服务暂时不可用：${errorMessage}`
         return
       }
     }

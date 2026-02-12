@@ -46,6 +46,8 @@ export const useChatStore = defineStore('chat', {
         await this.createSession()
       }
 
+      const isFirstMessage = this.messages.length === 0
+
       // 先插入用户消息，提升交互体验
       const userMessage: Message = {
         id: `msg-${Date.now()}`,
@@ -123,9 +125,14 @@ export const useChatStore = defineStore('chat', {
         let buffer = ''
 
         // 读取 SSE 数据块
+        console.log('[Chat] Starting SSE stream...')
+        let tokenCount = 0
         while (true) {
           const { value, done } = await reader.read()
-          if (done) break
+          if (done) {
+            console.log(`[Chat] Stream ended. Total tokens: ${tokenCount}`)
+            break
+          }
           buffer += decoder.decode(value, { stream: true })
 
           // 按 SSE 事件分割
@@ -139,6 +146,7 @@ export const useChatStore = defineStore('chat', {
                 try {
                   const payload = JSON.parse(dataLine.replace('data: ', ''))
                   assistantMessage.content += payload.message || '服务器内部错误'
+                  console.error('[Chat] SSE error:', payload.message)
                 } catch {
                   assistantMessage.content += '服务器内部错误'
                 }
@@ -149,6 +157,7 @@ export const useChatStore = defineStore('chat', {
                 try {
                   const payload = JSON.parse(dataLine.replace('data: ', ''))
                   assistantMessage.sources = payload.sources || []
+                  console.log('[Chat] Stream done, sources:', payload.sources?.length || 0)
                 } catch {
                   // 解析失败，忽略
                 }
@@ -156,6 +165,10 @@ export const useChatStore = defineStore('chat', {
             } else if (part.startsWith('data: ')) {
               const token = part.replace('data: ', '')
               assistantMessage.content += token
+              tokenCount++
+              if (tokenCount % 10 === 0) {
+                console.log(`[Chat] Received ${tokenCount} tokens, current length: ${assistantMessage.content.length}`)
+              }
             }
           }
         }
@@ -172,6 +185,15 @@ export const useChatStore = defineStore('chat', {
           } catch {
             assistantMessage.content = '⚠️ AI 未返回内容，请检查后端日志'
           }
+        }
+
+        // 如果是第一条消息，延迟刷新会话列表以获取 AI 生成的标题
+        if (isFirstMessage) {
+          setTimeout(() => {
+            this.fetchSessions().catch(err => {
+              console.warn('[Chat] Failed to refresh sessions after title generation:', err)
+            })
+          }, 2000)
         }
 
         return assistantMessage

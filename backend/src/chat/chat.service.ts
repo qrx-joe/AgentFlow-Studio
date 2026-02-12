@@ -104,6 +104,9 @@ export class ChatService {
       take: 10,
     })
 
+    // 判断是否为第一条消息（用于生成标题）
+    const isFirstMessage = history.length === 0
+
     // 1. 保存用户消息
     await this.messageRepo.save({
       sessionId,
@@ -158,7 +161,41 @@ export class ChatService {
       sources,
     })
 
+    // 5. 如果是第一条消息，生成会话标题
+    if (isFirstMessage) {
+      this.generateSessionTitle(sessionId, content, fullText).catch(err => {
+        console.warn('[ChatService] Failed to generate session title:', err)
+      })
+    }
+
     return assistant
+  }
+
+  // 生成会话标题
+  private async generateSessionTitle(sessionId: string, userMessage: string, assistantMessage: string) {
+    try {
+      const titlePrompt = '请根据以下对话内容，生成一个简短的标题（不超过20个字），只返回标题文本，不要有任何其他内容：'
+      const context = `用户：${userMessage}\n助手：${assistantMessage.substring(0, 200)}`
+
+      const title = await this.agentService.chat({
+        prompt: titlePrompt,
+        input: context,
+        context: {},
+      })
+
+      // 清理标题：去除引号、换行等
+      const cleanTitle = title.trim().replace(/^["']|["']$/g, '').replace(/\n/g, ' ').substring(0, 50)
+
+      if (cleanTitle && cleanTitle !== '新会话') {
+        await this.sessionRepo.update(sessionId, {
+          title: cleanTitle,
+          updatedAt: new Date()
+        })
+        console.log(`[ChatService] Generated title for session ${sessionId}: ${cleanTitle}`)
+      }
+    } catch (error) {
+      console.error('[ChatService] Error generating session title:', error)
+    }
   }
 
   private async ensureSession(sessionId?: string) {
