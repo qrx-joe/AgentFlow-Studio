@@ -42,17 +42,36 @@ export class KnowledgeService {
     options: { chunkSize?: number; overlap?: number } = {}
   ) {
     const startTime = Date.now()
-    // 1. 保存文档元信息
-    const document = await this.documentRepo.save({
-      filename: file.originalname,
-      fileType: file.mimetype,
-      fileSize: file.size,
-      content: file.buffer.toString('utf-8'),
-      metadata: {
-        chunkSize: options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500,
-        overlap: options.overlap && options.overlap >= 0 ? options.overlap : 50,
-      },
-    })
+
+    try {
+      // 清理文本内容：移除空字节和其他不可见字符
+      const cleanContent = (text: string): string => {
+        return text
+          .replace(/\0/g, '') // 移除空字节
+          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // 移除其他控制字符
+          .trim()
+      }
+
+      // 1. 保存文档元信息
+      const rawContent = file.buffer.toString('utf-8')
+      const cleanedContent = cleanContent(rawContent)
+
+      if (!cleanedContent) {
+        throw new Error('文档内容为空或无法解析')
+      }
+
+      console.log(`[KnowledgeService] Uploading document: ${file.originalname}, size: ${file.size} bytes`)
+
+      const document = await this.documentRepo.save({
+        filename: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        content: cleanedContent,
+        metadata: {
+          chunkSize: options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500,
+          overlap: options.overlap && options.overlap >= 0 ? options.overlap : 50,
+        },
+      })
 
     // 2. 分块并生成向量
     const chunkSize = options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500
@@ -71,18 +90,28 @@ export class KnowledgeService {
     let embeddingDim = Number(process.env.EMBEDDING_DIMENSION || 1536)
     for (let i = 0; i < chunks.length; i += 1) {
       const chunk = chunks[i]
-      const embedding = await this.embeddingService.embed(chunk)
+      // 清理分块内容
+      const cleanedChunk = chunk
+        .replace(/\0/g, '')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        .trim()
+
+      if (!cleanedChunk) continue // 跳过空分块
+
+      const embedding = await this.embeddingService.embed(cleanedChunk)
       if (Array.isArray(embedding) && embedding.length > 0) {
         embeddingDim = embedding.length
       }
       await this.chunkRepo.save({
         documentId: document.id,
-        content: chunk,
+        content: cleanedChunk,
         chunkIndex: i,
         embedding,
       })
     }
     const embedMs = Date.now() - embedStart
+
+    console.log(`[KnowledgeService] Document processed: ${chunks.length} chunks, ${charCount} chars, ${Date.now() - startTime}ms`)
 
     // 4. 更新元信息（分块数量、字符数）
     document.metadata = {
@@ -97,6 +126,10 @@ export class KnowledgeService {
     await this.documentRepo.save(document)
 
     return document
+    } catch (error) {
+      console.error('[KnowledgeService] Upload failed:', error)
+      throw error
+    }
   }
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
