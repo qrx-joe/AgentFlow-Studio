@@ -105,10 +105,17 @@ const handleDeleteNode = (id: string) => {
 const handleRun = async () => {
     workflowStore.executing = true
     try {
+        // 如果没有保存过，先自动保存
+        if (!workflowStore.workflowId) {
+            await workflowStore.saveWorkflow()
+            ElMessage.info('已自动保存工作流')
+        }
         await workflowStore.executeWorkflow('Test Input')
         ElMessage.success('执行完成')
-    } catch (e) {
-        ElMessage.error('执行失败')
+    } catch (e: any) {
+        const msg = e?.response?.data?.message || e?.message || '执行失败'
+        ElMessage.error(msg)
+        console.error('[Workflow Execute]', e)
     } finally {
         workflowStore.executing = false
     }
