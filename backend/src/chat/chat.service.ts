@@ -15,7 +15,7 @@ export class ChatService {
     @InjectRepository(ChatMessageEntity) private messageRepo: Repository<ChatMessageEntity>,
     private agentService: AgentService,
     private knowledgeService: KnowledgeService
-  ) {}
+  ) { }
 
   async listSessions() {
     return this.sessionRepo.find({ order: { updatedAt: 'DESC' } })
@@ -52,18 +52,26 @@ export class ChatService {
       content,
     })
 
-    // 2. 检索知识库，构造上下文
-    const searchResults = await this.knowledgeService.search(content, 3)
-    const sources: ChatSource[] = searchResults.map((item) => ({
-      documentId: item.documentId,
-      content: item.content,
-    }))
-
-    const contextText = searchResults.map((item) => item.content).join('\n\n---\n\n')
+    // 2. 检索知识库，构造上下文（允许失败，不影响对话）
+    let sources: ChatSource[] = []
+    let contextText = ''
+    try {
+      const searchResults = await this.knowledgeService.search(content, 3)
+      sources = searchResults.map((item) => ({
+        documentId: item.documentId,
+        content: item.content,
+      }))
+      contextText = searchResults.map((item) => item.content).join('\n\n---\n\n')
+    } catch (e) {
+      console.warn('[ChatService] Knowledge search failed in sendMessage:', (e as any)?.message)
+    }
 
     // 3. 调用 LLM
+    const prompt = contextText
+      ? `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`
+      : '你是一个智能助手，请回答用户的问题。'
     const answer = await this.agentService.chat({
-      prompt: `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`,
+      prompt,
       input: content,
       context: { sources },
       history: history.map(item => ({ role: item.role, content: item.content })),
@@ -101,24 +109,43 @@ export class ChatService {
       content,
     })
 
-    // 2. 检索知识库，构造上下文
-    const searchResults = await this.knowledgeService.search(content, 3)
-    const sources: ChatSource[] = searchResults.map((item) => ({
-      documentId: item.documentId,
-      content: item.content,
-    }))
-    const contextText = searchResults.map((item) => item.content).join('\n\n---\n\n')
+    // 2. 检索知识库，构造上下文（允许失败，不影响对话）
+    let sources: ChatSource[] = []
+    let contextText = ''
+    try {
+      const searchResults = await this.knowledgeService.search(content, 3)
+      sources = searchResults.map((item) => ({
+        documentId: item.documentId,
+        content: item.content,
+      }))
+      contextText = searchResults.map((item) => item.content).join('\n\n---\n\n')
+    } catch (e) {
+      console.warn('[ChatService] Knowledge search failed, proceeding without context:', (e as any)?.message)
+    }
 
     // 3. 流式调用 LLM
+    const prompt = contextText
+      ? `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`
+      : '你是一个智能助手，请回答用户的问题。'
+
     let fullText = ''
-    for await (const token of this.agentService.streamChat({
-      prompt: `你是一个智能助手，请基于以下知识回答问题：\n${contextText}`,
-      input: content,
-      context: { sources },
-      history: history.map(item => ({ role: item.role, content: item.content })),
-    })) {
-      fullText += token
-      onToken(token)
+    try {
+      for await (const token of this.agentService.streamChat({
+        prompt,
+        input: content,
+        context: { sources },
+        history: history.map(item => ({ role: item.role, content: item.content })),
+      })) {
+        fullText += token
+        onToken(token)
+      }
+    } catch (e) {
+      console.error('[ChatService] LLM stream failed:', (e as any)?.message)
+      if (!fullText) {
+        const fallbackMsg = `抱歉，AI 服务暂时不可用：${(e as any)?.message || '未知错误'}`
+        fullText = fallbackMsg
+        onToken(fallbackMsg)
+      }
     }
 
     // 4. 保存助手消息

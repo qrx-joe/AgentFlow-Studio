@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import {
   Setting,
-  Delete
+  Delete,
+  InfoFilled,
+  ArrowRight
 } from '@element-plus/icons-vue'
 
 const props = defineProps<{
@@ -17,6 +19,20 @@ const isKnowledge = computed(() => props.node?.type === 'knowledge')
 const isCondition = computed(() => props.node?.type === 'condition')
 const isCode = computed(() => props.node?.type === 'code')
 const isEnd = computed(() => props.node?.type === 'end')
+const isTrigger = computed(() => props.node?.type === 'trigger')
+
+// 展开/折叠状态
+const expandedSections = ref({
+  basic: true,
+  config: true,
+  input: false,
+  output: false,
+  error: false
+})
+
+const toggleSection = (section: string) => {
+  expandedSections.value[section] = !expandedSections.value[section]
+}
 
 </script>
 
@@ -28,101 +44,259 @@ const isEnd = computed(() => props.node?.type === 'end')
     </div>
 
     <div v-else class="config-content">
+      <!-- 节点头部 -->
       <div class="panel-header">
-        <span class="node-type">{{ node.type?.toUpperCase() || 'NODE' }}</span>
-        <div class="actions">
-             <el-button link type="danger" :icon="Delete" @click="$emit('delete', node.id)" />
+        <div class="header-left">
+          <span class="node-type-badge" :class="`type-${node.type}`">
+            {{ node.type?.toUpperCase() || 'NODE' }}
+          </span>
+          <span class="node-id">ID: {{ node.id.slice(0, 8) }}</span>
         </div>
+        <el-button link type="danger" :icon="Delete" @click="$emit('delete', node.id)" />
       </div>
 
-      <el-form label-position="top" class="config-form">
-        <!-- Common: Label -->
-        <el-form-item label="节点名称">
-          <el-input 
-            :model-value="node.data?.label" 
-            @input="$emit('update', node.id, { label: $event })" 
-          />
-        </el-form-item>
+      <div class="config-sections">
+        <!-- 基本信息 -->
+        <div class="section">
+          <div class="section-header" @click="toggleSection('basic')">
+            <span class="section-title">基本信息</span>
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.basic }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.basic" class="section-content">
+              <el-form label-position="top" size="default">
+                <el-form-item label="节点名称">
+                  <el-input
+                    :model-value="node.data?.label"
+                    @input="$emit('update', node.id, { label: $event })"
+                    placeholder="输入节点名称"
+                  />
+                </el-form-item>
+                <el-form-item label="节点描述">
+                  <el-input
+                    type="textarea"
+                    :rows="2"
+                    :model-value="node.data?.description"
+                    @input="$emit('update', node.id, { description: $event })"
+                    placeholder="描述节点功能（可选）"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-collapse-transition>
+        </div>
 
-        <!-- LLM Specific -->
-        <template v-if="isLLM">
-          <el-form-item label="模型选择">
-            <el-select 
-              :model-value="node.data?.model || 'gpt-3.5-turbo'"
-              @update:model-value="$emit('update', node.id, { model: $event })"
-            >
-              <el-option label="GPT-3.5 Turbo" value="gpt-3.5-turbo" />
-              <el-option label="GPT-4" value="gpt-4" />
-              <el-option label="DeepSeek Chat" value="deepseek-chat" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="系统提示词 (System)">
-            <el-input 
-              type="textarea" 
-              :rows="4"
-              :model-value="node.data?.systemPrompt"
-               @input="$emit('update', node.id, { systemPrompt: $event })"
-            />
-          </el-form-item>
-        </template>
-        
-        <!-- Knowledge Specific -->
-        <template v-if="isKnowledge">
-             <el-form-item label="知识库集合">
-                <el-select placeholder="选择知识库" :model-value="node.data?.dataset || 'default'" @update:model-value="$emit('update', node.id, { dataset: $event })">
-                    <el-option label="默认知识库" value="default" />
-                    <el-option label="公司规章制度" value="doc-1" />
-                    <el-option label="产品技术文档" value="doc-2" />
-                </el-select>
-             </el-form-item>
-             <el-form-item label="召回数量 (TopK)">
-                <el-input-number 
-                    :model-value="node.data?.topK || 3" 
-                    :min="1" 
+        <!-- 节点配置 -->
+        <div class="section">
+          <div class="section-header" @click="toggleSection('config')">
+            <span class="section-title">节点配置</span>
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.config }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.config" class="section-content">
+              <el-form label-position="top" size="default">
+                <!-- LLM Specific -->
+                <template v-if="isLLM">
+                  <el-form-item label="模型选择">
+                    <el-select
+                      :model-value="node.data?.model || 'deepseek-chat'"
+                      @update:model-value="$emit('update', node.id, { model: $event })"
+                      style="width: 100%"
+                    >
+                      <el-option label="DeepSeek Chat" value="deepseek-chat" />
+                      <el-option label="GPT-3.5 Turbo" value="gpt-3.5-turbo" />
+                      <el-option label="GPT-4" value="gpt-4" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="系统提示词">
+                    <el-input
+                      type="textarea"
+                      :rows="4"
+                      :model-value="node.data?.systemPrompt"
+                      @input="$emit('update', node.id, { systemPrompt: $event })"
+                      placeholder="你是一个专业的AI助手..."
+                    />
+                  </el-form-item>
+                  <el-form-item label="温度 (Temperature)">
+                    <el-slider
+                      :model-value="node.data?.temperature || 0.7"
+                      @update:model-value="$emit('update', node.id, { temperature: $event })"
+                      :min="0"
+                      :max="2"
+                      :step="0.1"
+                      show-input
+                    />
+                  </el-form-item>
+                </template>
+
+                <!-- Knowledge Specific -->
+                <template v-if="isKnowledge">
+                  <el-form-item label="知识库">
+                    <el-select
+                      placeholder="选择知识库"
+                      :model-value="node.data?.dataset || 'default'"
+                      @update:model-value="$emit('update', node.id, { dataset: $event })"
+                      style="width: 100%"
+                    >
+                      <el-option label="默认知识库" value="default" />
+                      <el-option label="公司规章制度" value="doc-1" />
+                      <el-option label="产品技术文档" value="doc-2" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="召回数量 (TopK)">
+                    <el-input-number
+                      :model-value="node.data?.topK || 3"
+                      :min="1"
+                      :max="10"
+                      @update:model-value="$emit('update', node.id, { topK: $event })"
+                      style="width: 100%"
+                    />
+                  </el-form-item>
+                  <el-form-item label="相似度阈值">
+                    <el-slider
+                      :model-value="node.data?.scoreThreshold || 0.7"
+                      @update:model-value="$emit('update', node.id, { scoreThreshold: $event })"
+                      :min="0"
+                      :max="1"
+                      :step="0.05"
+                      show-input
+                    />
+                  </el-form-item>
+                </template>
+
+                <!-- Condition Specific -->
+                <template v-if="isCondition">
+                  <el-form-item label="判断条件">
+                    <el-input
+                      type="textarea"
+                      :rows="3"
+                      placeholder="例如: input.includes('error')"
+                      :model-value="node.data?.expression"
+                      @input="$emit('update', node.id, { expression: $event })"
+                    />
+                  </el-form-item>
+                  <el-alert type="info" :closable="false" show-icon>
+                    <template #default>
+                      <div class="tip-content">
+                        支持 JavaScript 表达式，返回 true/false
+                      </div>
+                    </template>
+                  </el-alert>
+                </template>
+
+                <!-- Code Specific -->
+                <template v-if="isCode">
+                  <el-form-item label="代码逻辑">
+                    <el-input
+                      type="textarea"
+                      :rows="8"
+                      placeholder="// JavaScript 代码&#10;return { result: 'ok' }"
+                      :model-value="node.data?.code"
+                      @input="$emit('update', node.id, { code: $event })"
+                      class="code-editor"
+                    />
+                  </el-form-item>
+                </template>
+
+                <!-- End Specific -->
+                <template v-if="isEnd">
+                  <el-form-item label="输出变量名">
+                    <el-input
+                      placeholder="result"
+                      :model-value="node.data?.outputVar || 'result'"
+                      @input="$emit('update', node.id, { outputVar: $event })"
+                    />
+                  </el-form-item>
+                </template>
+
+                <!-- Trigger Specific -->
+                <template v-if="isTrigger">
+                  <el-alert type="success" :closable="false">
+                    <template #default>
+                      <div class="tip-content">
+                        <el-icon><InfoFilled /></el-icon>
+                        <span>工作流的起始节点，接收外部输入</span>
+                      </div>
+                    </template>
+                  </el-alert>
+                </template>
+              </el-form>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 输入变量 -->
+        <div v-if="!isTrigger" class="section">
+          <div class="section-header" @click="toggleSection('input')">
+            <span class="section-title">输入变量</span>
+            <el-badge :value="0" :hidden="true" class="section-badge" />
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.input }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.input" class="section-content">
+              <el-empty description="暂无输入变量配置" :image-size="60" />
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 输出变量 -->
+        <div v-if="!isEnd" class="section">
+          <div class="section-header" @click="toggleSection('output')">
+            <span class="section-title">输出变量</span>
+            <el-badge :value="0" :hidden="true" class="section-badge" />
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.output }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.output" class="section-content">
+              <el-empty description="暂无输出变量配置" :image-size="60" />
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <!-- 错误处理 -->
+        <div class="section">
+          <div class="section-header" @click="toggleSection('error')">
+            <span class="section-title">错误处理</span>
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.error }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.error" class="section-content">
+              <el-form label-position="top" size="default">
+                <el-form-item label="失败时">
+                  <el-select
+                    :model-value="node.data?.onError || 'stop'"
+                    @update:model-value="$emit('update', node.id, { onError: $event })"
+                    style="width: 100%"
+                  >
+                    <el-option label="停止执行" value="stop" />
+                    <el-option label="继续执行" value="continue" />
+                    <el-option label="重试" value="retry" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item v-if="node.data?.onError === 'retry'" label="重试次数">
+                  <el-input-number
+                    :model-value="node.data?.retryCount || 3"
+                    @update:model-value="$emit('update', node.id, { retryCount: $event })"
+                    :min="1"
                     :max="10"
-                    @update:model-value="$emit('update', node.id, { topK: $event })"
-                />
-             </el-form-item>
-        </template>
-
-        <!-- Condition Specific -->
-        <template v-if="isCondition">
-             <el-form-item label="判断条件 (Expression)">
-                <el-input 
-                    type="textarea"
-                    placeholder="e.g. input.includes('error')"
-                    :model-value="node.data?.expression" 
-                    @input="$emit('update', node.id, { expression: $event })"
-                />
-             </el-form-item>
-             <div class="tip">支持简单的 JavaScript 表达式</div>
-        </template>
-
-        <!-- Code Specific -->
-        <template v-if="isCode">
-             <el-form-item label="代码逻辑 (JavaScript)">
-                <el-input 
-                    type="textarea"
-                    :rows="6"
-                    placeholder="return { result: 'ok' }"
-                    :model-value="node.data?.code" 
-                    @input="$emit('update', node.id, { code: $event })"
-                    class="code-editor"
-                />
-             </el-form-item>
-        </template>
-        
-        <!-- End Specific -->
-        <template v-if="isEnd">
-             <el-form-item label="输出变量">
-                <el-input 
-                    placeholder="output_variable"
-                    :model-value="node.data?.outputVar || 'result'" 
-                    @input="$emit('update', node.id, { outputVar: $event })"
-                />
-             </el-form-item>
-        </template>
-      </el-form>
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-collapse-transition>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -132,7 +306,6 @@ const isEnd = computed(() => props.node?.type === 'end')
   width: 100%;
   height: 100%;
   background: #ffffff;
-  border-left: 1px solid var(--color-neutral-200);
   display: flex;
   flex-direction: column;
 }
@@ -143,64 +316,206 @@ const isEnd = computed(() => props.node?.type === 'end')
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-neutral-400);
+  color: #909399;
   gap: 12px;
+  padding: 40px 20px;
 }
 
 .empty-icon {
   font-size: 48px;
-  color: var(--color-neutral-200);
+  color: #dcdfe6;
 }
 
 .empty-text {
   font-size: 13px;
+  color: #909399;
 }
 
 .config-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .panel-header {
   padding: 16px;
-  border-bottom: 1px solid var(--color-neutral-100);
-  background: var(--color-neutral-50);
+  border-bottom: 1px solid #e4e7ed;
+  background: #f5f7fa;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
-.node-type {
-  font-size: 12px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-type-badge {
+  font-size: 11px;
   font-weight: 700;
-  color: var(--color-neutral-500);
+  padding: 4px 8px;
+  border-radius: 4px;
   letter-spacing: 0.5px;
+  background: #e4e7ed;
+  color: #606266;
 }
 
-.config-form {
-    padding: 16px;
-    overflow-y: auto;
-    flex: 1;
+.node-type-badge.type-trigger {
+  background: #fef0c7;
+  color: #f59e0b;
+}
+
+.node-type-badge.type-llm {
+  background: #dbeafe;
+  color: #0ea5e9;
+}
+
+.node-type-badge.type-knowledge {
+  background: #d1fae5;
+  color: #10b981;
+}
+
+.node-type-badge.type-condition {
+  background: #ede9fe;
+  color: #8b5cf6;
+}
+
+.node-type-badge.type-code {
+  background: #e0e7ff;
+  color: #6366f1;
+}
+
+.node-type-badge.type-end {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.node-id {
+  font-size: 11px;
+  color: #909399;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.config-sections {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.section {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.section-header:hover {
+  background: #f5f7fa;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  flex: 1;
+}
+
+.section-badge {
+  margin-right: 8px;
+}
+
+.toggle-icon {
+  font-size: 14px;
+  color: #909399;
+  transition: transform 0.3s;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.section-content {
+  padding: 0 16px 16px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 16px;
 }
 
 :deep(.el-form-item__label) {
-    font-size: 12px !important;
-    color: var(--color-neutral-600) !important;
-    font-weight: 500;
+  font-size: 12px !important;
+  color: #606266 !important;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
-.tip {
-    font-size: 12px;
-    color: var(--color-neutral-400);
-    margin-top: -8px;
-    margin-bottom: 16px;
+:deep(.el-input__inner),
+:deep(.el-textarea__inner) {
+  font-size: 13px;
 }
 
 .code-editor :deep(textarea) {
-    font-family: 'JetBrains Mono', Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    background: #f8fafc;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #f8fafc;
+}
+
+.tip-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+:deep(.el-alert) {
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+:deep(.el-alert__content) {
+  padding: 0;
+}
+
+:deep(.el-empty) {
+  padding: 20px 0;
+}
+
+:deep(.el-empty__description) {
+  font-size: 12px;
+  color: #909399;
+}
+
+/* 滚动条样式 */
+.config-sections::-webkit-scrollbar {
+  width: 6px;
+}
+
+.config-sections::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.config-sections::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.config-sections::-webkit-scrollbar-track {
+  background: transparent;
 }
 </style>

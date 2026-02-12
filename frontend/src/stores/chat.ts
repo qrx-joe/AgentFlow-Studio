@@ -58,22 +58,21 @@ export const useChatStore = defineStore('chat', {
       this.loading = true
       this.streaming = true
       this.abortController = new AbortController()
-      try {
-        // 先插入一个空的助手消息，用于流式展示
-        const assistantMessage: Message = {
-          id: `msg-${Date.now() + 1}`,
-          role: 'assistant',
-          content: '',
-          sources: [],
-          createdAt: new Date().toISOString(),
-        }
-        this.messages.push(assistantMessage)
 
+      // 先插入一个空的助手消息，用于流式展示
+      const assistantMessage: Message = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'assistant',
+        content: '',
+        sources: [],
+        createdAt: new Date().toISOString(),
+      }
+      this.messages.push(assistantMessage)
+
+      try {
         // 使用后端 SSE 流式接口
         const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
-        const streamUrl = baseUrl.startsWith('http')
-          ? `${baseUrl}/chat/messages/stream`
-          : `${baseUrl}/chat/messages/stream`
+        const streamUrl = `${baseUrl}/chat/messages/stream`
         const response = await fetch(streamUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -81,15 +80,42 @@ export const useChatStore = defineStore('chat', {
           signal: this.abortController.signal,
         })
 
+        // 检查 HTTP 状态码
+        if (!response.ok) {
+          let errorMsg = `请求失败 (${response.status})`
+          try {
+            const errorBody = await response.json()
+            errorMsg = errorBody.message || errorMsg
+          } catch {
+            // 无法解析错误体，使用默认消息
+          }
+          // 回退到非流式接口
+          try {
+            const fallback = await chatApi.sendMessage({
+              sessionId: this.currentSessionId,
+              content,
+            })
+            assistantMessage.content = fallback.content || errorMsg
+            assistantMessage.sources = fallback.sources || []
+          } catch {
+            assistantMessage.content = `⚠️ ${errorMsg}`
+          }
+          return assistantMessage
+        }
+
         if (!response.body) {
           // 回退到非流式接口
-          const fallback = await chatApi.sendMessage({
-            sessionId: this.currentSessionId,
-            content,
-          })
-          assistantMessage.content = fallback.content || ''
-          assistantMessage.sources = fallback.sources || []
-          return fallback
+          try {
+            const fallback = await chatApi.sendMessage({
+              sessionId: this.currentSessionId,
+              content,
+            })
+            assistantMessage.content = fallback.content || ''
+            assistantMessage.sources = fallback.sources || []
+          } catch (e: any) {
+            assistantMessage.content = `⚠️ 无法获取回复：${e.message || '未知错误'}`
+          }
+          return assistantMessage
         }
 
         const reader = response.body.getReader()
@@ -110,8 +136,12 @@ export const useChatStore = defineStore('chat', {
             if (part.startsWith('event: done')) {
               const dataLine = part.split('\n').find(line => line.startsWith('data: '))
               if (dataLine) {
-                const payload = JSON.parse(dataLine.replace('data: ', ''))
-                assistantMessage.sources = payload.sources || []
+                try {
+                  const payload = JSON.parse(dataLine.replace('data: ', ''))
+                  assistantMessage.sources = payload.sources || []
+                } catch {
+                  // 解析失败，忽略
+                }
               }
             } else if (part.startsWith('data: ')) {
               const token = part.replace('data: ', '')
@@ -120,6 +150,28 @@ export const useChatStore = defineStore('chat', {
           }
         }
 
+        // 如果流结束后内容仍为空，尝试非流式接口
+        if (!assistantMessage.content.trim()) {
+          try {
+            const fallback = await chatApi.sendMessage({
+              sessionId: this.currentSessionId,
+              content,
+            })
+            assistantMessage.content = fallback.content || '⚠️ AI 未返回内容'
+            assistantMessage.sources = fallback.sources || []
+          } catch {
+            assistantMessage.content = '⚠️ AI 未返回内容，请检查后端日志'
+          }
+        }
+
+        return assistantMessage
+      } catch (e: any) {
+        if (e.name === 'AbortError') {
+          assistantMessage.content += '\n\n_(已停止生成)_'
+        } else {
+          assistantMessage.content = `⚠️ 发送失败：${e.message || '未知错误'}`
+          console.error('[Chat] sendMessage error:', e)
+        }
         return assistantMessage
       } finally {
         this.loading = false

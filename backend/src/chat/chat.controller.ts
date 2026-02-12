@@ -5,7 +5,7 @@ import { ChatService } from './chat.service'
 // 对话 API 控制器
 @Controller('api/chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) { }
 
   @Get('sessions')
   listSessions() {
@@ -42,13 +42,23 @@ export class ChatController {
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
 
-    const assistant = await this.chatService.streamMessage(payload, (token) => {
-      res.write(`data: ${token}\n\n`)
-    })
+    try {
+      const assistant = await this.chatService.streamMessage(payload, (token) => {
+        res.write(`data: ${token}\n\n`)
+      })
 
-    // 发送结束事件，包含溯源信息
-    res.write(`event: done\n`)
-    res.write(`data: ${JSON.stringify({ id: assistant.id, sources: assistant.sources })}\n\n`)
+      // 发送结束事件，包含溯源信息
+      res.write(`event: done\n`)
+      res.write(`data: ${JSON.stringify({ id: assistant.id, sources: assistant.sources })}\n\n`)
+    } catch (error) {
+      console.error('[ChatController] SSE stream error:', error)
+      // 发送错误信息作为 SSE data，前端至少能看到错误提示
+      const errMsg = (error as any)?.message || '服务器内部错误'
+      res.write(`data: ⚠️ ${errMsg}\n\n`)
+      res.write(`event: done\n`)
+      res.write(`data: ${JSON.stringify({ id: null, sources: [] })}\n\n`)
+    }
+
     res.end()
   }
 }

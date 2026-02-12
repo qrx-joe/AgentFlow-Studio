@@ -29,13 +29,15 @@ const handleStop = () => {
   chatStore.abortStreaming()
 }
 
+const handleDeleteSession = async (id: string) => {
+  await chatStore.deleteSession(id)
+}
+
 const handleSelectSource = (messageId: string, source: any) => {
-  // 记录当前高亮的消息与来源
   activeMessageId.value = messageId
   selectedSource.value = source
   showSourceDrawer.value = true
 
-  // 自动滚动到对应消息，便于定位
   nextTick(() => {
     const target = document.getElementById(`msg-${messageId}`)
     if (target) {
@@ -48,7 +50,6 @@ const goToDocument = () => {
   if (!selectedSource.value?.documentId) {
     return
   }
-  // 保存目标文档 ID，进入知识库页后自动打开详情
   localStorage.setItem(
     focusKey,
     JSON.stringify({
@@ -58,16 +59,16 @@ const goToDocument = () => {
   )
   router.push('/knowledge')
 }
-
 </script>
 
 <template>
-  <div class="page">
+  <div class="chat-page">
     <ChatSessionsPanel
       :sessions="chatStore.sessions"
       :current-session-id="chatStore.currentSessionId"
       @select="chatStore.selectSession"
       @create="chatStore.createSession"
+      @delete="handleDeleteSession"
     />
 
     <ChatMessagesPanel
@@ -86,11 +87,17 @@ const goToDocument = () => {
 </template>
 
 <style scoped>
-.page {
+.chat-page {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 16px;
   height: 100%;
+  padding: 0;
 }
 
+@media (max-width: 768px) {
+  .chat-page {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

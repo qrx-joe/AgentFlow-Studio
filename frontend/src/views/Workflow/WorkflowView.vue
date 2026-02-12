@@ -203,18 +203,23 @@ const replaying = ref(false)
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: var(--color-neutral-50);
+  background: #f5f7fa;
+  overflow: hidden;
 }
 
 .studio-body {
   flex: 1;
   display: flex;
   overflow: hidden;
+  gap: 0;
 }
 
 .studio-left {
   width: 240px;
   flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
   z-index: 20;
 }
 
@@ -224,17 +229,44 @@ const replaying = ref(false)
   flex-direction: column;
   position: relative;
   min-width: 0;
+  background: #f5f7fa;
 }
 
 .canvas-wrapper {
   flex: 1;
-  background: #f0f4f8; /* slightly darker than standard white for canvas contrast */
+  background: #fafbfc;
   position: relative;
+  overflow: hidden;
 }
 
 .studio-right {
-  width: 300px;
+  width: 360px;
   flex-shrink: 0;
+  background: #ffffff;
+  border-left: 1px solid #e4e7ed;
+  overflow-y: auto;
   z-index: 20;
+}
+
+/* 滚动条样式优化 */
+.studio-left::-webkit-scrollbar,
+.studio-right::-webkit-scrollbar {
+  width: 6px;
+}
+
+.studio-left::-webkit-scrollbar-thumb,
+.studio-right::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.studio-left::-webkit-scrollbar-thumb:hover,
+.studio-right::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.studio-left::-webkit-scrollbar-track,
+.studio-right::-webkit-scrollbar-track {
+  background: transparent;
 }
 </style>
