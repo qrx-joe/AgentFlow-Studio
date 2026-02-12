@@ -18,7 +18,7 @@ async function bootstrap() {
     // 全局异常过滤器，统一返回结构
     app.useGlobalFilters(new AllExceptionsFilter())
 
-    const port = process.env.PORT || 3001
+    const port = process.env.PORT || 3000
     console.log(`[Bootstrap] Attempting to listen on port ${port}...`)
     await app.listen(port)
     console.log(`[Bootstrap] Application listening on port ${port}`)
