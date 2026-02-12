@@ -15,16 +15,24 @@ const emit = defineEmits<{
   (e: 'removeDoc', id: string): void
 }>()
 
-const handleUpload = async (file: any) => {
-  await emit('upload', file)
-  return false
+const handleUpload = async (options: { file: File }) => {
+  try {
+    await emit('upload', options.file)
+  } catch (e) {
+    // 错误已在 store/api 层处理
+    console.error('[Upload] Error:', e)
+  }
 }
 </script>
 
 <template>
   <div class="panel">
     <div class="title">文档管理</div>
-    <el-upload :before-upload="handleUpload" :show-file-list="false">
+    <el-upload
+      :http-request="handleUpload"
+      :show-file-list="false"
+      action=""
+    >
       <el-button type="primary" :loading="props.uploading">上传文档</el-button>
     </el-upload>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useKnowledgeStore } from '@/stores/knowledge'
 import KnowledgeDocumentsPanel from '@/components/knowledge/KnowledgeDocumentsPanel.vue'
 import KnowledgeSearchPanel from '@/components/knowledge/KnowledgeSearchPanel.vue'
@@ -32,11 +33,16 @@ onMounted(() => {
 })
 
 const handleUpload = async (file: File) => {
-  await knowledgeStore.uploadDocument(file, {
-    chunkSize: chunkSize.value,
-    overlap: overlap.value,
-  })
-  return false
+  try {
+    await knowledgeStore.uploadDocument(file, {
+      chunkSize: chunkSize.value,
+      overlap: overlap.value,
+    })
+    ElMessage.success('上传成功')
+  } catch (e: any) {
+    // 错误消息已在 axios 拦截器中显示
+    console.error('[KnowledgeView] Upload failed:', e)
+  }
 }
 
 const handleSearch = async () => {

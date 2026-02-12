@@ -22,21 +22,31 @@ export class AgentService {
     context: Record<string, any>
     history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
   }) {
-    const model = process.env.LLM_MODEL || 'gpt-4o-mini'
+    const model = process.env.LLM_MODEL || 'deepseek-chat'
 
     const systemPrompt = `${payload.prompt}\n\n【上下文】\n${JSON.stringify(payload.context)}`
     const history = payload.history || []
 
     if (this.client) {
-      const response = await this.client.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...history,
-          { role: 'user', content: payload.input },
-        ],
-      })
-      return response.choices[0]?.message?.content || ''
+      try {
+        const response = await this.client.chat.completions.create({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...history,
+            { role: 'user', content: payload.input },
+          ],
+        })
+        const content = response.choices[0]?.message?.content
+        if (!content) {
+          console.error('[AgentService] LLM returned empty content')
+          return '抱歉，AI 未能生成回复，请稍后重试。'
+        }
+        return content
+      } catch (error) {
+        console.error('[AgentService] LLM API call failed:', error)
+        return `抱歉，AI 服务暂时不可用：${error.message}`
+      }
     }
 
     // 无 API Key 时返回降级文本
@@ -50,28 +60,34 @@ export class AgentService {
     context: Record<string, any>
     history?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
   }): AsyncGenerator<string> {
-    const model = process.env.LLM_MODEL || 'gpt-4o-mini'
+    const model = process.env.LLM_MODEL || 'deepseek-chat'
     const systemPrompt = `${payload.prompt}\n\n【上下文】\n${JSON.stringify(payload.context)}`
     const history = payload.history || []
 
     if (this.client) {
-      const stream = await this.client.chat.completions.create({
-        model,
-        stream: true,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...history,
-          { role: 'user', content: payload.input },
-        ],
-      })
+      try {
+        const stream = await this.client.chat.completions.create({
+          model,
+          stream: true,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...history,
+            { role: 'user', content: payload.input },
+          ],
+        })
 
-      for await (const part of stream) {
-        const token = part.choices[0]?.delta?.content
-        if (token) {
-          yield token
+        for await (const part of stream) {
+          const token = part.choices[0]?.delta?.content
+          if (token) {
+            yield token
+          }
         }
+        return
+      } catch (error) {
+        console.error('[AgentService] LLM stream API call failed:', error)
+        yield `抱歉，AI 服务暂时不可用：${error.message}`
+        return
       }
-      return
     }
 
     // 无 API Key 时使用模拟流式输出
