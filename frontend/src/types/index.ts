@@ -13,10 +13,14 @@ export interface WorkflowEdge {
   id: string
   source: string
   target: string
+  type?: string
   sourceHandle?: string | null
   targetHandle?: string | null
   label?: string
   branchType?: 'True' | 'False'
+  style?: Record<string, any>
+  labelStyle?: Record<string, any>
+  labelBgStyle?: Record<string, any>
 }
 
 export interface Workflow {

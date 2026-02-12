@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useVueFlow } from '@vue-flow/core'
 import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
 import { ElMessage } from 'element-plus'
 
 // Layout Components
@@ -52,7 +53,8 @@ onMounted(() => {
         }
     }
 })
-const vueFlow = useVueFlow()
+const FLOW_ID = 'workflow-canvas'
+const vueFlow = useVueFlow({ id: FLOW_ID })
 const { onConnect, addEdges, addNodes, project, removeNodes } = vueFlow
 
 // Node & Edge Types
@@ -65,8 +67,7 @@ const nodeTypes = {
   end: EndNode,
 }
 const edgeTypes = {
-  default: BranchEdge,
-  step: BranchEdge,
+  branch: BranchEdge,
 }
 
 // Logic Hooks
@@ -146,6 +147,7 @@ const replaying = ref(false)
         -->
         <div class="canvas-wrapper" @dragover="onDragOver" @drop="onDrop">
              <WorkflowCanvasPanel 
+                :flow-id="FLOW_ID"
                 v-model:nodes="workflowStore.nodes" 
                 v-model:edges="workflowStore.edges"
                 :node-types="nodeTypes"

@@ -45,7 +45,7 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
       :id="id"
       :class="['branch-edge', 'flow']"
       :d="edgePathData[0]"
-      :style="style"
+      :style="{ stroke: strokeColor, strokeWidth: 2, fill: 'none', ...(style as any || {}) }"
       :marker-end="`url(#${id}-arrow)`"
     />
 

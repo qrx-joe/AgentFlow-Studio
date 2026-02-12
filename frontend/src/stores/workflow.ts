@@ -142,8 +142,8 @@ export const useWorkflowStore = defineStore('workflow', {
           }
         ]
         this.edges = [
-          { id: 'edge-1-2', source: 'node-1', target: 'node-2', sourceHandle: null, targetHandle: null },
-          { id: 'edge-2-3', source: 'node-2', target: 'node-3', sourceHandle: null, targetHandle: null }
+          { id: 'edge-1-2', source: 'node-1', target: 'node-2', type: 'default' },
+          { id: 'edge-2-3', source: 'node-2', target: 'node-3', type: 'default' }
         ]
         this.workflowName = '新建 AI 应用'
         this.addLog('已加载 "Hello World" 模板')

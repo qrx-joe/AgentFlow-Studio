@@ -2,12 +2,14 @@
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
+import '@vue-flow/controls/dist/style.css'
 import NodeToolbar from '@/components/workflow/NodeToolbar.vue'
 
 const nodes = defineModel<any[]>('nodes', { required: true })
 const edges = defineModel<any[]>('edges', { required: true })
 
 const props = defineProps<{
+  flowId?: string
   nodeTypes: Record<string, any>
   edgeTypes: Record<string, any>
   saving: boolean
@@ -96,6 +98,7 @@ const emit = defineEmits<{
 
     <div class="canvas" @dragover="props.onDragOver" @drop="props.onDrop">
       <VueFlow
+        :id="props.flowId"
         v-model:nodes="nodes"
         v-model:edges="edges"
         :node-types="props.nodeTypes"
