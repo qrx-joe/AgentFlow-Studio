@@ -42,6 +42,12 @@ const router = createRouter({
       name: 'Studio',
       component: () => import('@/views/Workflow/WorkflowView.vue'),
       meta: { title: 'Workflow Studio' }
+    },
+    {
+      path: '/workflow/:id',
+      name: 'Workflow',
+      component: () => import('@/views/Workflow/WorkflowView.vue'),
+      meta: { title: 'Workflow Studio' }
     }
   ]
 })

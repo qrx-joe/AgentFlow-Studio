@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { VideoPlay, Close, Delete } from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import { VideoPlay, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 interface ExecutionLog {
@@ -21,14 +21,16 @@ interface ExecutionResult {
   duration: number
 }
 
-const props = defineProps<{
+interface InputField {
+  name: string
+  label: string
+  type: 'text' | 'textarea' | 'number'
+  placeholder?: string
+}
+
+defineProps<{
   visible: boolean
-  inputs?: Array<{
-    name: string
-    label: string
-    type: 'text' | 'textarea' | 'number'
-    placeholder?: string
-  }>
+  inputs?: InputField[]
 }>()
 
 const emit = defineEmits(['update:visible', 'run'])
@@ -184,11 +186,6 @@ const clearLogs = () => {
   executionResult.value = null
 }
 
-// 获取输入组件
-const getInputComponent = (type: string) => {
-  return type === 'textarea' ? 'el-input' : 'el-input'
-}
-
 // 关闭面板
 const handleClose = () => {
   emit('update:visible', false)
@@ -220,7 +217,7 @@ const handleClose = () => {
         <div class="section-content">
           <el-form label-position="top">
             <el-form-item
-              v-for="input in (inputs || [{ name: 'input', label: '输入内容', type: 'textarea' }])"
+              v-for="input in (inputs || [{ name: 'input', label: '输入内容', type: 'textarea' as const, placeholder: '输入测试数据' }])"
               :key="input.name"
               :label="input.label"
             >

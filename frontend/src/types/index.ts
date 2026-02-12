@@ -83,4 +83,5 @@ export interface Session {
   title?: string
   workflowId?: string
   createdAt?: string
+  updatedAt?: string
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { ElCollapseTransition } from 'element-plus'
 import {
   Setting,
   Delete,
@@ -23,7 +24,7 @@ const isTrigger = computed(() => props.node?.type === 'trigger')
 const isHttp = computed(() => props.node?.type === 'http')
 
 // 展开/折叠状态
-const expandedSections = ref({
+const expandedSections = ref<Record<string, boolean>>({
   basic: true,
   config: true,
   input: false,
@@ -32,7 +33,9 @@ const expandedSections = ref({
 })
 
 const toggleSection = (section: string) => {
-  expandedSections.value[section] = !expandedSections.value[section]
+  if (section in expandedSections.value) {
+    expandedSections.value[section] = !expandedSections.value[section]
+  }
 }
 
 </script>
