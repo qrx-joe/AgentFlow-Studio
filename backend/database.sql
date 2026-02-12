@@ -29,6 +29,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_workflows_updated_at ON workflows;
 CREATE TRIGGER update_workflows_updated_at
     BEFORE UPDATE ON workflows
     FOR EACH ROW
@@ -109,6 +110,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TRIGGER IF EXISTS update_chat_sessions_updated_at ON chat_sessions;
 CREATE TRIGGER update_chat_sessions_updated_at
     BEFORE UPDATE ON chat_sessions
     FOR EACH ROW

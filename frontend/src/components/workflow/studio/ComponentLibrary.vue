@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { 
-  Lightning, 
-  Cpu, 
-  Files, 
-  Connection, 
-  VideoPlay, 
+import {
+  Lightning,
+  Cpu,
+  Files,
+  Connection,
+  VideoPlay,
   SwitchButton,
-  Search
+  Search,
+  Link
 } from '@element-plus/icons-vue'
 
 const searchQuery = ref('')
@@ -32,6 +33,12 @@ const nodeGroups = [
     items: [
       { type: 'condition', label: '条件判断', icon: Connection, color: '#8b5cf6', desc: 'If-Else' },
       { type: 'code', label: '代码执行', icon: VideoPlay, color: '#6366f1', desc: 'JS/Python' },
+    ]
+  },
+  {
+    title: '数据处理',
+    items: [
+      { type: 'http', label: 'HTTP 请求', icon: Link, color: '#667eea', desc: 'API 调用' },
     ]
   }
 ]

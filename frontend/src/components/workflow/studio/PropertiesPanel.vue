@@ -20,6 +20,7 @@ const isCondition = computed(() => props.node?.type === 'condition')
 const isCode = computed(() => props.node?.type === 'code')
 const isEnd = computed(() => props.node?.type === 'end')
 const isTrigger = computed(() => props.node?.type === 'trigger')
+const isHttp = computed(() => props.node?.type === 'http')
 
 // 展开/折叠状态
 const expandedSections = ref({
@@ -224,6 +225,57 @@ const toggleSection = (section: string) => {
                     </template>
                   </el-alert>
                 </template>
+
+                <!-- HTTP Specific -->
+                <template v-if="isHttp">
+                  <el-form-item label="请求方法">
+                    <el-select
+                      :model-value="node.data?.method || 'GET'"
+                      @update:model-value="$emit('update', node.id, { method: $event })"
+                      style="width: 100%"
+                    >
+                      <el-option label="GET" value="GET" />
+                      <el-option label="POST" value="POST" />
+                      <el-option label="PUT" value="PUT" />
+                      <el-option label="DELETE" value="DELETE" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="请求 URL">
+                    <el-input
+                      :model-value="node.data?.url"
+                      @input="$emit('update', node.id, { url: $event })"
+                      placeholder="https://api.example.com/endpoint"
+                    />
+                  </el-form-item>
+                  <el-form-item label="请求头 (Headers)">
+                    <el-input
+                      type="textarea"
+                      :rows="3"
+                      :model-value="node.data?.headers"
+                      @input="$emit('update', node.id, { headers: $event })"
+                      placeholder='{"Content-Type": "application/json"}'
+                    />
+                  </el-form-item>
+                  <el-form-item v-if="node.data?.method !== 'GET'" label="请求体 (Body)">
+                    <el-input
+                      type="textarea"
+                      :rows="4"
+                      :model-value="node.data?.body"
+                      @input="$emit('update', node.id, { body: $event })"
+                      placeholder='{"key": "value"}'
+                    />
+                  </el-form-item>
+                  <el-form-item label="超时时间 (ms)">
+                    <el-input-number
+                      :model-value="node.data?.timeout || 30000"
+                      @update:model-value="$emit('update', node.id, { timeout: $event })"
+                      :min="1000"
+                      :max="300000"
+                      :step="1000"
+                      style="width: 100%"
+                    />
+                  </el-form-item>
+                </template>
               </el-form>
             </div>
           </el-collapse-transition>
@@ -392,6 +444,11 @@ const toggleSection = (section: string) => {
 .node-type-badge.type-end {
   background: #fee2e2;
   color: #ef4444;
+}
+
+.node-type-badge.type-http {
+  background: #ede9fe;
+  color: #667eea;
 }
 
 .node-id {
