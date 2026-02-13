@@ -85,16 +85,15 @@ const handleDelete = (e: Event, id: string) => {
 
 <style scoped>
 .sessions-sidebar {
-  background: #fdfdfd; 
+  background: #ffffff; 
   /* Dify style light background */
-  border-right: 1px solid #e5e7eb;
-  border-radius: 16px 0 0 16px; /* only left rounded if inside a container, for now keep simple */ 
-  /* Actually standard Dify sidebar is usually full height square, but let's keep rounded for consistency with container */
+  border: 1px solid #e2e8f0; /* Full border */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Subtle shadow */
 }
 
 .sidebar-header {

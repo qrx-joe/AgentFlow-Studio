@@ -89,16 +89,17 @@ const goToDocument = () => {
 <style scoped>
 .chat-page {
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 16px;
+  grid-template-columns: 280px 1fr; /* Slightly wider sidebar */
+  gap: 20px;
   height: 100%;
-  padding: 0;
-  /* background-color: #f3f4f6; */ /* Removed to inherit from MainLayout */
+  padding: 24px 32px; /* Consistent frame padding */
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .chat-page {
     grid-template-columns: 1fr;
+    padding: 16px;
   }
 }
 </style>

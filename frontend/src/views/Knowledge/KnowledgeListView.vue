@@ -222,28 +222,29 @@ const formatDate = (dateStr?: string) => {
 
 <style scoped>
 .knowledge-list-page {
-  padding: 24px 32px;
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 32px 40px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
+  align-items: flex-end;
+  margin-bottom: 40px;
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
 }
 
 .page-desc {
   font-size: 14px;
-  color: #6b7280;
+  color: #64748b;
   margin: 0;
 }
 
@@ -254,29 +255,32 @@ const formatDate = (dateStr?: string) => {
 }
 
 .search-input {
-  width: 240px;
+  width: 260px;
 }
 
 /* 卡片网格 */
 .kb-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
 .kb-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
 }
 
 .kb-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
 }
 
 .card-header {
@@ -287,108 +291,123 @@ const formatDate = (dateStr?: string) => {
 }
 
 .kb-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
+  transition: transform 0.2s;
+}
+
+.kb-card:hover .kb-icon {
+  transform: scale(1.05);
 }
 
 .more-btn {
-  padding: 4px;
-  color: #9ca3af;
+  padding: 6px;
+  color: #94a3b8;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  margin-right: -10px;
+  margin-top: -6px;
   transition: all 0.2s;
 }
 
 .more-btn:hover {
-  color: #6b7280;
-  background: #f3f4f6;
+  color: #475569;
+  background: #f1f5f9;
 }
 
 .card-body {
-  margin-bottom: 16px;
+  flex: 1;
+  margin-bottom: 24px;
 }
 
 .kb-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
   margin: 0 0 8px;
+  line-height: 1.4;
 }
 
 .kb-desc {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 36px;
+  min-height: 44px; /* Ensure 2 lines height consistency */
+  line-height: 1.6;
 }
 
 .card-footer {
   display: flex;
   gap: 24px;
-  padding: 12px 0;
-  border-top: 1px solid #f3f4f6;
-  border-bottom: 1px solid #f3f4f6;
-  margin-bottom: 12px;
+  padding: 16px 0;
+  border-top: 1px dashed #e2e8f0; /* Dashed line for unified look */
+  border-bottom: 1px dashed #e2e8f0;
+  margin-bottom: 16px;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start; /* Left align stats */
 }
 
 .stat-value {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .card-meta {
   font-size: 12px;
-  color: #9ca3af;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 /* 创建卡片 */
 .create-card {
-  border: 2px dashed #e5e7eb;
-  background: #fafafa;
+  border: 2px dashed #e2e8f0;
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
+  min-height: 200px;
+  padding: 0; /* Clear padding for center alignment */
 }
 
 .create-card:hover {
   border-color: #3b82f6;
   background: #eff6ff;
+  box-shadow: none;
+  transform: none; /* No lift specific for create card if preferred, or keep it */
 }
 
 .create-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  color: #6b7280;
+  gap: 12px;
+  color: #64748b;
 }
 
 .create-icon {
   font-size: 32px;
-  color: #9ca3af;
+  color: #94a3b8;
+  transition: color 0.2s;
 }
 
 .create-card:hover .create-icon {
@@ -396,8 +415,9 @@ const formatDate = (dateStr?: string) => {
 }
 
 .create-text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 0.2s;
 }
 
 .create-card:hover .create-text {
@@ -417,6 +437,7 @@ const formatDate = (dateStr?: string) => {
 .empty-icon {
   font-size: 64px;
   margin-bottom: 16px;
+  opacity: 0.5;
 }
 
 .empty-state h2 {
@@ -435,24 +456,26 @@ const formatDate = (dateStr?: string) => {
 /* 颜色选择器 */
 .color-picker {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .color-option {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px; /* Squircle */
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
 }
 
 .color-option:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 .color-option.active {
-  border-color: #111827;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px #fff;
+  transform: scale(1.1);
 }
 </style>

@@ -343,6 +343,9 @@ const handleQuickPrompt = (text: string) => {
   height: 100%;
   background: #ffffff; /* Clean white bg */
   overflow: hidden;
+  border: 1px solid #e2e8f0; /* Full border */
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Subtle shadow */
 }
 
 /* ===== 1. 消息滚动区 ===== */
