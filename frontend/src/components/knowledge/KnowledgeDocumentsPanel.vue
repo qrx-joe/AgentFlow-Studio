@@ -67,13 +67,6 @@ const handleDragLeave = () => {
 }
 
 // 批量操作
-const toggleSelectAll = () => {
-  if (selectedDocs.value.size === filteredDocuments.value.length) {
-    selectedDocs.value.clear()
-  } else {
-    filteredDocuments.value.forEach(doc => selectedDocs.value.add(doc.id))
-  }
-}
 
 const toggleSelect = (id: string) => {
   if (selectedDocs.value.has(id)) {

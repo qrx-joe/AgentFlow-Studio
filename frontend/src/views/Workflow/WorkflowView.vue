@@ -57,7 +57,7 @@ onMounted(() => {
 })
 const FLOW_ID = 'workflow-canvas'
 const vueFlow = useVueFlow({ id: FLOW_ID })
-const { onConnect, addEdges, addNodes, project, removeNodes } = vueFlow
+const { onConnect, addEdges, project } = vueFlow
 
 // Node & Edge Types
 const nodeTypes = {
@@ -73,10 +73,15 @@ const edgeTypes = {
   branch: BranchEdge,
 }
 
+// Add nodes directly to store (synced with VueFlow via v-model)
+const addNodesToStore = (nodes: any[]) => {
+  workflowStore.nodes.push(...nodes)
+}
+
 // Logic Hooks
 const { handleConnect } = useWorkflowEdgeHandlers(workflowStore, addEdges)
 onConnect(handleConnect)
-const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodes)
+const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodesToStore)
 
 // Selection State
 const selectedNodeId = ref('')
@@ -85,7 +90,7 @@ const selectedNode = computed(() => {
 })
 
 // Event Handlers
-const onNodeClick = (_: any, node: any) => {
+const onNodeClick = (node: any) => {
     selectedNodeId.value = node.id
 }
 
@@ -101,7 +106,14 @@ const handleUpdateNode = (id: string, data: any) => {
 }
 
 const handleDeleteNode = (id: string) => {
-    removeNodes([id])
+    const index = workflowStore.nodes.findIndex(n => n.id === id)
+    if (index !== -1) {
+      workflowStore.nodes.splice(index, 1)
+      // Also remove connected edges
+      workflowStore.edges = workflowStore.edges.filter(
+        e => e.source !== id && e.target !== id
+      )
+    }
     selectedNodeId.value = ''
 }
 
@@ -165,13 +177,13 @@ const handleDebugRun = async (testData: any) => {
 
       <!-- Center: Canvas -->
       <main class="studio-center">
-        <!-- We reuse WorkflowCanvasPanel for the VueFlow wrapper, 
-             but we might need to hide its internal Toolbar since we moved actions to Header 
+        <!-- We reuse WorkflowCanvasPanel for the VueFlow wrapper,
+             but we might need to hide its internal Toolbar since we moved actions to Header
         -->
-        <div class="canvas-wrapper" @dragover="onDragOver" @drop="onDrop">
-             <WorkflowCanvasPanel 
+        <div class="canvas-wrapper">
+             <WorkflowCanvasPanel
                 :flow-id="FLOW_ID"
-                v-model:nodes="workflowStore.nodes" 
+                v-model:nodes="workflowStore.nodes"
                 v-model:edges="workflowStore.edges"
                 :node-types="nodeTypes"
                 :edge-types="edgeTypes"
@@ -188,7 +200,7 @@ const handleDebugRun = async (testData: any) => {
                 :apply-snapshot-meta="false"
                 :on-drag-over="onDragOver"
                 :on-drop="onDrop"
-                @node-double-click="onNodeClick" 
+                @node-click="onNodeClick"
                 @pane-click="onPaneClick"
              />
              <!-- Note: WorkflowCanvasPanel currently has a Toolbar inside. 

@@ -51,7 +51,9 @@ const emit = defineEmits<{
   (e: 'exportReplayScript'): void
   (e: 'exportReplayJson'): void
   (e: 'exportReplayTxt'): void
+  (e: 'nodeClick', node: any): void
   (e: 'nodeDoubleClick', node: any): void
+  (e: 'paneClick'): void
   (e: 'edgeClick', edge: any): void
 }>()
 </script>
@@ -103,7 +105,9 @@ const emit = defineEmits<{
         v-model:edges="edges"
         :node-types="props.nodeTypes"
         :edge-types="props.edgeTypes"
+        @node-click="(event: any) => emit('nodeClick', event.node)"
         @node-double-click="(event: any) => emit('nodeDoubleClick', event.node)"
+        @pane-click="() => emit('paneClick')"
         @edge-click="(event: any) => emit('edgeClick', event.edge)"
       >
         <Background />

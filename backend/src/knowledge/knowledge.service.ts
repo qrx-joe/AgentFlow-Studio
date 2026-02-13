@@ -60,10 +60,11 @@ export class KnowledgeService {
         throw new Error('文档内容为空或无法解析')
       }
 
-      console.log(`[KnowledgeService] Uploading document: ${file.originalname}, size: ${file.size} bytes`)
+      const filename = this.normalizeFilename(file.originalname)
+      console.log(`[KnowledgeService] Uploading document: ${filename}, size: ${file.size} bytes`)
 
       const document = await this.documentRepo.save({
-        filename: file.originalname,
+        filename,
         fileType: file.mimetype,
         fileSize: file.size,
         content: cleanedContent,
@@ -137,6 +138,18 @@ export class KnowledgeService {
     const result = await this.searchService.search(query, topK, options)
     void this.metricsService.recordKnowledgeSearch(Date.now() - start)
     return result
+  }
+
+  private normalizeFilename(name: string) {
+    if (!name) return name
+    const looksMojibake = /[ÃÂ][\u0000-\u007f]/.test(name) || name.includes('�')
+    if (!looksMojibake) return name
+    try {
+      const decoded = Buffer.from(name, 'latin1').toString('utf8')
+      return decoded || name
+    } catch {
+      return name
+    }
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {

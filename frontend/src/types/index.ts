@@ -1,6 +1,6 @@
 // 通用类型定义，集中管理前后端交互数据结构
 
-export type NodeType = 'trigger' | 'llm' | 'knowledge' | 'condition' | 'code' | 'end'
+export type NodeType = 'trigger' | 'llm' | 'knowledge' | 'condition' | 'code' | 'end' | 'http'
 
 export interface WorkflowNode {
   id: string
