@@ -8,6 +8,7 @@ import { EmbeddingService } from './embedding/embedding.service'
 import { MetricsService } from '../metrics/metrics.service'
 import { KnowledgeSearchService } from './search/knowledge-search.service'
 import type { KnowledgeSearchOptions } from './types'
+import { parseDocument, isSupportedFile, getSupportedFormats } from './utils/document-parser'
 
 import { RecursiveCharacterTextSplitter } from './utils/text-splitter'
 
@@ -120,6 +121,7 @@ export class KnowledgeService {
   }
 
   async deleteDocument(id: string) {
+    await this.chunkRepo.delete({ documentId: id })
     await this.documentRepo.delete(id)
     return { id }
   }
@@ -129,92 +131,95 @@ export class KnowledgeService {
     options: { chunkSize?: number; overlap?: number; knowledgeBaseId?: string } = {}
   ) {
     const startTime = Date.now()
+    const filename = this.normalizeFilename(file.originalname)
+
+    console.log(`[KnowledgeService] Uploading document: ${filename}, mimetype: ${file.mimetype}, size: ${file.size} bytes`)
+
+    // 检查文件类型是否支持
+    if (!isSupportedFile(filename, file.mimetype)) {
+      const supportedFormats = getSupportedFormats().join(', ')
+      throw new Error(`不支持的文件格式。支持的格式: ${supportedFormats}`)
+    }
 
     try {
-      // 清理文本内容：移除空字节和其他不可见字符
-      const cleanContent = (text: string): string => {
-        return text
-          .replace(/\0/g, '') // 移除空字节
-          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // 移除其他控制字符
-          .trim()
-      }
+      // 1. 解析文档内容
+      const parsed = await parseDocument(file.buffer, filename, file.mimetype)
 
-      // 1. 保存文档元信息
-      const rawContent = file.buffer.toString('utf-8')
-      const cleanedContent = cleanContent(rawContent)
-
-      if (!cleanedContent) {
+      if (!parsed.content || parsed.content.trim().length === 0) {
         throw new Error('文档内容为空或无法解析')
       }
 
-      const filename = this.normalizeFilename(file.originalname)
-      console.log(`[KnowledgeService] Uploading document: ${filename}, size: ${file.size} bytes`)
+      console.log(`[KnowledgeService] Parsed document: ${parsed.content.length} chars, format: ${parsed.metadata.format}`)
 
+      // 2. 保存文档元信息
       const document = await this.documentRepo.save({
         filename,
         fileType: file.mimetype,
         fileSize: file.size,
-        content: cleanedContent,
+        content: parsed.content,
         knowledgeBaseId: options.knowledgeBaseId,
         metadata: {
           chunkSize: options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500,
           overlap: options.overlap && options.overlap >= 0 ? options.overlap : 50,
+          format: parsed.metadata.format,
+          ...parsed.metadata,
         },
       })
 
-    // 2. 分块并生成向量
-    const chunkSize = options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500
-    const chunkOverlap = options.overlap && options.overlap >= 0 ? options.overlap : 50
-    const chunkStart = Date.now()
+      // 3. 分块并生成向量
+      const chunkSize = options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500
+      const chunkOverlap = options.overlap && options.overlap >= 0 ? options.overlap : 50
+      const chunkStart = Date.now()
 
-    const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize,
-      chunkOverlap,
-    })
-    const chunks = splitter.splitText(document.content || '')
-
-    const chunkMs = Date.now() - chunkStart
-    const charCount = (document.content || '').length
-    const embedStart = Date.now()
-    let embeddingDim = Number(process.env.EMBEDDING_DIMENSION || 1536)
-    for (let i = 0; i < chunks.length; i += 1) {
-      const chunk = chunks[i]
-      // 清理分块内容
-      const cleanedChunk = chunk
-        .replace(/\0/g, '')
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-        .trim()
-
-      if (!cleanedChunk) continue // 跳过空分块
-
-      const embedding = await this.embeddingService.embed(cleanedChunk)
-      if (Array.isArray(embedding) && embedding.length > 0) {
-        embeddingDim = embedding.length
-      }
-      await this.chunkRepo.save({
-        documentId: document.id,
-        content: cleanedChunk,
-        chunkIndex: i,
-        embedding,
+      const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize,
+        chunkOverlap,
       })
-    }
-    const embedMs = Date.now() - embedStart
+      const chunks = splitter.splitText(parsed.content)
 
-    console.log(`[KnowledgeService] Document processed: ${chunks.length} chunks, ${charCount} chars, ${Date.now() - startTime}ms`)
+      const chunkMs = Date.now() - chunkStart
+      const charCount = parsed.content.length
+      const embedStart = Date.now()
+      let embeddingDim = Number(process.env.EMBEDDING_DIMENSION || 1024)
 
-    // 4. 更新元信息（分块数量、字符数）
-    document.metadata = {
-      ...document.metadata,
-      chunkCount: chunks.length,
-      charCount,
-      chunkMs,
-      embedMs,
-      processMs: Date.now() - startTime,
-      embeddingDim,
-    }
-    await this.documentRepo.save(document)
+      for (let i = 0; i < chunks.length; i += 1) {
+        const chunk = chunks[i]
+        // 清理分块内容
+        const cleanedChunk = chunk
+          .replace(/\0/g, '')
+          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+          .trim()
 
-    return document
+        if (!cleanedChunk) continue // 跳过空分块
+
+        const embedding = await this.embeddingService.embed(cleanedChunk)
+        if (Array.isArray(embedding) && embedding.length > 0) {
+          embeddingDim = embedding.length
+        }
+        await this.chunkRepo.save({
+          documentId: document.id,
+          content: cleanedChunk,
+          chunkIndex: i,
+          embedding,
+        })
+      }
+      const embedMs = Date.now() - embedStart
+
+      console.log(`[KnowledgeService] Document processed: ${chunks.length} chunks, ${charCount} chars, ${Date.now() - startTime}ms`)
+
+      // 4. 更新元信息（分块数量、字符数）
+      document.metadata = {
+        ...document.metadata,
+        chunkCount: chunks.length,
+        charCount,
+        chunkMs,
+        embedMs,
+        processMs: Date.now() - startTime,
+        embeddingDim,
+      }
+      await this.documentRepo.save(document)
+
+      return document
     } catch (error) {
       console.error('[KnowledgeService] Upload failed:', error)
       throw error
@@ -228,16 +233,58 @@ export class KnowledgeService {
     return result
   }
 
-  private normalizeFilename(name: string) {
-    if (!name) return name
-    const looksMojibake = /[ÃÂ][\u0000-\u007f]/.test(name) || name.includes('�')
-    if (!looksMojibake) return name
-    try {
-      const decoded = Buffer.from(name, 'latin1').toString('utf8')
-      return decoded || name
-    } catch {
-      return name
+  /**
+   * 规范化文件名，处理各种编码问题
+   */
+  private normalizeFilename(name: string): string {
+    if (!name) return 'unnamed'
+
+    // 尝试多种解码方式
+    let decoded = name
+
+    // 1. 检测并修复 UTF-8 被错误解析为 Latin-1 的情况
+    const looksLatin1Encoded = /[\xc0-\xff][\x80-\xbf]/.test(name)
+    if (looksLatin1Encoded) {
+      try {
+        decoded = Buffer.from(name, 'latin1').toString('utf8')
+        if (decoded && !decoded.includes('�')) {
+          return decoded
+        }
+      } catch {
+        // 忽略解码错误
+      }
     }
+
+    // 2. 检测并修复 URL 编码
+    if (name.includes('%')) {
+      try {
+        decoded = decodeURIComponent(name)
+        if (decoded && !decoded.includes('�')) {
+          return decoded
+        }
+      } catch {
+        // 忽略解码错误
+      }
+    }
+
+    // 3. 检测并修复双重 UTF-8 编码
+    const looksMojibake = /[ÃÂ]/.test(name) || name.includes('�')
+    if (looksMojibake) {
+      try {
+        // 尝试将 UTF-8 字节序列作为 Latin-1 解释后再转回 UTF-8
+        const bytes = Buffer.from(name, 'utf8')
+        decoded = bytes.toString('latin1')
+        const reencoded = Buffer.from(decoded, 'latin1').toString('utf8')
+        if (reencoded && !reencoded.includes('�') && reencoded !== name) {
+          return reencoded
+        }
+      } catch {
+        // 忽略解码错误
+      }
+    }
+
+    // 4. 如果所有尝试都失败，返回原始名称（移除非法字符）
+    return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {

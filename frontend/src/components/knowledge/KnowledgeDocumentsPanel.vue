@@ -114,6 +114,9 @@ const getFileIcon = (fileType?: string) => {
   if (fileType.includes('excel') || fileType.includes('sheet')) return '📗'
   if (fileType.includes('text') || fileType.includes('txt')) return '📝'
   if (fileType.includes('markdown') || fileType.includes('md')) return '📋'
+  if (fileType.includes('json')) return '📊'
+  if (fileType.includes('csv')) return '📈'
+  if (fileType.includes('html')) return '🌐'
   return '📄'
 }
 </script>
@@ -210,7 +213,7 @@ const getFileIcon = (fileType?: string) => {
       <div class="upload-icon">📁</div>
       <div class="upload-title">拖拽文件到这里上传</div>
       <div class="upload-hint">或点击上方"上传文档"按钮</div>
-      <div class="upload-formats">支持 TXT, PDF, DOCX, MD 等格式</div>
+      <div class="upload-formats">支持 TXT, MD, PDF, DOCX, JSON, CSV, HTML 格式</div>
     </div>
 
     <!-- 文档卡片列表 -->
