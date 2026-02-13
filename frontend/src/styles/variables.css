@@ -2,31 +2,39 @@
   /* ========================================================================
      Color System (Inspired by Inter / Vercel / Linear)
      ======================================================================== */
-     
-  /* Primary Brand - Deep Space Blue */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;  /* Primary Button / Active */
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;  /* Sidebar Bg */
-  --color-primary-950: #082f49;
+
+  /* Primary Brand - Monochrome (Slate 900) */
+  --color-primary-50: #f8fafc;
+  --color-primary-100: #f1f5f9;
+  --color-primary-200: #e2e8f0;
+  --color-primary-300: #cbd5e1;
+  --color-primary-400: #94a3b8;
+  --color-primary-500: #64748b;
+  --color-primary-600: #475569;
+  --color-primary-700: #334155;
+  --color-primary-800: #1e293b;
+  --color-primary-900: #0f172a;
+  /* Core Brand Color */
+  --color-primary-950: #020617;
 
   /* Neutral (Slate) - Text & Borders */
-  --color-neutral-50: #f8fafc;   /* Canvas Bg */
-  --color-neutral-100: #f1f5f9;  /* Panel Bg / Hover */
-  --color-neutral-200: #e2e8f0;  /* Borders */
+  --color-neutral-50: #f8fafc;
+  /* Canvas Bg */
+  --color-neutral-100: #f1f5f9;
+  /* Panel Bg / Hover */
+  --color-neutral-200: #e2e8f0;
+  /* Borders */
   --color-neutral-300: #cbd5e1;
-  --color-neutral-400: #94a3b8;  /* Placeholder / Icon */
-  --color-neutral-500: #64748b;  /* Secondary Text */
+  --color-neutral-400: #94a3b8;
+  /* Placeholder / Icon */
+  --color-neutral-500: #64748b;
+  /* Secondary Text */
   --color-neutral-600: #475569;
-  --color-neutral-700: #334155;  /* Primary Text */
+  --color-neutral-700: #334155;
+  /* Primary Text */
   --color-neutral-800: #1e293b;
-  --color-neutral-900: #0f172a;  /* Titles */
+  --color-neutral-900: #0f172a;
+  /* Titles */
 
   /* Semantic - Success / Error / Warning */
   --color-success: #10b981;
@@ -62,6 +70,18 @@
 
   --header-height: 60px;
   --sidebar-width: 240px;
+
+  /* ========================================================================
+     Element Plus Overrides
+     ======================================================================== */
+  --el-color-primary: var(--color-primary-900);
+  --el-color-primary-light-3: var(--color-primary-500);
+  --el-color-primary-light-5: var(--color-primary-300);
+  --el-color-primary-light-7: var(--color-primary-200);
+  --el-color-primary-light-8: var(--color-primary-100);
+  --el-color-primary-light-9: var(--color-primary-50);
+  --el-color-primary-dark-2: #020617;
+  /* Darker than primary-900 */
 }
 
 /* Base Reset */

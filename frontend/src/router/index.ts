@@ -5,8 +5,15 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/Auth/LoginView.vue'),
+      meta: { title: '登录', guest: true }
+    },
+    {
       path: '/',
       component: MainLayout,
+      meta: { requiresAuth: true },
       children: [
         {
           path: '', // Default to Dashboard
@@ -45,15 +52,36 @@ const router = createRouter({
       path: '/studio/:id',
       name: 'Studio',
       component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio' }
+      meta: { title: 'Workflow Studio', requiresAuth: true }
     },
     {
       path: '/workflow/:id',
       name: 'Workflow',
       component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio' }
+      meta: { title: 'Workflow Studio', requiresAuth: true }
     }
   ]
+})
+
+// 路由守卫
+router.beforeEach((to, _from, next) => {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+
+  // 需要登录的页面
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isLoggedIn) {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+      return
+    }
+  }
+
+  // 已登录用户访问登录页，重定向到首页
+  if (to.meta.guest && isLoggedIn) {
+    next({ path: '/' })
+    return
+  }
+
+  next()
 })
 
 export default router

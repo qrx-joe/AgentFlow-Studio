@@ -523,12 +523,12 @@ const formatNumber = (num: number) => {
 }
 
 .tab-btn:hover {
-  color: #3b82f6;
+  color: var(--color-primary-900);
 }
 
 .tab-btn.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
+  color: var(--color-primary-900);
+  border-bottom-color: var(--color-primary-900);
 }
 
 /* Tab 内容 */

@@ -17,7 +17,7 @@ const edgePathData = computed(() => {
 })
 
 const strokeColor = computed(() => {
-  if (props.selected) return '#3b82f6' // Brand Blue when selected
+  if (props.selected) return '#0f172a' // Brand Slate when selected
   const stroke = (props.style as any)?.stroke
   return typeof stroke === 'string' ? stroke : '#cbd5e1' // Slate-300 default
 })
@@ -116,9 +116,9 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
 }
 
 .edge-group.selected .edge-label {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+  border-color: var(--color-primary-900);
+  color: var(--color-primary-900);
+  box-shadow: 0 0 0 1px var(--color-primary-900);
 }
 
 .interaction-path {

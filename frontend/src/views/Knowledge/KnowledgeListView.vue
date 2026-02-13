@@ -12,7 +12,7 @@ const searchQuery = ref('')
 const showCreateDialog = ref(false)
 const newKbName = ref('')
 const newKbDesc = ref('')
-const newKbColor = ref('#3b82f6')
+const newKbColor = ref('#0f172a')
 
 const colorOptions = [
   '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b',
@@ -47,7 +47,7 @@ const handleCreate = async () => {
     showCreateDialog.value = false
     newKbName.value = ''
     newKbDesc.value = ''
-    newKbColor.value = '#3b82f6'
+    newKbColor.value = '#0f172a'
     // 跳转到详情页
     router.push(`/knowledge/${kb.id}`)
   } catch (e) {
@@ -390,7 +390,7 @@ const formatDate = (dateStr?: string) => {
 }
 
 .create-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-primary-900);
   background: #eff6ff;
   box-shadow: none;
   transform: none; /* No lift specific for create card if preferred, or keep it */
@@ -411,7 +411,7 @@ const formatDate = (dateStr?: string) => {
 }
 
 .create-card:hover .create-icon {
-  color: #3b82f6;
+  color: var(--color-primary-900);
 }
 
 .create-text {
@@ -421,7 +421,7 @@ const formatDate = (dateStr?: string) => {
 }
 
 .create-card:hover .create-text {
-  color: #3b82f6;
+  color: var(--color-primary-900);
 }
 
 /* 空状态 */

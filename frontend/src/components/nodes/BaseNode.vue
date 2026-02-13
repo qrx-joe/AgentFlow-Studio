@@ -101,7 +101,7 @@ const iconStyle = computed(() => ({
 }
 
 .base-node.running {
-    border-color: #3b82f6;
+    border-color: var(--color-primary-900);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 

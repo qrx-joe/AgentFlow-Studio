@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { Files, ChatLineRound, Monitor } from '@element-plus/icons-vue'
+import { Files, ChatLineRound, Monitor, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 
 // 主布局：现代化侧边栏与内容区
 const route = useRoute()
@@ -15,6 +16,23 @@ const menus = [
 const handleSelect = (path: string) => {
   if (route.path !== path) {
     router.push(path)
+  }
+}
+
+const username = localStorage.getItem('username') || 'User'
+
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
+      confirmButtonText: '退出',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('username')
+    router.push('/login')
+  } catch {
+    // 用户取消
   }
 }
 </script>
@@ -48,10 +66,25 @@ const handleSelect = (path: string) => {
       </nav>
 
       <div class="navbar-right">
-        <!-- User Profile Dropdown could go here, simplified user profile for now -->
-        <div class="user-profile">
-          <div class="avatar">U</div>
-        </div>
+        <el-dropdown trigger="click" @command="handleLogout">
+          <div class="user-profile">
+            <div class="avatar">{{ username.charAt(0).toUpperCase() }}</div>
+            <span class="username">{{ username }}</span>
+            <el-icon class="dropdown-arrow"><arrow-down /></el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item disabled>
+                <el-icon><user /></el-icon>
+                <span>{{ username }}</span>
+              </el-dropdown-item>
+              <el-dropdown-item divided command="logout">
+                <el-icon><switch-button /></el-icon>
+                <span>退出登录</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </header>
 
@@ -81,13 +114,13 @@ const handleSelect = (path: string) => {
 
 /* Navbar */
 .navbar {
-  height: 60px;
+  height: 72px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 32px;
   flex-shrink: 0;
   z-index: 50;
   position: relative; /* For absolute centering of nav-menu */
@@ -103,15 +136,15 @@ const handleSelect = (path: string) => {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
 }
 
 .logo-box {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   background: #0f172a; /* Solid dark brand color */
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,7 +152,7 @@ const handleSelect = (path: string) => {
 }
 
 .brand-text {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.5px;
@@ -132,19 +165,19 @@ const handleSelect = (path: string) => {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -162,7 +195,7 @@ const handleSelect = (path: string) => {
 }
 
 .nav-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Navbar Right */
@@ -171,19 +204,48 @@ const handleSelect = (path: string) => {
   align-items: center;
 }
 
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-profile:hover {
+  background: #f1f5f9;
+}
+
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+  flex-shrink: 0;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #9ca3af;
+  transition: transform 0.2s;
 }
 
 /* Content */

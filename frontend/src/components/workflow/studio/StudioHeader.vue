@@ -147,13 +147,13 @@ const saveStatusText = computed(() => {
 
 <style scoped>
 .studio-header {
-  height: 56px;
+  height: 64px;
   background: #ffffff;
   border-bottom: 1px solid #e4e7ed;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   z-index: 50;
   flex-shrink: 0;
@@ -253,8 +253,9 @@ const saveStatusText = computed(() => {
 
 .action-btn:hover {
   background: #f5f7fa;
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--color-primary-600);
+  background: var(--color-primary-900);
+  color: white;
 }
 
 .publish-btn {
