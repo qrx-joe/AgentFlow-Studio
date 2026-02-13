@@ -93,7 +93,7 @@ const goToDocument = () => {
   gap: 16px;
   height: 100%;
   padding: 0;
-  background-color: #f3f4f6; /* Light gray background for the workspace */
+  /* background-color: #f3f4f6; */ /* Removed to inherit from MainLayout */
 }
 
 @media (max-width: 768px) {

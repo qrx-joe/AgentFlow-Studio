@@ -21,46 +21,42 @@ const handleSelect = (path: string) => {
 
 <template>
   <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo-box">
-          <span class="logo-text">AF</span>
-        </div>
-        <div class="brand-info">
-          <div class="title">AgentFlow</div>
-          <div class="subtitle">Steve Studio</div>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="navbar-left">
+        <div class="brand">
+          <div class="logo-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <span class="brand-text">AgentFlow</span>
         </div>
       </div>
-      
-      <nav class="menu">
-        <div class="menu-label">MENU</div>
+
+      <nav class="nav-menu">
         <button
           v-for="item in menus"
           :key="item.path"
-          class="menu-item"
-          :class="{ active: route.path.startsWith(item.path) }"
+          class="nav-item"
+          :class="{ active: route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)) }"
           @click="handleSelect(item.path)"
         >
-          <el-icon class="menu-icon"><component :is="item.icon" /></el-icon>
-          <span class="menu-text">{{ item.name }}</span>
-          <div v-if="route.path.startsWith(item.path)" class="active-indicator"></div>
+          <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+          <span class="nav-text">{{ item.name }}</span>
         </button>
       </nav>
 
-      <div class="user-profile">
-        <div class="avatar">U</div>
-        <div class="user-info">
-          <div class="user-name">User</div>
-          <div class="user-role">Developer</div>
+      <div class="navbar-right">
+        <!-- User Profile Dropdown could go here, simplified user profile for now -->
+        <div class="user-profile">
+          <div class="avatar">U</div>
         </div>
       </div>
-    </aside>
+    </header>
 
+    <!-- Main Content Area -->
     <main class="content-wrapper">
-      <header class="top-bar">
-        <!-- 面包屑或标题，暂时留空 -->
-        <span class="page-title">{{ route.meta.title || 'AgentFlow Studio' }}</span>
-      </header>
       <div class="page-content">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
@@ -75,201 +71,140 @@ const handleSelect = (path: string) => {
 <style scoped>
 .layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: var(--color-neutral-50);
+  background-color: #f8fafc; /* Lighter background */
   font-family: var(--font-family-base);
-  color: var(--color-neutral-800);
+  color: #0f172a;
 }
 
-/* Sidebar Styling */
-.sidebar {
-  width: 260px;
-  background: #ffffff; /* Light sidebar for cleaner look, or var(--color-primary-900) for dark */
-  border-right: 1px solid var(--color-neutral-200);
+/* Navbar */
+.navbar {
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
-  flex-direction: column;
-  padding: 24px 16px;
-  transition: all 0.3s ease;
-  z-index: 10;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 50;
+  position: relative; /* For absolute centering of nav-menu */
 }
 
-/* Dark mode sidebar option */
-/* .sidebar {
-  background: var(--color-neutral-900);
-  color: var(--color-neutral-100);
-  border-right: 1px solid rgba(255,255,255,0.05);
-} */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
 
+/* Brand */
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px 32px 12px;
+  gap: 10px;
+  cursor: pointer;
 }
 
 .logo-box {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  background: #0f172a; /* Solid dark brand color */
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 800;
+}
+
+.brand-text {
   font-size: 18px;
-  box-shadow: var(--shadow-md);
-}
-
-.brand-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.title {
   font-weight: 700;
-  font-size: 16px;
-  color: var(--color-neutral-900);
-  line-height: 1.2;
+  color: #0f172a;
+  letter-spacing: -0.5px;
 }
 
-.subtitle {
-  font-size: 12px;
-  color: var(--color-neutral-500);
-}
-
-.menu {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.menu-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-neutral-400);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0 12px 8px 12px;
-}
-
-.menu-item {
+/* Navigation - Centered */
+.nav-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--color-neutral-600);
+  color: #64748b;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  text-align: left;
+  transition: all 0.2s;
 }
 
-.menu-item:hover {
-  background: var(--color-neutral-100);
-  color: var(--color-neutral-900);
+.nav-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.menu-item.active {
-  background: var(--color-primary-50);
-  color: var(--color-primary-600);
+.nav-item.active {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
 }
 
-.menu-icon {
-  font-size: 18px;
+.nav-icon {
+  font-size: 16px;
 }
 
-.active-indicator {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 16px;
-  background: var(--color-primary-500);
-  border-radius: 2px 0 0 2px;
-}
-
-/* User Profile */
-.user-profile {
-  margin-top: auto;
-  padding: 16px 12px 0;
-  border-top: 1px solid var(--color-neutral-100);
+/* Navbar Right */
+.navbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--color-neutral-200);
-  color: var(--color-neutral-600);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
 }
 
-.user-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
-}
-
-.user-role {
-  font-size: 12px;
-  color: var(--color-neutral-500);
-}
-
-/* Main Content */
+/* Content */
 .content-wrapper {
   flex: 1;
+  overflow: hidden;
+  position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: var(--color-neutral-50);
-}
-
-.top-bar {
-  height: var(--header-height);
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  background: var(--color-neutral-50); /* Transparent/match bg */
-  /* border-bottom: 1px solid var(--color-neutral-200); */ /* Optional: cleaner without border if canvas has card style */
-}
-
-.page-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
 }
 
 .page-content {
   flex: 1;
-  padding: 0 24px 24px; /* Give some breathing room */
-  overflow: hidden;
+  overflow: hidden; /* Child views handle scrolling */
+  position: relative;
 }
 
 /* Transition */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
 
 .fade-enter-from,

@@ -160,21 +160,35 @@ const handleQuickPrompt = (text: string) => {
       <div v-if="props.messages.length === 0" class="welcome-container">
         <div class="welcome-content">
           <div class="welcome-logo">
-            <span class="ai-emoji">🤖</span>
-            <div class="logo-ring"></div>
+            <div class="logo-icon-large">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+                <path d="M9 12h.01"></path>
+                <path d="M15 12h.01"></path>
+              </svg>
+            </div>
+            <!-- <div class="logo-ring"></div> -->
           </div>
           <h2 class="welcome-title">有什么可以帮你的吗？</h2>
           <p class="welcome-desc">AgentFlow AI 助手，基于你的知识库进行智能对话</p>
           <div class="quick-prompts">
             <button
-              v-for="prompt in quickPrompts"
+              v-for="(prompt, index) in quickPrompts"
               :key="prompt.text"
               class="quick-prompt"
               @click="handleQuickPrompt(prompt.text)"
             >
-              <div class="qp-icon">{{ prompt.icon }}</div>
+              <div class="qp-icon">
+                <svg v-if="index === 0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path><path d="M9 21h6"></path></svg>
+                <svg v-else-if="index === 1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
               <div class="qp-text">{{ prompt.text }}</div>
-              <div class="qp-arrow">→</div>
+              <div class="qp-arrow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
             </button>
           </div>
         </div>
@@ -191,8 +205,13 @@ const handleQuickPrompt = (text: string) => {
         >
           <!-- 头像 -->
           <div class="avatar" :class="msg.role">
-            <span v-if="msg.role === 'user'">👤</span>
-            <span v-else>🤖</span>
+            <svg v-if="msg.role === 'user'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+            </svg>
           </div>
 
           <!-- 消息内容 -->
@@ -346,6 +365,7 @@ const handleQuickPrompt = (text: string) => {
   background: transparent;
 }
 
+
 /* 欢迎页 */
 .welcome-container {
   max-width: 640px;
@@ -363,33 +383,37 @@ const handleQuickPrompt = (text: string) => {
 
 .welcome-logo {
   position: relative;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f3f4f6;
-  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.ai-emoji {
-  font-size: 32px;
-  position: relative;
-  z-index: 2;
+.logo-icon-large {
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .welcome-title {
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
 }
 
 .welcome-desc {
   font-size: 15px;
-  color: #6b7280;
-  margin-bottom: 32px;
+  color: #64748b;
+  margin-bottom: 40px;
 }
 
 .quick-prompts {
@@ -403,41 +427,49 @@ const handleQuickPrompt = (text: string) => {
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: #f9fafb;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
   text-align: left;
 }
 
 .quick-prompt:hover {
-  background: #fff;
-  border-color: #d1d5db;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .qp-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  border-radius: 8px;
-  font-size: 18px;
-  border: 1px solid #f3f4f6;
+  background: #f8fafc;
+  border-radius: 10px;
+  color: #475569;
+}
+
+.quick-prompt:hover .qp-icon {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .qp-text {
   flex: 1;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: #334155;
+}
+
+.quick-prompt:hover .qp-text {
+  color: #0f172a;
 }
 
 .qp-arrow {
-  color: #9ca3af;
+  color: #cbd5e1;
   opacity: 0;
   transform: translateX(-5px);
   transition: all 0.2s;
@@ -446,6 +478,7 @@ const handleQuickPrompt = (text: string) => {
 .quick-prompt:hover .qp-arrow {
   opacity: 1;
   transform: translateX(0);
+  color: #94a3b8;
 }
 
 /* 对话流容器 - 取 Dify 的居中窄布局 */
@@ -473,23 +506,26 @@ const handleQuickPrompt = (text: string) => {
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px; /* Slightly squarer than typical circle */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   flex-shrink: 0;
   margin-top: 2px;
+  border: 1px solid transparent;
 }
 
 .avatar.user {
-  background: #eff6ff;
+  background: #eff6ff; /* Solid light blue */
   color: #2563eb;
+  border-color: #dbeafe;
 }
 
 .avatar.assistant {
-  background: #f0fdf4;
-  color: #16a34a;
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow for white avatar */
 }
 
 /* 消息体 Wrapper */
@@ -508,7 +544,7 @@ const handleQuickPrompt = (text: string) => {
 
 .message-sender {
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
   margin-bottom: 6px;
   font-weight: 500;
 }
@@ -529,16 +565,16 @@ const handleQuickPrompt = (text: string) => {
 /* AI 消息：去气泡化，直接显示 markdown */
 .message-row.assistant .message-bubble {
   width: 100%;
-  color: #1f2937;
+  color: #1e293b;
 }
 
-/* 用户消息：蓝色气泡 */
+/* 用户消息：纯蓝气泡，无渐变 */
 .message-row.user .message-bubble {
-  background: #2563eb;
-  color: #fff;
+  background: #2563eb; /* Pure Blue */
+  color: #ffffff;
   padding: 12px 16px;
   border-radius: 12px 2px 12px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
 }
 
 .user-text {
@@ -549,13 +585,13 @@ const handleQuickPrompt = (text: string) => {
 .sources-area {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed #e5e7eb;
+  border-top: 1px dashed #e2e8f0;
   width: 100%;
 }
 
 .sources-title {
   font-size: 11px;
-  color: #9ca3af;
+  color: #94a3b8;
   font-weight: 600;
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -571,8 +607,8 @@ const handleQuickPrompt = (text: string) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 4px 8px;
   cursor: pointer;
@@ -580,13 +616,13 @@ const handleQuickPrompt = (text: string) => {
 }
 
 .source-item:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .source-idx {
-  background: #e5e7eb;
-  color: #4b5563;
+  background: #f1f5f9;
+  color: #64748b;
   width: 16px;
   height: 16px;
   border-radius: 4px;
@@ -599,7 +635,7 @@ const handleQuickPrompt = (text: string) => {
 
 .source-name {
   font-size: 12px;
-  color: #374151;
+  color: #475569;
 }
 
 .message-actions {
@@ -620,7 +656,7 @@ const handleQuickPrompt = (text: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: #94a3b8;
   background: none;
   border: none;
   border-radius: 6px;
@@ -628,12 +664,12 @@ const handleQuickPrompt = (text: string) => {
 }
 
 .action-btn:hover {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 /* Markdown 样式覆盖 (Light) */
-.markdown-body :deep(h2) { font-size: 1.1em; font-weight: 700; margin-top: 16px; }
+.markdown-body :deep(h2) { font-size: 1.1em; font-weight: 700; margin-top: 16px; color: #0f172a; }
 .markdown-body :deep(p) { margin: 8px 0; }
 .markdown-body :deep(ul), .markdown-body :deep(ol) { padding-left: 20px; }
 .markdown-body :deep(.code-block) {
@@ -641,11 +677,14 @@ const handleQuickPrompt = (text: string) => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   color: #334155;
+  margin: 12px 0;
 }
 .markdown-body :deep(.inline-code) {
   background: #f1f5f9;
-  color: #ef4444; /* Red emphasis like Dify sometimes has or Notion */
+  color: #0f172a;
   padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
 }
 .markdown-body :deep(.source-highlight) {
   background: rgba(253, 224, 71, 0.4);
@@ -659,7 +698,7 @@ const handleQuickPrompt = (text: string) => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .animate-spin {
@@ -674,7 +713,11 @@ const handleQuickPrompt = (text: string) => {
   left: 0;
   right: 0;
   padding: 0 20px 24px;
-  background: linear-gradient(to top, #ffffff 80%, rgba(255,255,255,0));
+  /* background: linear-gradient(to top, #ffffff 80%, rgba(255,255,255,0)); */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.5); /* Subtle top border */
   z-index: 10;
   display: flex;
   flex-direction: column;
