@@ -30,6 +30,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof Error ? exception.stack : ''
     )
 
+    // 检查响应头是否已发送（SSE 流已开始）
+    if (response.headersSent) {
+      this.logger.warn('Headers already sent, cannot send error response')
+      // SSE 流已开始，尝试通过流发送错误事件后关闭
+      try {
+        response.write(`event: error\ndata: ${JSON.stringify({ message })}\n\n`)
+        response.end()
+      } catch {
+        // 忽略写入错误
+      }
+      return
+    }
+
     response.status(status).json({
       code: status,
       message,

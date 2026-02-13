@@ -42,9 +42,12 @@ export class ChatController {
     res.setHeader('Cache-Control', 'no-cache, no-transform')
     res.setHeader('Connection', 'keep-alive')
     res.setHeader('X-Accel-Buffering', 'no')
-    res.flushHeaders?.()
+    // 禁用 Node.js 的响应缓冲
+    res.socket?.setNoDelay(true)
+    res.flushHeaders()
 
     const writeEvent = (event: string | null, data: string) => {
+      if (!res.writable) return
       if (event) {
         res.write(`event: ${event}\n`)
       }
@@ -53,7 +56,10 @@ export class ChatController {
         res.write(`data: ${line}\n`)
       }
       res.write('\n')
-      res.flush?.()
+      // 强制刷新缓冲区（通过写入空字符串触发）
+      if (typeof (res as any).flush === 'function') {
+        (res as any).flush()
+      }
     }
 
     // 发送初始注释，确保连接尽快建立

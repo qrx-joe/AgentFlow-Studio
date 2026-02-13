@@ -21,7 +21,20 @@ const request = axios.create({
 request.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   (error) => {
-    const message = error.response?.data?.message || '网络请求失败'
+    let message = '网络请求失败'
+    if (error.response) {
+      // 服务器返回了错误响应
+      message = error.response.data?.message || `服务器错误 (${error.response.status})`
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      message = '服务器无响应，请检查后端服务是否启动'
+    } else if (error.code === 'ECONNABORTED') {
+      // 请求超时
+      message = '请求超时，请稍后重试'
+    } else {
+      // 其他错误
+      message = error.message || '未知网络错误'
+    }
     ElMessage.error(message)
     return Promise.reject(error)
   }

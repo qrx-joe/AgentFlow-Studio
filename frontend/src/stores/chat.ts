@@ -147,10 +147,12 @@ export const useChatStore = defineStore('chat', {
 
             for (const line of lines) {
               if (line.startsWith('event:')) {
-                eventType = line.replace('event:', '').trim() || 'message'
+                eventType = line.slice(6).trim() || 'message'
               } else if (line.startsWith('data:')) {
-                dataLines.push(line.replace('data:', '').trimStart())
+                // 使用 slice 而非 replace，避免误替换内容中的 'data:'
+                dataLines.push(line.slice(5).trimStart())
               }
+              // 忽略注释行（以 : 开头）和其他行
             }
 
             if (!dataLines.length) {
