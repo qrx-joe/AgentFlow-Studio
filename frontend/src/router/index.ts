@@ -12,7 +12,7 @@ const router = createRouter({
           path: '', // Default to Dashboard
           name: 'Dashboard',
           component: () => import('@/views/Dashboard/DashboardView.vue'),
-          meta: { title: '工作台' }
+          meta: { title: '工作室' }
         },
         // Old workflow path reserved or redirected
         // { path: 'workflow', redirect: '/' }, 

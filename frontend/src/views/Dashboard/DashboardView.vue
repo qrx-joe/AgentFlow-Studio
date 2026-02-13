@@ -61,7 +61,7 @@ const handleOpen = (id: string) => {
   <div class="dashboard-container">
     <div class="header-section">
       <div class="welcome-box">
-        <h1 class="page-title">工作台</h1>
+        <h1 class="page-title">工作室</h1>
         <p class="page-subtitle">管理与构建所有的 AI 智能体应用</p>
       </div>
       <div class="action-box">
