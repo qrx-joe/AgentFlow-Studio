@@ -96,13 +96,14 @@ const iconStyle = computed(() => ({
 /* Selected State: Glow & Border */
 .base-node.selected {
   border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 20;
 }
 
 .base-node.running {
     border-color: var(--color-primary-900);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
 }
 
 .base-node.failed {

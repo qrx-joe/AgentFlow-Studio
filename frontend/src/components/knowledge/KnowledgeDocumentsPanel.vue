@@ -396,7 +396,7 @@ const getFileIcon = (fileType?: string) => {
 
 .selected-count {
   font-size: 13px;
-  color: #2563eb;
+  color: var(--color-primary-900);
   font-weight: 500;
 }
 
@@ -413,8 +413,8 @@ const getFileIcon = (fileType?: string) => {
 
 .upload-area:hover,
 .upload-area.dragging {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-primary-100);
+  background: #f1f5f9;
 }
 
 .upload-icon {
@@ -459,14 +459,14 @@ const getFileIcon = (fileType?: string) => {
 }
 
 .doc-card:hover {
-  border-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  border-color: var(--color-primary-900);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   transform: translateY(-2px);
 }
 
 .doc-card.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--color-primary-900);
+  background: #f1f5f9;
 }
 
 .card-checkbox {

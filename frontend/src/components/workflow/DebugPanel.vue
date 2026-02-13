@@ -417,7 +417,7 @@ const handleClose = () => {
 
 :deep(.el-collapse-item__header) {
   font-size: 12px;
-  color: #409eff;
+  color: var(--color-primary-900);
   background: transparent;
   border: none;
   padding: 0;

@@ -20,7 +20,7 @@ const apps = ref([
     name: '智能客服助手',
     desc: '基于知识库的自动问答机器人，处理常见客户咨询。',
     icon: 'CustomerService',
-    color: '#3b82f6',
+    color: '#475569', // Changed from #3b82f6 (blue) to #475569 (slate-700)
     status: 'published',
     updatedAt: '10分钟前',
     author: 'Admin'
@@ -180,12 +180,12 @@ const handleOpen = (id: string) => {
     padding: 10px 20px;
     font-weight: 500;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 2px 4px rgba(71, 85, 105, 0.15); /* Changed from rgba(59, 130, 246, 0.15) to slate-700 */
     transition: all 0.2s;
 }
 
 .create-btn:hover {
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 4px 6px rgba(71, 85, 105, 0.25); /* Changed from rgba(59, 130, 246, 0.25) to slate-700 */
     transform: translateY(-1px);
 }
 

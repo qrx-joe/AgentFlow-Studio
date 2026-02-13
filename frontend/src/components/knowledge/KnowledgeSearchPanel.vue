@@ -247,9 +247,9 @@ const applyPreset = (preset: typeof presets[0]) => {
 }
 
 .search-input-wrapper:focus-within {
-  border-color: #3b82f6;
+  border-color: var(--color-primary-900);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
 .search-icon {
@@ -345,7 +345,7 @@ const applyPreset = (preset: typeof presets[0]) => {
 
 .param-value {
   font-size: 13px;
-  color: #3b82f6;
+  color: var(--color-primary-900);
   font-weight: 600;
   min-width: 36px;
   text-align: center;
@@ -428,7 +428,7 @@ const applyPreset = (preset: typeof presets[0]) => {
 .weight-value {
   font-size: 14px;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--color-primary-900);
   text-align: center;
 }
 
@@ -454,8 +454,8 @@ const applyPreset = (preset: typeof presets[0]) => {
 }
 
 .mode-btn.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: var(--color-primary-900);
+  background: #f1f5f9;
 }
 
 .mode-label {

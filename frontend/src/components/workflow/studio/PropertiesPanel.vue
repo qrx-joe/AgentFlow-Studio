@@ -513,7 +513,7 @@ const toggleSection = (section: string) => {
 }
 
 .node-type-badge.type-llm {
-  background: #dbeafe;
+  background: #f1f5f9;
   color: #0ea5e9;
 }
 

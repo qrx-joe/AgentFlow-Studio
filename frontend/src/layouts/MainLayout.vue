@@ -259,7 +259,8 @@ const handleLogout = async () => {
 
 .page-content {
   flex: 1;
-  overflow: hidden; /* Child views handle scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 

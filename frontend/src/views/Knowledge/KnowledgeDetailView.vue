@@ -200,7 +200,7 @@ const formatNumber = (num: number) => {
       <div class="header-left">
         <el-button :icon="ArrowLeft" text @click="handleBack">返回</el-button>
         <div class="kb-title" v-if="kb">
-          <div class="kb-icon" :style="{ background: (kb.color || '#3b82f6') + '15', color: kb.color || '#3b82f6' }">
+          <div class="kb-icon" :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }">
             {{ kb.name.slice(0, 1) }}
           </div>
           <div class="kb-info">

@@ -15,7 +15,7 @@ const props = defineProps<{
 const statusColor = computed(() => {
   const colors = {
     idle: '#909399',
-    running: '#409eff',
+    running: 'var(--color-primary-900)',
     success: '#67c23a',
     error: '#f56c6c'
   }
@@ -25,7 +25,7 @@ const statusColor = computed(() => {
 const methodColor = computed(() => {
   const colors = {
     GET: '#67c23a',
-    POST: '#409eff',
+    POST: 'var(--color-primary-900)',
     PUT: '#e6a23c',
     DELETE: '#f56c6c'
   }
@@ -151,7 +151,7 @@ const methodColor = computed(() => {
   width: 12px;
   height: 12px;
   background: #ffffff;
-  border: 2px solid #409eff;
+  border: 2px solid var(--color-primary-900);
   border-radius: 50%;
   pointer-events: all;
   cursor: crosshair;

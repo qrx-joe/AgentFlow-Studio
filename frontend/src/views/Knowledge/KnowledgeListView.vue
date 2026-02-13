@@ -15,7 +15,7 @@ const newKbDesc = ref('')
 const newKbColor = ref('#0f172a')
 
 const colorOptions = [
-  '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b',
+  '#64748b', '#10b981', '#8b5cf6', '#f59e0b',
   '#ef4444', '#ec4899', '#06b6d4', '#6366f1'
 ]
 
@@ -118,7 +118,7 @@ const formatDate = (dateStr?: string) => {
         @click="handleOpen(kb.id)"
       >
         <div class="card-header">
-          <div class="kb-icon" :style="{ background: (kb.color || '#3b82f6') + '15', color: kb.color || '#3b82f6' }">
+          <div class="kb-icon" :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }">
             <span>{{ kb.name.slice(0, 1) }}</span>
           </div>
           <el-dropdown trigger="click" @click.stop>
@@ -391,7 +391,7 @@ const formatDate = (dateStr?: string) => {
 
 .create-card:hover {
   border-color: var(--color-primary-900);
-  background: #eff6ff;
+  background: #f1f5f9;
   box-shadow: none;
   transform: none; /* No lift specific for create card if preferred, or keep it */
 }
