@@ -109,6 +109,7 @@ const emit = defineEmits<{
         @node-double-click="(event: any) => emit('nodeDoubleClick', event.node)"
         @pane-click="() => emit('paneClick')"
         @edge-click="(event: any) => emit('edgeClick', event.edge)"
+        :fit-view-on-init="true"
       >
         <Background />
         <Controls />

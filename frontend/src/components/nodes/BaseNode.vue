@@ -79,40 +79,51 @@ const iconStyle = computed(() => ({
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid var(--color-neutral-200);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
   min-width: 240px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
 }
 
+/* Hover Effect: Lift & Deeper Shadow */
 .base-node:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-neutral-300);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: var(--color-primary-300);
+  z-index: 10;
 }
 
+/* Selected State: Glow & Border */
 .base-node.selected {
   border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 2px var(--color-primary-200), var(--shadow-md);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 20;
 }
 
 .base-node.running {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 
 .base-node.failed {
     border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.base-node.success {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* Header */
 .node-header {
-  padding: 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   gap: 10px;
   border-radius: 12px 12px 0 0;
+  transition: background 0.2s;
 }
 
 .icon-box {
@@ -124,6 +135,7 @@ const iconStyle = computed(() => ({
   justify-content: center;
   font-size: 16px;
   flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .node-title {
@@ -148,17 +160,24 @@ const iconStyle = computed(() => ({
   align-items: center;
   gap: 4px;
   color: var(--color-neutral-400);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.base-node:hover .node-actions {
+  opacity: 1;
 }
 
 .more-btn {
     cursor: pointer;
-    padding: 2px;
+    padding: 4px;
     border-radius: 4px;
+    transition: all 0.2s;
 }
 
 .more-btn:hover {
     background: rgba(0,0,0,0.05);
-    color: var(--color-neutral-600);
+    color: var(--color-neutral-900);
 }
 
 /* Body */
@@ -169,20 +188,30 @@ const iconStyle = computed(() => ({
   line-height: 1.5;
 }
 
-/* Handles */
+/* Handles - Auto Hide */
 :deep(.vue-flow__handle) {
   width: 10px;
   height: 10px;
   border: 2px solid #ffffff;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   background: var(--color-neutral-400);
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0; /* Hidden by default */
+  transform: scale(0.5);
+}
+
+.base-node:hover :deep(.vue-flow__handle),
+.base-node.selected :deep(.vue-flow__handle) {
+    opacity: 1;
+    transform: scale(1);
 }
 
 :deep(.vue-flow__handle:hover) {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     background: var(--color-primary-500);
+    transform: scale(1.2);
+    border-color: #ffffff;
 }
 
 :deep(.vue-flow__handle-left) {

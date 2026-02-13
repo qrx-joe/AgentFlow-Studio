@@ -17,22 +17,22 @@ const edgePathData = computed(() => {
 })
 
 const strokeColor = computed(() => {
+  if (props.selected) return '#3b82f6' // Brand Blue when selected
   const stroke = (props.style as any)?.stroke
-  return typeof stroke === 'string' ? stroke : '#94a3b8'
+  return typeof stroke === 'string' ? stroke : '#cbd5e1' // Slate-300 default
 })
 
-const labelStyle = computed(() => (props.labelStyle || {}) as Record<string, any>)
-const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string, any>)
+const strokeWidth = computed(() => props.selected ? 3 : 2)
 </script>
 
 <template>
-  <g>
+  <g class="edge-group" :class="{ selected }">
     <defs>
       <marker
         :id="`${id}-arrow`"
-        markerWidth="10"
-        markerHeight="10"
-        refX="8"
+        markerWidth="12"
+        markerHeight="12"
+        refX="10"
         refY="3"
         orient="auto"
         markerUnits="strokeWidth"
@@ -41,17 +41,26 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
       </marker>
     </defs>
 
+    <!-- Invisible wider path for easier selection -->
+    <path
+      :d="edgePathData[0]"
+      stroke-width="20"
+      stroke="transparent"
+      fill="none"
+      class="interaction-path"
+    />
+
     <path
       :id="id"
-      :class="['branch-edge', 'flow']"
+      :class="['branch-edge', { flow: animated }]"
       :d="edgePathData[0]"
-      :style="{ stroke: strokeColor, strokeWidth: 2, fill: 'none', ...(style as any || {}) }"
+      :style="{ stroke: strokeColor, strokeWidth: strokeWidth, fill: 'none', ...(style as any || {}) }"
       :marker-end="`url(#${id}-arrow)`"
     />
 
     <!-- 端点标记 -->
-    <circle :cx="sourceX" :cy="sourceY" r="4" :fill="strokeColor" />
-    <circle :cx="targetX" :cy="targetY" r="4" :fill="strokeColor" />
+    <circle v-if="!selected" :cx="sourceX" :cy="sourceY" r="3" :fill="strokeColor" />
+    <circle v-if="!selected" :cx="targetX" :cy="targetY" r="3" :fill="strokeColor" />
 
     <!-- 标签 -->
     <EdgeLabelRenderer>
@@ -62,9 +71,15 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
           ...labelBgStyle,
           position: 'absolute',
           transform: `translate(-50%, -50%) translate(${edgePathData[1]}px, ${edgePathData[2]}px)`,
-          padding: '2px 6px',
-          borderRadius: '6px',
-          fontSize: '12px',
+          padding: '2px 8px',
+          borderRadius: '12px',
+          fontSize: '11px',
+          fontWeight: 500,
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          color: '#64748b',
+          zIndex: 10,
         }"
       >
         <span :style="labelStyle">{{ label }}</span>
@@ -75,40 +90,38 @@ const labelBgStyle = computed(() => (props.labelBgStyle || {}) as Record<string,
 
 <style scoped>
 .branch-edge {
-  stroke-width: 2;
   fill: none;
+  transition: all 0.2s;
 }
 
-@keyframes flowDash {
+/* Particle Flow Animation */
+@keyframes flowParticle {
+  from {
+    stroke-dashoffset: 24;
+  }
   to {
-    stroke-dashoffset: -20;
+    stroke-dashoffset: 0;
   }
 }
 
 .flow {
-  stroke-dasharray: 6 6;
-  animation: flowDash 1.2s linear infinite;
-}
-
-.edge-highlight {
-  stroke-width: 3;
-}
-
-.edge-highlight.flow {
-  animation-duration: 0.5s;
-}
-
-.edge-trail {
-  stroke-opacity: 0.9;
-}
-
-.edge-compare {
-  stroke: #64748b;
-  stroke-dasharray: 2 4;
-  opacity: 0.7;
+  /* Create a dot pattern */
+  stroke-dasharray: 4 4; 
+  animation: flowParticle 0.8s linear infinite;
 }
 
 .edge-label {
-  pointer-events: none;
+  pointer-events: all; /* Allow clicking label if needed */
+  transition: all 0.2s;
+}
+
+.edge-group.selected .edge-label {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.interaction-path {
+    cursor: pointer;
 }
 </style>
