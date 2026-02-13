@@ -24,6 +24,7 @@ export class WorkflowEngine {
       variables: {},
       logs: [],
       compensations: [],
+      steps: [],
     }
 
     try {
@@ -54,12 +55,18 @@ export class WorkflowEngine {
         currentNode = nextNodeId ? this.nodes.get(nextNodeId) : undefined
       }
 
-      return { status: 'completed', output: context.variables, logs: context.logs }
+      return {
+        status: 'completed',
+        output: context.variables,
+        logs: context.logs,
+        steps: context.steps
+      }
     } catch (error: any) {
       return {
         status: 'failed',
         error: error?.message || '执行失败',
         logs: context.logs,
+        steps: context.steps,
       }
     }
   }
@@ -118,6 +125,14 @@ export class WorkflowEngine {
       : 'fail'
     const snapshot = { ...context.variables }
 
+    // Record Step Start
+    const startTime = Date.now()
+    const stepIndex = context.steps.push({
+      nodeId: node.id,
+      status: 'running',
+      startTime,
+    }) - 1
+
     for (let attempt = 0; attempt <= retryCount; attempt += 1) {
       try {
         if (attempt > 0) {
@@ -129,6 +144,15 @@ export class WorkflowEngine {
           await this.executeNode(node, context)
         }
         this.registerCompensation(node, context)
+
+        // Record Success
+        const endTime = Date.now()
+        const step = context.steps[stepIndex]
+        step.endTime = endTime
+        step.duration = endTime - startTime
+        step.status = 'success'
+        step.output = context.variables[node.id]
+
         return 'ok'
       } catch (error: any) {
         const message = error?.message || '执行失败'
@@ -138,6 +162,14 @@ export class WorkflowEngine {
         }
       }
     }
+
+    // Record Failure (initial)
+    const endTime = Date.now()
+    const step = context.steps[stepIndex]
+    step.endTime = endTime
+    step.duration = endTime - startTime
+    step.status = 'failed'
+    step.output = { error: 'Execution failed after retries' }
 
     if (node.data?.onError === 'compensate') {
       await this.runCompensations(context)
@@ -154,6 +186,8 @@ export class WorkflowEngine {
         delete context.variables[node.id]
       }
       context.logs.push(`节点 ${node.id} 已跳过（失败后策略）`)
+      // Record Skip
+      step.status = 'skipped'
       return 'skipped'
     }
 

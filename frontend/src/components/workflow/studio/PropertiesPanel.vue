@@ -288,14 +288,58 @@ const toggleSection = (section: string) => {
         <div v-if="!isTrigger" class="section">
           <div class="section-header" @click="toggleSection('input')">
             <span class="section-title">输入变量</span>
-            <el-badge :value="0" :hidden="true" class="section-badge" />
+            <el-badge :value="(node.data?.inputs || []).length" :hidden="(node.data?.inputs || []).length === 0" type="primary" class="section-badge" />
             <el-icon class="toggle-icon" :class="{ expanded: expandedSections.input }">
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
             <div v-show="expandedSections.input" class="section-content">
-              <el-empty description="暂无输入变量配置" :image-size="60" />
+              <div class="var-list">
+                <div v-for="(item, index) in (node.data?.inputs || [])" :key="index" class="var-item">
+                  <el-input 
+                    v-model="item.name" 
+                    placeholder="变量名" 
+                    size="small" 
+                    class="var-name"
+                    @change="$emit('update', node.id, { inputs: [...(node.data?.inputs || [])] })"
+                  />
+                  <el-select 
+                    v-model="item.type" 
+                    placeholder="类型" 
+                    size="small" 
+                    class="var-type"
+                    @change="$emit('update', node.id, { inputs: [...(node.data?.inputs || [])] })"
+                  >
+                    <el-option label="String" value="string" />
+                    <el-option label="Number" value="number" />
+                    <el-option label="Boolean" value="boolean" />
+                    <el-option label="Object" value="object" />
+                    <el-option label="Array" value="array" />
+                  </el-select>
+                  <el-button 
+                    link 
+                    type="danger" 
+                    :icon="Delete" 
+                    class="var-delete"
+                    @click="() => {
+                      const newInputs = [...(node.data?.inputs || [])]
+                      newInputs.splice(index, 1)
+                      $emit('update', node.id, { inputs: newInputs })
+                    }" 
+                  />
+                </div>
+              </div>
+              <el-button 
+                class="add-btn" 
+                size="small" 
+                @click="() => {
+                  const newInputs = [...(node.data?.inputs || []), { name: 'variable', type: 'string' }]
+                  $emit('update', node.id, { inputs: newInputs })
+                }"
+              >
+                + 添加输入变量
+              </el-button>
             </div>
           </el-collapse-transition>
         </div>
@@ -304,14 +348,58 @@ const toggleSection = (section: string) => {
         <div v-if="!isEnd" class="section">
           <div class="section-header" @click="toggleSection('output')">
             <span class="section-title">输出变量</span>
-            <el-badge :value="0" :hidden="true" class="section-badge" />
+            <el-badge :value="(node.data?.outputs || []).length" :hidden="(node.data?.outputs || []).length === 0" type="success" class="section-badge" />
             <el-icon class="toggle-icon" :class="{ expanded: expandedSections.output }">
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
             <div v-show="expandedSections.output" class="section-content">
-              <el-empty description="暂无输出变量配置" :image-size="60" />
+              <div class="var-list">
+                <div v-for="(item, index) in (node.data?.outputs || [])" :key="index" class="var-item">
+                  <el-input 
+                    v-model="item.name" 
+                    placeholder="变量名" 
+                    size="small" 
+                    class="var-name"
+                    @change="$emit('update', node.id, { outputs: [...(node.data?.outputs || [])] })"
+                  />
+                  <el-select 
+                    v-model="item.type" 
+                    placeholder="类型" 
+                    size="small" 
+                    class="var-type"
+                    @change="$emit('update', node.id, { outputs: [...(node.data?.outputs || [])] })"
+                  >
+                    <el-option label="String" value="string" />
+                    <el-option label="Number" value="number" />
+                    <el-option label="Boolean" value="boolean" />
+                    <el-option label="Object" value="object" />
+                    <el-option label="Array" value="array" />
+                  </el-select>
+                  <el-button 
+                    link 
+                    type="danger" 
+                    :icon="Delete" 
+                    class="var-delete"
+                    @click="() => {
+                      const newOutputs = [...(node.data?.outputs || [])]
+                      newOutputs.splice(index, 1)
+                      $emit('update', node.id, { outputs: newOutputs })
+                    }" 
+                  />
+                </div>
+              </div>
+               <el-button 
+                class="add-btn" 
+                size="small" 
+                @click="() => {
+                  const newOutputs = [...(node.data?.outputs || []), { name: 'result', type: 'string' }]
+                  $emit('update', node.id, { outputs: newOutputs })
+                }"
+              >
+                + 添加输出变量
+              </el-button>
             </div>
           </el-collapse-transition>
         </div>
@@ -577,5 +665,46 @@ const toggleSection = (section: string) => {
 
 .config-sections::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.var-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.var-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.var-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.var-type {
+  width: 85px !important;
+  flex-shrink: 0;
+}
+
+.var-delete {
+  padding: 4px;
+  margin-left: 2px;
+}
+
+.add-btn {
+  width: 100%;
+  border-style: dashed !important;
+  color: #606266;
+  font-weight: normal;
+}
+
+.add-btn:hover {
+  color: var(--color-primary-500);
+  border-color: var(--color-primary-300) !important;
+  background: var(--color-primary-50) !important;
 }
 </style>
