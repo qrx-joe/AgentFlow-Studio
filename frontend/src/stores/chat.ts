@@ -134,41 +134,56 @@ export const useChatStore = defineStore('chat', {
             break
           }
           buffer += decoder.decode(value, { stream: true })
+          buffer = buffer.replace(/\r\n/g, '\n')
 
           // 按 SSE 事件分割
           const parts = buffer.split('\n\n')
           buffer = parts.pop() || ''
 
           for (const part of parts) {
-            if (part.startsWith('event: error')) {
-              const dataLine = part.split('\n').find(line => line.startsWith('data: '))
-              if (dataLine) {
-                try {
-                  const payload = JSON.parse(dataLine.replace('data: ', ''))
-                  assistantMessage.content += payload.message || '服务器内部错误'
-                  console.error('[Chat] SSE error:', payload.message)
-                } catch {
-                  assistantMessage.content += '服务器内部错误'
-                }
+            const lines = part.split('\n').filter(Boolean)
+            let eventType = 'message'
+            const dataLines: string[] = []
+
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.replace('event:', '').trim() || 'message'
+              } else if (line.startsWith('data:')) {
+                dataLines.push(line.replace('data:', '').trimStart())
               }
-            } else if (part.startsWith('event: done')) {
-              const dataLine = part.split('\n').find(line => line.startsWith('data: '))
-              if (dataLine) {
-                try {
-                  const payload = JSON.parse(dataLine.replace('data: ', ''))
-                  assistantMessage.sources = payload.sources || []
-                  console.log('[Chat] Stream done, sources:', payload.sources?.length || 0)
-                } catch {
-                  // 解析失败，忽略
-                }
+            }
+
+            if (!dataLines.length) {
+              continue
+            }
+
+            const dataText = dataLines.join('\n')
+            if (eventType === 'error') {
+              try {
+                const payload = JSON.parse(dataText)
+                assistantMessage.content += payload.message || '服务器内部错误'
+                console.error('[Chat] SSE error:', payload.message)
+              } catch {
+                assistantMessage.content += '服务器内部错误'
               }
-            } else if (part.startsWith('data: ')) {
-              const token = part.replace('data: ', '')
-              assistantMessage.content += token
-              tokenCount++
-              if (tokenCount % 10 === 0) {
-                console.log(`[Chat] Received ${tokenCount} tokens, current length: ${assistantMessage.content.length}`)
+              continue
+            }
+
+            if (eventType === 'done') {
+              try {
+                const payload = JSON.parse(dataText)
+                assistantMessage.sources = payload.sources || []
+                console.log('[Chat] Stream done, sources:', payload.sources?.length || 0)
+              } catch {
+                // 解析失败，忽略
               }
+              continue
+            }
+
+            assistantMessage.content += dataText
+            tokenCount++
+            if (tokenCount % 10 === 0) {
+              console.log(`[Chat] Received ${tokenCount} tokens, current length: ${assistantMessage.content.length}`)
             }
           }
         }

@@ -39,22 +39,37 @@ export class ChatController {
   ) {
     // SSE 基本响应头
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
-    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Cache-Control', 'no-cache, no-transform')
     res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.flushHeaders?.()
+
+    const writeEvent = (event: string | null, data: string) => {
+      if (event) {
+        res.write(`event: ${event}\n`)
+      }
+      const lines = data.split('\n')
+      for (const line of lines) {
+        res.write(`data: ${line}\n`)
+      }
+      res.write('\n')
+      res.flush?.()
+    }
+
+    // 发送初始注释，确保连接尽快建立
+    res.write(':ok\n\n')
 
     try {
       const assistant = await this.chatService.streamMessage(payload, (token) => {
-        res.write(`data: ${token}\n\n`)
+        writeEvent(null, token)
       })
 
-      res.write(`event: done\n`)
-      res.write(`data: ${JSON.stringify({ id: assistant.id, sources: assistant.sources })}\n\n`)
+      writeEvent('done', JSON.stringify({ id: assistant.id, sources: assistant.sources }))
       res.end()
     } catch (error) {
       console.error('[ChatController] SSE stream error:', error)
       const errMsg = (error as any)?.message || '服务器内部错误'
-      res.write(`event: error\n`)
-      res.write(`data: ${JSON.stringify({ message: errMsg })}\n\n`)
+      writeEvent('error', JSON.stringify({ message: errMsg }))
       res.end()
     }
   }
