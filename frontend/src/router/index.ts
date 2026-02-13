@@ -14,13 +14,17 @@ const router = createRouter({
           component: () => import('@/views/Dashboard/DashboardView.vue'),
           meta: { title: '工作室' }
         },
-        // Old workflow path reserved or redirected
-        // { path: 'workflow', redirect: '/' }, 
         {
           path: 'knowledge',
           name: 'Knowledge',
-          component: () => import('@/views/Knowledge/KnowledgeView.vue'),
-          meta: { title: '知识库管理' }
+          component: () => import('@/views/Knowledge/KnowledgeListView.vue'),
+          meta: { title: '知识库' }
+        },
+        {
+          path: 'knowledge/:id',
+          name: 'KnowledgeDetail',
+          component: () => import('@/views/Knowledge/KnowledgeDetailView.vue'),
+          meta: { title: '知识库详情' }
         },
         {
           path: 'chat',

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Body, UseInterceptors, UploadedFile, Query } from '@nestjs/common'
+import { Controller, Delete, Get, Param, Post, Put, Body, UseInterceptors, UploadedFile, Query } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { KnowledgeService } from './knowledge.service'
 
@@ -7,9 +7,49 @@ import { KnowledgeService } from './knowledge.service'
 export class KnowledgeController {
   constructor(private readonly knowledgeService: KnowledgeService) { }
 
+  // ========== 知识库管理 ==========
+
+  @Get('bases')
+  listKnowledgeBases() {
+    return this.knowledgeService.listKnowledgeBases()
+  }
+
+  @Post('bases')
+  createKnowledgeBase(@Body() body: {
+    name: string
+    description?: string
+    icon?: string
+    color?: string
+  }) {
+    return this.knowledgeService.createKnowledgeBase(body)
+  }
+
+  @Get('bases/:id')
+  getKnowledgeBase(@Param('id') id: string) {
+    return this.knowledgeService.getKnowledgeBase(id)
+  }
+
+  @Put('bases/:id')
+  updateKnowledgeBase(@Param('id') id: string, @Body() body: {
+    name?: string
+    description?: string
+    icon?: string
+    color?: string
+    settings?: any
+  }) {
+    return this.knowledgeService.updateKnowledgeBase(id, body)
+  }
+
+  @Delete('bases/:id')
+  deleteKnowledgeBase(@Param('id') id: string) {
+    return this.knowledgeService.deleteKnowledgeBase(id)
+  }
+
+  // ========== 文档管理 ==========
+
   @Get('documents')
-  listDocuments() {
-    return this.knowledgeService.listDocuments()
+  listDocuments(@Query('knowledgeBaseId') knowledgeBaseId?: string) {
+    return this.knowledgeService.listDocuments(knowledgeBaseId)
   }
 
   @Get('documents/:id/chunks')
@@ -22,7 +62,8 @@ export class KnowledgeController {
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File,
     @Body('chunkSize') chunkSize?: string,
-    @Body('overlap') overlap?: string
+    @Body('overlap') overlap?: string,
+    @Body('knowledgeBaseId') knowledgeBaseId?: string
   ) {
     console.log('[Upload] Received request:', {
       hasFile: !!file,
@@ -31,6 +72,7 @@ export class KnowledgeController {
       mimetype: file?.mimetype,
       chunkSize,
       overlap,
+      knowledgeBaseId,
     })
     if (!file) {
       console.error('[Upload] No file received! Check multipart form data.')
@@ -40,6 +82,7 @@ export class KnowledgeController {
       const result = await this.knowledgeService.uploadDocument(file, {
         chunkSize: chunkSize ? Number(chunkSize) : undefined,
         overlap: overlap ? Number(overlap) : undefined,
+        knowledgeBaseId,
       })
       console.log('[Upload] Success:', result.id)
       return result

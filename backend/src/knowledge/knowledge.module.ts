@@ -4,6 +4,7 @@ import { KnowledgeController } from './knowledge.controller'
 import { KnowledgeService } from './knowledge.service'
 import { DocumentEntity } from './entities/document.entity'
 import { DocumentChunkEntity } from './entities/document-chunk.entity'
+import { KnowledgeBaseEntity } from './entities/knowledge-base.entity'
 import { EmbeddingService } from './embedding/embedding.service'
 import { RagService } from './rag/rag.service'
 
@@ -13,7 +14,7 @@ import { AppCacheModule } from '../common/cache/cache.module'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity]),
+    TypeOrmModule.forFeature([DocumentEntity, DocumentChunkEntity, KnowledgeBaseEntity]),
     MetricsModule,
     AppCacheModule,
   ],

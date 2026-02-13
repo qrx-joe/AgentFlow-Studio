@@ -13,8 +13,19 @@ export const workflowApi = {
 
 // 知识库 API
 export const knowledgeApi = {
-  list: () => request.get('/knowledge/documents'),
-  upload: (file: File, options?: { chunkSize?: number; overlap?: number }) => {
+  // 知识库管理
+  listBases: () => request.get('/knowledge/bases'),
+  createBase: (data: { name: string; description?: string; icon?: string; color?: string }) =>
+    request.post('/knowledge/bases', data),
+  getBase: (id: string) => request.get(`/knowledge/bases/${id}`),
+  updateBase: (id: string, data: { name?: string; description?: string; icon?: string; color?: string; settings?: any }) =>
+    request.put(`/knowledge/bases/${id}`, data),
+  deleteBase: (id: string) => request.delete(`/knowledge/bases/${id}`),
+
+  // 文档管理
+  list: (knowledgeBaseId?: string) =>
+    request.get('/knowledge/documents', { params: knowledgeBaseId ? { knowledgeBaseId } : {} }),
+  upload: (file: File, options?: { chunkSize?: number; overlap?: number; knowledgeBaseId?: string }) => {
     const formData = new FormData()
     formData.append('file', file)
     if (options?.chunkSize !== undefined) {
@@ -22,6 +33,9 @@ export const knowledgeApi = {
     }
     if (options?.overlap !== undefined) {
       formData.append('overlap', String(options.overlap))
+    }
+    if (options?.knowledgeBaseId) {
+      formData.append('knowledgeBaseId', options.knowledgeBaseId)
     }
     return request.post('/knowledge/upload', formData)
   },

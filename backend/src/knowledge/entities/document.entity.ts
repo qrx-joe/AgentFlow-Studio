@@ -6,6 +6,9 @@ export class DocumentEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
+  @Column({ type: 'uuid', name: 'knowledge_base_id', nullable: true })
+  knowledgeBaseId?: string
+
   @Column({ type: 'varchar', length: 255 })
   filename!: string
 

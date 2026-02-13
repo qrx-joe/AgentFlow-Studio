@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { DocumentEntity } from './entities/document.entity'
 import { DocumentChunkEntity } from './entities/document-chunk.entity'
+import { KnowledgeBaseEntity, defaultKnowledgeBaseSettings, KnowledgeBaseSettings } from './entities/knowledge-base.entity'
 import { EmbeddingService } from './embedding/embedding.service'
 import { MetricsService } from '../metrics/metrics.service'
 import { KnowledgeSearchService } from './search/knowledge-search.service'
@@ -15,13 +16,99 @@ export class KnowledgeService {
   constructor(
     @InjectRepository(DocumentEntity) private documentRepo: Repository<DocumentEntity>,
     @InjectRepository(DocumentChunkEntity) private chunkRepo: Repository<DocumentChunkEntity>,
+    @InjectRepository(KnowledgeBaseEntity) private kbRepo: Repository<KnowledgeBaseEntity>,
     private embeddingService: EmbeddingService,
     private searchService: KnowledgeSearchService,
     private metricsService: MetricsService
   ) { }
 
-  async listDocuments() {
-    return this.documentRepo.find({ order: { createdAt: 'DESC' } })
+  // ========== 知识库管理 ==========
+
+  async listKnowledgeBases() {
+    const kbs = await this.kbRepo.find({ order: { createdAt: 'DESC' } })
+    // 为每个知识库添加统计信息
+    const result = await Promise.all(
+      kbs.map(async (kb) => {
+        const stats = await this.getKnowledgeBaseStats(kb.id)
+        return { ...kb, ...stats }
+      })
+    )
+    return result
+  }
+
+  async createKnowledgeBase(data: {
+    name: string
+    description?: string
+    icon?: string
+    color?: string
+    settings?: Partial<KnowledgeBaseSettings>
+  }) {
+    const kb = this.kbRepo.create({
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      color: data.color,
+      settings: { ...defaultKnowledgeBaseSettings, ...data.settings },
+    })
+    return this.kbRepo.save(kb)
+  }
+
+  async updateKnowledgeBase(id: string, data: {
+    name?: string
+    description?: string
+    icon?: string
+    color?: string
+    settings?: Partial<KnowledgeBaseSettings>
+  }) {
+    const kb = await this.kbRepo.findOne({ where: { id } })
+    if (!kb) return null
+
+    const updateData: Partial<KnowledgeBaseEntity> = {
+      updatedAt: new Date(),
+    }
+    if (data.name !== undefined) updateData.name = data.name
+    if (data.description !== undefined) updateData.description = data.description
+    if (data.icon !== undefined) updateData.icon = data.icon
+    if (data.color !== undefined) updateData.color = data.color
+    if (data.settings) {
+      updateData.settings = { ...kb.settings, ...data.settings }
+    }
+
+    await this.kbRepo.update(id, updateData)
+    return this.getKnowledgeBase(id)
+  }
+
+  async deleteKnowledgeBase(id: string) {
+    // 删除知识库下的所有文档和分块
+    const docs = await this.documentRepo.find({ where: { knowledgeBaseId: id } })
+    for (const doc of docs) {
+      await this.chunkRepo.delete({ documentId: doc.id })
+      await this.documentRepo.delete(doc.id)
+    }
+    await this.kbRepo.delete(id)
+    return { id }
+  }
+
+  async getKnowledgeBase(id: string) {
+    const kb = await this.kbRepo.findOne({ where: { id } })
+    if (!kb) return null
+    const stats = await this.getKnowledgeBaseStats(id)
+    return { ...kb, ...stats }
+  }
+
+  async getKnowledgeBaseStats(id: string) {
+    const docs = await this.documentRepo.find({ where: { knowledgeBaseId: id } })
+    const documentCount = docs.length
+    const chunkCount = docs.reduce((sum, doc) => sum + (doc.metadata?.chunkCount || 0), 0)
+    const totalChars = docs.reduce((sum, doc) => sum + (doc.metadata?.charCount || 0), 0)
+    return { documentCount, chunkCount, totalChars }
+  }
+
+  // ========== 文档管理 ==========
+
+  async listDocuments(knowledgeBaseId?: string) {
+    const where = knowledgeBaseId ? { knowledgeBaseId } : {}
+    return this.documentRepo.find({ where, order: { createdAt: 'DESC' } })
   }
 
   async listDocumentChunks(documentId: string, limit = 5) {
@@ -39,7 +126,7 @@ export class KnowledgeService {
 
   async uploadDocument(
     file: Express.Multer.File,
-    options: { chunkSize?: number; overlap?: number } = {}
+    options: { chunkSize?: number; overlap?: number; knowledgeBaseId?: string } = {}
   ) {
     const startTime = Date.now()
 
@@ -68,6 +155,7 @@ export class KnowledgeService {
         fileType: file.mimetype,
         fileSize: file.size,
         content: cleanedContent,
+        knowledgeBaseId: options.knowledgeBaseId,
         metadata: {
           chunkSize: options.chunkSize && options.chunkSize > 0 ? options.chunkSize : 500,
           overlap: options.overlap && options.overlap >= 0 ? options.overlap : 50,
