@@ -130,19 +130,18 @@ const handleDelete = (e: Event, id: string) => {
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #eff6ff; /* Light blue bg */
-  color: #2563eb; /* Blue text */
-  border: 1px solid #dbeafe;
+  background: var(--color-primary-900);
+  color: #ffffff;
+  border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  /* Dify style: clean button */
 }
 
 .btn-new-chat:hover {
-  background: #dbeafe;
+  background: var(--color-primary-800);
   transform: translateY(-1px);
 }
 
@@ -190,9 +189,8 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-item.active {
-  background: #eff6ff; /* Light blue active bg */
-  color: #1d4ed8; /* Blue active text */
-  /* Remove border-left logic, use full bg */
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .session-icon {
@@ -203,7 +201,7 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-item.active .session-icon {
-  color: #3b82f6;
+  color: #0f172a;
 }
 
 .session-info {
@@ -226,7 +224,7 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-item.active .session-time {
-  color: #93c5fd;
+  color: #94a3b8;
 }
 
 .btn-delete {

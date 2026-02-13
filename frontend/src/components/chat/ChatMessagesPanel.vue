@@ -509,7 +509,7 @@ const handleQuickPrompt = (text: string) => {
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 8px; /* Slightly squarer than typical circle */
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -519,9 +519,9 @@ const handleQuickPrompt = (text: string) => {
 }
 
 .avatar.user {
-  background: #eff6ff; /* Solid light blue */
-  color: #2563eb;
-  border-color: #dbeafe;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  color: #ffffff;
+  border: none;
 }
 
 .avatar.assistant {
@@ -573,11 +573,11 @@ const handleQuickPrompt = (text: string) => {
 
 /* 用户消息：纯蓝气泡，无渐变 */
 .message-row.user .message-bubble {
-  background: #2563eb; /* Pure Blue */
+  background: var(--color-primary-900);
   color: #ffffff;
   padding: 12px 16px;
   border-radius: 12px 2px 12px 12px;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
 }
 
 .user-text {
@@ -742,8 +742,8 @@ const handleQuickPrompt = (text: string) => {
 }
 
 .input-card:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12);
+  border-color: var(--color-primary-900);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
 }
 
 .input-card textarea {
@@ -808,7 +808,7 @@ const handleQuickPrompt = (text: string) => {
 }
 
 .send-btn.active {
-  background: #2563eb;
+  background: var(--color-primary-900);
   color: #fff;
   cursor: pointer;
 }
