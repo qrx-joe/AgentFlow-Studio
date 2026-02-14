@@ -1,6 +1,15 @@
 import { Controller, Delete, Get, Param, Post, Put, Body, UseInterceptors, UploadedFile, Query } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { KnowledgeService } from './knowledge.service'
+import { memoryStorage } from 'multer'
+
+// Multer 配置：增加文件大小限制
+const multerOptions = {
+  storage: memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+}
 
 // 知识库 API 控制器
 @Controller('api/knowledge')
@@ -58,7 +67,7 @@ export class KnowledgeController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerOptions))
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File,
     @Body('chunkSize') chunkSize?: string,

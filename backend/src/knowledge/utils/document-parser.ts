@@ -100,34 +100,30 @@ function parseMarkdown(buffer: Buffer): ParsedDocument {
  */
 async function parsePDF(buffer: Buffer): Promise<ParsedDocument> {
   try {
-    // pdf-parse 新版本使用 PDFParse 类
+    // pdf-parse 2.x 使用 PDFParse 类，构造函数需要 { data: Buffer }
     const { PDFParse } = pdfParse
-    if (PDFParse) {
-      const parser = new PDFParse(buffer)
-      const data = await parser.parse()
-      const content = cleanText(data.text || '')
-      return {
-        content,
-        metadata: {
-          format: 'pdf',
-          pages: data.numPages,
-        },
-      }
+    const parser = new PDFParse({ data: buffer })
+    await parser.load()
+    const text = await parser.getText()
+    let info: any = {}
+    try {
+      info = await parser.getInfo()
+    } catch {
+      // getInfo 可能失败，忽略
     }
-    // 兼容旧版本 API
-    const data = await pdfParse(buffer)
-    const content = cleanText(data.text)
+    const content = cleanText(text || '')
+    await parser.destroy()
     return {
       content,
       metadata: {
         format: 'pdf',
-        pages: data.numpages,
-        info: data.info,
+        pages: info?.numPages,
+        info,
       },
     }
   } catch (error) {
     console.error('[DocumentParser] PDF parsing error:', error)
-    throw new Error('PDF 文件解析失败，请确保文件未损坏')
+    throw new Error(`PDF 文件解析失败: ${(error as Error).message}`)
   }
 }
 
