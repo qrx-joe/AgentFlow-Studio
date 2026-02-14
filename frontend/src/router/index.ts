@@ -44,21 +44,20 @@ const router = createRouter({
           name: 'Monitoring',
           component: () => import('@/views/Monitoring/MonitoringView.vue'),
           meta: { title: '系统监控' }
+        },
+        {
+          path: 'studio/:id',
+          name: 'Studio',
+          component: () => import('@/views/Workflow/WorkflowView.vue'),
+          meta: { title: 'Workflow Studio' }
+        },
+        {
+          path: 'workflow/:id',
+          name: 'Workflow',
+          component: () => import('@/views/Workflow/WorkflowView.vue'),
+          meta: { title: 'Workflow Studio' }
         }
       ]
-    },
-    // Independent route for Studio (No MainLayout sidebar)
-    {
-      path: '/studio/:id',
-      name: 'Studio',
-      component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio', requiresAuth: true }
-    },
-    {
-      path: '/workflow/:id',
-      name: 'Workflow',
-      component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio', requiresAuth: true }
     }
   ]
 })

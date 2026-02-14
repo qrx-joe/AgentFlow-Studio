@@ -123,7 +123,10 @@ const handleLogout = async () => {
   padding: 0 32px;
   flex-shrink: 0;
   z-index: 50;
-  position: relative; /* For absolute centering of nav-menu */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 
 .navbar-left {
@@ -255,6 +258,7 @@ const handleLogout = async () => {
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-top: 72px;
 }
 
 .page-content {
