@@ -82,17 +82,28 @@ const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodesToStore)
 
 // Selection State
 const selectedNodeId = ref('')
+const selectedEdgeId = ref('')
 const selectedNode = computed(() => {
     return workflowStore.nodes.find(n => n.id === selectedNodeId.value)
+})
+const selectedEdge = computed(() => {
+    return workflowStore.edges.find(e => e.id === selectedEdgeId.value)
 })
 
 // Event Handlers
 const onNodeClick = (node: any) => {
     selectedNodeId.value = node.id
+    selectedEdgeId.value = '' // 清除边选择
+}
+
+const onEdgeClick = (edge: any) => {
+    selectedEdgeId.value = edge.id
+    selectedNodeId.value = '' // 清除节点选择
 }
 
 const onPaneClick = () => {
     selectedNodeId.value = ''
+    selectedEdgeId.value = ''
 }
 
 const handleUpdateNode = (id: string, data: any) => {
@@ -112,6 +123,21 @@ const handleDeleteNode = (id: string) => {
       )
     }
     selectedNodeId.value = ''
+}
+
+const handleUpdateEdge = (id: string, data: any) => {
+    const edge = workflowStore.edges.find(e => e.id === id)
+    if (edge) {
+        Object.assign(edge, data)
+    }
+}
+
+const handleDeleteEdge = (id: string) => {
+    const index = workflowStore.edges.findIndex(e => e.id === id)
+    if (index !== -1) {
+      workflowStore.edges.splice(index, 1)
+    }
+    selectedEdgeId.value = ''
 }
 
 const handleRun = async () => {
@@ -204,6 +230,7 @@ const handleDebugRun = async (testData: any) => {
                 :on-drag-over="onDragOver"
                 :on-drop="onDrop"
                 @node-click="onNodeClick"
+                @edge-click="onEdgeClick"
                 @pane-click="onPaneClick"
              />
              <!-- Note: WorkflowCanvasPanel currently has a Toolbar inside. 
@@ -218,10 +245,13 @@ const handleDebugRun = async (testData: any) => {
 
       <!-- Right: Properties -->
       <aside class="studio-right">
-        <PropertiesPanel 
-            :node="selectedNode" 
+        <PropertiesPanel
+            :node="selectedNode"
+            :edge="selectedEdge"
             @update="handleUpdateNode"
             @delete="handleDeleteNode"
+            @update-edge="handleUpdateEdge"
+            @delete-edge="handleDeleteEdge"
         />
       </aside>
     </div>

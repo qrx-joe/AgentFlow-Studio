@@ -6,9 +6,13 @@ import {
   Search,
   MoreFilled,
   Clock,
-  User
+  User,
+  Edit,
+  Delete,
+  CopyDocument
 } from '@element-plus/icons-vue'
 import { workflowApi } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface Workflow {
   id: string
@@ -27,8 +31,19 @@ const activeTab = ref('all')
 const loading = ref(false)
 const workflows = ref<Workflow[]>([])
 
-// 颜色列表用于随机分配
-const colors = ['#475569', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6']
+// 颜色列表用于选择
+const colors = ['#475569', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6']
+
+// 编辑对话框
+const dialogVisible = ref(false)
+const dialogMode = ref<'create' | 'edit'>('create')
+const editingApp = ref<Workflow | null>(null)
+const formData = ref({
+  name: '',
+  description: '',
+  color: '#475569'
+})
+const formLoading = ref(false)
 
 // 格式化时间
 const formatTime = (dateStr: string) => {
@@ -50,14 +65,12 @@ const formatTime = (dateStr: string) => {
 const filteredApps = computed(() => {
   let result = workflows.value
 
-  // 按状态过滤
   if (activeTab.value === 'published') {
     result = result.filter(w => w.status === 'published')
   } else if (activeTab.value === 'draft') {
     result = result.filter(w => w.status === 'draft')
   }
 
-  // 按搜索词过滤
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(w =>
@@ -74,7 +87,6 @@ const fetchWorkflows = async () => {
   loading.value = true
   try {
     const res = await workflowApi.list()
-    // res 已经是数据数组（响应拦截器返回 response.data）
     workflows.value = (res || []).map((w: any, index: number) => ({
       ...w,
       color: w.color || colors[index % colors.length],
@@ -91,12 +103,107 @@ onMounted(() => {
   fetchWorkflows()
 })
 
-const handleCreate = () => {
-    router.push('/studio/new')
+// 打开新建对话框
+const handleShowCreate = () => {
+  dialogMode.value = 'create'
+  editingApp.value = null
+  formData.value = {
+    name: '',
+    description: '',
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }
+  dialogVisible.value = true
+}
+
+// 打开编辑对话框
+const handleShowEdit = (app: Workflow) => {
+  dialogMode.value = 'edit'
+  editingApp.value = app
+  formData.value = {
+    name: app.name,
+    description: app.description || '',
+    color: app.color || '#475569'
+  }
+  dialogVisible.value = true
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!formData.value.name.trim()) {
+    ElMessage.warning('请输入应用名称')
+    return
+  }
+
+  formLoading.value = true
+  try {
+    if (dialogMode.value === 'create') {
+      // 创建新应用
+      const res = await workflowApi.create({
+        name: formData.value.name,
+        description: formData.value.description,
+        color: formData.value.color,
+        nodes: [],
+        edges: []
+      })
+      ElMessage.success('创建成功')
+      dialogVisible.value = false
+      // 跳转到编辑页面
+      router.push(`/studio/${res.id}`)
+    } else if (editingApp.value) {
+      // 更新应用
+      await workflowApi.update(editingApp.value.id, {
+        name: formData.value.name,
+        description: formData.value.description,
+        color: formData.value.color
+      })
+      ElMessage.success('更新成功')
+      dialogVisible.value = false
+      fetchWorkflows()
+    }
+  } catch (error) {
+    ElMessage.error(dialogMode.value === 'create' ? '创建失败' : '更新失败')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+// 删除应用
+const handleDelete = async (app: Workflow) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除应用「${app.name}」吗？此操作不可恢复。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await workflowApi.remove(app.id)
+    ElMessage.success('删除成功')
+    fetchWorkflows()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 复制应用
+const handleDuplicate = async (app: Workflow) => {
+  try {
+    await workflowApi.create({
+      name: `${app.name} (副本)`,
+      description: app.description,
+      color: app.color,
+      nodes: [],
+      edges: []
+    })
+    ElMessage.success('复制成功')
+    fetchWorkflows()
+  } catch (error) {
+    ElMessage.error('复制失败')
+  }
 }
 
 const handleOpen = (id: string) => {
-    router.push(`/studio/${id}`)
+  router.push(`/studio/${id}`)
 }
 </script>
 
@@ -108,7 +215,7 @@ const handleOpen = (id: string) => {
         <p class="page-subtitle">管理与构建所有的 AI 智能体应用</p>
       </div>
       <div class="action-box">
-        <el-button type="primary" size="large" :icon="Plus" class="create-btn" @click="handleCreate">
+        <el-button type="primary" size="large" :icon="Plus" class="create-btn" @click="handleShowCreate">
           新建应用
         </el-button>
       </div>
@@ -116,26 +223,26 @@ const handleOpen = (id: string) => {
 
     <div class="filter-section">
       <div class="tabs">
-        <button 
-            class="tab-btn" 
+        <button
+            class="tab-btn"
             :class="{ active: activeTab === 'all' }"
             @click="activeTab = 'all'"
         >全部应用</button>
-        <button 
-            class="tab-btn" 
+        <button
+            class="tab-btn"
             :class="{ active: activeTab === 'published' }"
              @click="activeTab = 'published'"
         >已发布</button>
-        <button 
-            class="tab-btn" 
+        <button
+            class="tab-btn"
             :class="{ active: activeTab === 'draft' }"
              @click="activeTab = 'draft'"
         >草稿箱</button>
       </div>
       <div class="search-box">
-        <el-input 
-            v-model="searchQuery" 
-            placeholder="搜索应用..." 
+        <el-input
+            v-model="searchQuery"
+            placeholder="搜索应用..."
             :prefix-icon="Search"
             clearable
             class="search-input"
@@ -144,11 +251,16 @@ const handleOpen = (id: string) => {
     </div>
 
     <div class="apps-grid" v-loading="loading">
-        <!-- Empty state -->
-        <div v-if="!loading && filteredApps.length === 0" class="empty-state">
-            <p>暂无应用，点击"新建应用"开始创建</p>
+        <!-- 新建应用卡片 -->
+        <div class="app-card create-card" @click="handleShowCreate">
+          <div class="create-icon-box">
+            <el-icon :size="32"><Plus /></el-icon>
+          </div>
+          <span class="create-text">新建应用</span>
+          <span class="create-hint">创建一个新的 AI 智能体</span>
         </div>
 
+        <!-- 应用卡片列表 -->
         <div v-for="app in filteredApps" :key="app.id" class="app-card" @click="handleOpen(app.id)">
             <div class="card-header">
                 <div class="app-icon" :style="{ background: app.color + '15', color: app.color }">
@@ -158,9 +270,31 @@ const handleOpen = (id: string) => {
                     <span class="status-dot" :class="app.status"></span>
                     {{ app.status === 'published' ? '已发布' : '草稿' }}
                 </div>
-                <div class="app-menu" @click.stop>
-                     <el-icon><MoreFilled /></el-icon>
-                </div>
+                <el-dropdown trigger="click" @click.stop @command="(cmd: string) => {
+                  if (cmd === 'edit') handleShowEdit(app)
+                  else if (cmd === 'delete') handleDelete(app)
+                  else if (cmd === 'duplicate') handleDuplicate(app)
+                }">
+                  <div class="app-menu" @click.stop>
+                    <el-icon><MoreFilled /></el-icon>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="edit">
+                        <el-icon><Edit /></el-icon>
+                        <span>编辑信息</span>
+                      </el-dropdown-item>
+                      <el-dropdown-item command="duplicate">
+                        <el-icon><CopyDocument /></el-icon>
+                        <span>复制应用</span>
+                      </el-dropdown-item>
+                      <el-dropdown-item command="delete" divided style="color: #f56c6c">
+                        <el-icon><Delete /></el-icon>
+                        <span>删除应用</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
             </div>
 
             <div class="card-body">
@@ -183,6 +317,53 @@ const handleOpen = (id: string) => {
             </div>
         </div>
     </div>
+
+    <!-- 新建/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogMode === 'create' ? '新建应用' : '编辑应用'"
+      width="480px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="formData" label-position="top">
+        <el-form-item label="应用名称" required>
+          <el-input
+            v-model="formData.name"
+            placeholder="输入应用名称"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="应用描述">
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="3"
+            placeholder="描述应用的功能和用途（可选）"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="主题颜色">
+          <div class="color-picker">
+            <div
+              v-for="color in colors"
+              :key="color"
+              class="color-option"
+              :class="{ active: formData.color === color }"
+              :style="{ background: color }"
+              @click="formData.color = color"
+            />
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
+          {{ dialogMode === 'create' ? '创建并编辑' : '保存' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -436,5 +617,83 @@ const handleOpen = (id: string) => {
     padding: 60px 20px;
     color: #64748b;
     font-size: 14px;
+}
+
+/* 新建应用卡片 */
+.create-card {
+    border: 2px dashed #e2e8f0;
+    background: #fafbfc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 180px;
+}
+
+.create-card:hover {
+    border-color: var(--el-color-primary);
+    background: #f8fafc;
+}
+
+.create-icon-box {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.create-card:hover .create-icon-box {
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+}
+
+.create-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.create-hint {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* 颜色选择器 */
+.color-picker {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+}
+
+.color-option.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+}
+
+/* 下拉菜单样式 */
+:deep(.el-dropdown-menu__item) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
 }
 </style>

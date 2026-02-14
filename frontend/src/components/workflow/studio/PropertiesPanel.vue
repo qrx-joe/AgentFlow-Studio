@@ -5,14 +5,16 @@ import {
   Setting,
   Delete,
   InfoFilled,
-  ArrowRight
+  ArrowRight,
+  Connection
 } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   node: any
+  edge?: any
 }>()
 
-const emit = defineEmits(['update', 'delete'])
+const emit = defineEmits(['update', 'delete', 'update-edge', 'delete-edge'])
 
 // Mock config schema based on node type
 const isLLM = computed(() => props.node?.type === 'llm')
@@ -42,11 +44,108 @@ const toggleSection = (section: string) => {
 
 <template>
   <div class="properties-panel">
-    <div v-if="!node" class="empty-state">
+    <!-- 空状态 -->
+    <div v-if="!node && !edge" class="empty-state">
       <el-icon class="empty-icon"><Setting /></el-icon>
-      <span class="empty-text">选择一个节点进行配置</span>
+      <span class="empty-text">选择节点或连线进行配置</span>
     </div>
 
+    <!-- 边编辑面板 -->
+    <div v-else-if="edge" class="config-content">
+      <div class="panel-header">
+        <div class="header-left">
+          <span class="node-type-badge type-edge">
+            <el-icon><Connection /></el-icon>
+            连线
+          </span>
+          <span class="node-id">ID: {{ edge.id.slice(0, 8) }}</span>
+        </div>
+        <el-button link type="danger" :icon="Delete" @click="$emit('delete-edge', edge.id)" />
+      </div>
+
+      <div class="config-sections">
+        <div class="section">
+          <div class="section-header" @click="toggleSection('basic')">
+            <span class="section-title">连线配置</span>
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.basic }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.basic" class="section-content">
+              <el-form label-position="top" size="default">
+                <el-form-item label="连线标签">
+                  <el-input
+                    :model-value="edge.label"
+                    @input="$emit('update-edge', edge.id, { label: $event })"
+                    placeholder="输入连线标签（可选）"
+                  />
+                </el-form-item>
+                <el-form-item label="分支类型">
+                  <el-select
+                    :model-value="edge.branchType || ''"
+                    @update:model-value="$emit('update-edge', edge.id, { branchType: $event || undefined, label: $event || edge.label })"
+                    style="width: 100%"
+                    clearable
+                    placeholder="选择分支类型"
+                  >
+                    <el-option label="True (条件成立)" value="True" />
+                    <el-option label="False (条件不成立)" value="False" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="连线样式">
+                  <el-select
+                    :model-value="edge.type || 'default'"
+                    @update:model-value="$emit('update-edge', edge.id, { type: $event })"
+                    style="width: 100%"
+                  >
+                    <el-option label="默认" value="default" />
+                    <el-option label="分支线" value="branch" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="动画效果">
+                  <el-switch
+                    :model-value="edge.animated || false"
+                    @update:model-value="$emit('update-edge', edge.id, { animated: $event })"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+          </el-collapse-transition>
+        </div>
+
+        <div class="section">
+          <div class="section-header" @click="toggleSection('config')">
+            <span class="section-title">连接信息</span>
+            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.config }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          <el-collapse-transition>
+            <div v-show="expandedSections.config" class="section-content">
+              <div class="info-row">
+                <span class="info-label">源节点</span>
+                <span class="info-value">{{ edge.source }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">目标节点</span>
+                <span class="info-value">{{ edge.target }}</span>
+              </div>
+              <div v-if="edge.sourceHandle" class="info-row">
+                <span class="info-label">源端口</span>
+                <span class="info-value">{{ edge.sourceHandle }}</span>
+              </div>
+              <div v-if="edge.targetHandle" class="info-row">
+                <span class="info-label">目标端口</span>
+                <span class="info-value">{{ edge.targetHandle }}</span>
+              </div>
+            </div>
+          </el-collapse-transition>
+        </div>
+      </div>
+    </div>
+
+    <!-- 节点编辑面板 -->
     <div v-else class="config-content">
       <!-- 节点头部 -->
       <div class="panel-header">
@@ -537,6 +636,14 @@ const toggleSection = (section: string) => {
   color: #ef4444;
 }
 
+.node-type-badge.type-edge {
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .node-type-badge.type-http {
   background: #ede9fe;
   color: #667eea;
@@ -706,5 +813,28 @@ const toggleSection = (section: string) => {
   color: var(--color-primary-500);
   border-color: var(--color-primary-300) !important;
   background: var(--color-primary-50) !important;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.info-value {
+  font-size: 12px;
+  color: #303133;
+  font-family: 'JetBrains Mono', Consolas, monospace;
 }
 </style>

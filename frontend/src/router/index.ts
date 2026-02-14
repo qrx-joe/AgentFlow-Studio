@@ -10,6 +10,19 @@ const router = createRouter({
       component: () => import('@/views/Auth/LoginView.vue'),
       meta: { title: '登录', guest: true }
     },
+    // 工作流编辑器 - 独立全屏页面
+    {
+      path: '/studio/:id',
+      name: 'Studio',
+      component: () => import('@/views/Workflow/WorkflowView.vue'),
+      meta: { title: 'Workflow Studio', requiresAuth: true }
+    },
+    {
+      path: '/workflow/:id',
+      name: 'Workflow',
+      component: () => import('@/views/Workflow/WorkflowView.vue'),
+      meta: { title: 'Workflow Studio', requiresAuth: true }
+    },
     {
       path: '/',
       component: MainLayout,
@@ -44,18 +57,6 @@ const router = createRouter({
           name: 'Monitoring',
           component: () => import('@/views/Monitoring/MonitoringView.vue'),
           meta: { title: '系统监控' }
-        },
-        {
-          path: 'studio/:id',
-          name: 'Studio',
-          component: () => import('@/views/Workflow/WorkflowView.vue'),
-          meta: { title: 'Workflow Studio' }
-        },
-        {
-          path: 'workflow/:id',
-          name: 'Workflow',
-          component: () => import('@/views/Workflow/WorkflowView.vue'),
-          meta: { title: 'Workflow Studio' }
         }
       ]
     }
