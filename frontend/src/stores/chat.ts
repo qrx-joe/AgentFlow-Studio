@@ -92,37 +92,42 @@ export const useChatStore = defineStore('chat', {
             // 无法解析错误体，使用默认消息
           }
           // 回退到非流式接口
+          const msgIndex = this.messages.length - 1
           try {
             const fallback = await chatApi.sendMessage({
               sessionId: this.currentSessionId,
               content,
             })
-            assistantMessage.content = fallback.content || errorMsg
-            assistantMessage.sources = fallback.sources || []
+            this.messages[msgIndex].content = fallback.content || errorMsg
+            this.messages[msgIndex].sources = fallback.sources || []
           } catch {
-            assistantMessage.content = `⚠️ ${errorMsg}`
+            this.messages[msgIndex].content = `⚠️ ${errorMsg}`
           }
-          return assistantMessage
+          return this.messages[msgIndex]
         }
 
         if (!response.body) {
           // 回退到非流式接口
+          const msgIndex = this.messages.length - 1
           try {
             const fallback = await chatApi.sendMessage({
               sessionId: this.currentSessionId,
               content,
             })
-            assistantMessage.content = fallback.content || ''
-            assistantMessage.sources = fallback.sources || []
+            this.messages[msgIndex].content = fallback.content || ''
+            this.messages[msgIndex].sources = fallback.sources || []
           } catch (e: any) {
-            assistantMessage.content = `⚠️ 无法获取回复：${e.message || '未知错误'}`
+            this.messages[msgIndex].content = `⚠️ 无法获取回复：${e.message || '未知错误'}`
           }
-          return assistantMessage
+          return this.messages[msgIndex]
         }
 
         const reader = response.body.getReader()
         const decoder = new TextDecoder('utf-8')
         let buffer = ''
+
+        // 获取助手消息在数组中的索引，用于响应式更新
+        const assistantIndex = this.messages.length - 1
 
         // 读取 SSE 数据块
         console.log('[Chat] Starting SSE stream...')
@@ -163,10 +168,10 @@ export const useChatStore = defineStore('chat', {
             if (eventType === 'error') {
               try {
                 const payload = JSON.parse(dataText)
-                assistantMessage.content += payload.message || '服务器内部错误'
+                this.messages[assistantIndex].content += payload.message || '服务器内部错误'
                 console.error('[Chat] SSE error:', payload.message)
               } catch {
-                assistantMessage.content += '服务器内部错误'
+                this.messages[assistantIndex].content += '服务器内部错误'
               }
               continue
             }
@@ -174,7 +179,7 @@ export const useChatStore = defineStore('chat', {
             if (eventType === 'done') {
               try {
                 const payload = JSON.parse(dataText)
-                assistantMessage.sources = payload.sources || []
+                this.messages[assistantIndex].sources = payload.sources || []
                 console.log('[Chat] Stream done, sources:', payload.sources?.length || 0)
               } catch {
                 // 解析失败，忽略
@@ -182,25 +187,26 @@ export const useChatStore = defineStore('chat', {
               continue
             }
 
-            assistantMessage.content += dataText
+            // 通过数组索引更新，确保触发 Vue 响应式
+            this.messages[assistantIndex].content += dataText
             tokenCount++
             if (tokenCount % 10 === 0) {
-              console.log(`[Chat] Received ${tokenCount} tokens, current length: ${assistantMessage.content.length}`)
+              console.log(`[Chat] Received ${tokenCount} tokens, current length: ${this.messages[assistantIndex].content.length}`)
             }
           }
         }
 
         // 如果流结束后内容仍为空，尝试非流式接口
-        if (!assistantMessage.content.trim()) {
+        if (!this.messages[assistantIndex].content.trim()) {
           try {
             const fallback = await chatApi.sendMessage({
               sessionId: this.currentSessionId,
               content,
             })
-            assistantMessage.content = fallback.content || '⚠️ AI 未返回内容'
-            assistantMessage.sources = fallback.sources || []
+            this.messages[assistantIndex].content = fallback.content || '⚠️ AI 未返回内容'
+            this.messages[assistantIndex].sources = fallback.sources || []
           } catch {
-            assistantMessage.content = '⚠️ AI 未返回内容，请检查后端日志'
+            this.messages[assistantIndex].content = '⚠️ AI 未返回内容，请检查后端日志'
           }
         }
 
@@ -213,15 +219,15 @@ export const useChatStore = defineStore('chat', {
           }, 2000)
         }
 
-        return assistantMessage
+        return this.messages[assistantIndex]
       } catch (e: any) {
         if (e.name === 'AbortError') {
-          assistantMessage.content += '\n\n_(已停止生成)_'
+          this.messages[this.messages.length - 1].content += '\n\n_(已停止生成)_'
         } else {
-          assistantMessage.content = `⚠️ 发送失败：${e.message || '未知错误'}`
+          this.messages[this.messages.length - 1].content = `⚠️ 发送失败：${e.message || '未知错误'}`
           console.error('[Chat] sendMessage error:', e)
         }
-        return assistantMessage
+        return this.messages[this.messages.length - 1]
       } finally {
         this.loading = false
         this.streaming = false
