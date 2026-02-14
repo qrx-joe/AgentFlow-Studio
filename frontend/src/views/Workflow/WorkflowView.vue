@@ -169,6 +169,15 @@ const handlePublish = async () => {
     }
 }
 
+const handleSave = async () => {
+    try {
+        await workflowStore.saveWorkflow()
+    } catch (e: any) {
+        const msg = e?.response?.data?.message || e?.message || '保存失败'
+        ElMessage.error(msg)
+    }
+}
+
 // Replay logic (simplified for layout demo, restore full logic later if needed)
 const replaying = ref(false)
 
@@ -190,10 +199,16 @@ const handleDebugRun = async (testData: any) => {
   <div class="studio-layout">
     <StudioHeader
         :workflow-name="workflowStore.workflowName"
+        :workflow-description="workflowStore.workflowDescription"
+        :workflow-color="workflowStore.workflowColor"
         @run="handleShowDebug"
         @publish="handlePublish"
+        @save="handleSave"
+        @update:workflow-name="workflowStore.workflowName = $event"
+        @update:workflow-description="workflowStore.workflowDescription = $event"
+        @update:workflow-color="workflowStore.workflowColor = $event"
     />
-    
+
     <div class="studio-body">
       <!-- Left: Component Library -->
       <aside class="studio-left">
@@ -272,6 +287,7 @@ const handleDebugRun = async (testData: any) => {
   width: 100vw;
   background: #f5f7fa;
   overflow: hidden;
+  padding-top: 64px; /* 为固定导航栏留出空间 */
 }
 
 .studio-body {

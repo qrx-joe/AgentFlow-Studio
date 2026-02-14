@@ -7,6 +7,8 @@ export const useWorkflowStore = defineStore('workflow', {
   state: () => ({
     workflowId: '' as string,
     workflowName: '未命名工作流',
+    workflowDescription: '' as string,
+    workflowColor: '#475569' as string,
     workflowStatus: 'draft' as string,
     nodes: [] as WorkflowNode[],
     edges: [] as WorkflowEdge[],
@@ -40,6 +42,8 @@ export const useWorkflowStore = defineStore('workflow', {
         const payload = {
           id: this.workflowId || undefined,
           name: this.workflowName,
+          description: this.workflowDescription,
+          color: this.workflowColor,
           status: status || this.workflowStatus,
           nodes: this.nodes,
           edges: this.edges,
@@ -67,6 +71,8 @@ export const useWorkflowStore = defineStore('workflow', {
       const response = await workflowApi.get(id)
       this.workflowId = response.id
       this.workflowName = response.name
+      this.workflowDescription = response.description || ''
+      this.workflowColor = response.color || '#475569'
       this.workflowStatus = response.status || 'draft'
       this.nodes = response.nodes || []
       this.edges = response.edges || []

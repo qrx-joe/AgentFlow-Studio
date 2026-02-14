@@ -11,7 +11,8 @@ import {
   Loading,
   Download,
   Upload,
-  Delete
+  Delete,
+  Edit
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -19,12 +20,28 @@ const router = useRouter()
 const lastSaved = ref('刚刚')
 const saving = ref(false)
 
+// 颜色列表
+const colors = ['#475569', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6']
+
 const props = defineProps<{
   workflowName?: string
+  workflowDescription?: string
+  workflowColor?: string
   autoSave?: boolean
 }>()
 
-const emit = defineEmits(['back', 'run', 'publish', 'save', 'showVersions', 'showSettings'])
+const emit = defineEmits([
+  'back', 'run', 'publish', 'save', 'showVersions', 'showSettings',
+  'update:workflowName', 'update:workflowDescription', 'update:workflowColor'
+])
+
+// 编辑对话框
+const editDialogVisible = ref(false)
+const editForm = ref({
+  name: '',
+  description: '',
+  color: '#475569'
+})
 
 const handleBack = () => {
   router.push('/')
@@ -51,11 +68,36 @@ const handleShowSettings = () => {
   emit('showSettings')
 }
 
+// 打开编辑对话框
+const handleShowEdit = () => {
+  editForm.value = {
+    name: props.workflowName || '',
+    description: props.workflowDescription || '',
+    color: props.workflowColor || '#475569'
+  }
+  editDialogVisible.value = true
+}
+
+// 保存编辑
+const handleSaveEdit = () => {
+  if (!editForm.value.name.trim()) {
+    ElMessage.warning('请输入应用名称')
+    return
+  }
+  emit('update:workflowName', editForm.value.name)
+  emit('update:workflowDescription', editForm.value.description)
+  emit('update:workflowColor', editForm.value.color)
+  editDialogVisible.value = false
+  ElMessage.success('信息已更新')
+}
+
 const saveStatusText = computed(() => {
   if (saving.value) return '保存中...'
   if (props.autoSave) return `自动保存于 ${lastSaved.value}`
   return `上次保存于 ${lastSaved.value}`
 })
+
+const currentColor = computed(() => props.workflowColor || '#475569')
 </script>
 
 <template>
@@ -67,8 +109,14 @@ const saveStatusText = computed(() => {
         </div>
       </el-tooltip>
       <div class="divider"></div>
-      <div class="workflow-info">
-        <div class="workflow-name">{{ workflowName || '未命名应用' }}</div>
+      <div class="workflow-info" @click="handleShowEdit">
+        <div class="workflow-name-row">
+          <div class="workflow-icon" :style="{ background: currentColor + '15', color: currentColor }">
+            {{ (workflowName || '未').slice(0, 1) }}
+          </div>
+          <div class="workflow-name">{{ workflowName || '未命名应用' }}</div>
+          <el-icon class="edit-icon"><Edit /></el-icon>
+        </div>
         <div class="save-status">
           <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
           {{ saveStatusText }}
@@ -142,6 +190,51 @@ const saveStatusText = computed(() => {
         发布
       </el-button>
     </div>
+
+    <!-- 编辑对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑应用信息"
+      width="480px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="editForm" label-position="top">
+        <el-form-item label="应用名称" required>
+          <el-input
+            v-model="editForm.name"
+            placeholder="输入应用名称"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="应用描述">
+          <el-input
+            v-model="editForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="描述应用的功能和用途（可选）"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="主题颜色">
+          <div class="color-picker">
+            <div
+              v-for="color in colors"
+              :key="color"
+              class="color-option"
+              :class="{ active: editForm.color === color }"
+              :style="{ background: color }"
+              @click="editForm.color = color"
+            />
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </header>
 </template>
 
@@ -155,8 +248,12 @@ const saveStatusText = computed(() => {
   justify-content: space-between;
   padding: 0 24px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  z-index: 50;
+  z-index: 100;
   flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .left-section {
@@ -193,6 +290,35 @@ const saveStatusText = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.workflow-info:hover {
+  background: #f5f7fa;
+}
+
+.workflow-info:hover .edit-icon {
+  opacity: 1;
+}
+
+.workflow-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .workflow-name {
@@ -201,12 +327,20 @@ const saveStatusText = computed(() => {
   color: #303133;
 }
 
+.edit-icon {
+  font-size: 12px;
+  color: #909399;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
 .save-status {
   font-size: 11px;
   color: #909399;
   display: flex;
   align-items: center;
   gap: 4px;
+  padding-left: 36px;
 }
 
 .center-section {
@@ -267,6 +401,31 @@ const saveStatusText = computed(() => {
 
 .btn-text {
   font-size: 13px;
+}
+
+/* 颜色选择器 */
+.color-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.active {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
 }
 
 :deep(.el-dropdown-menu__item) {
