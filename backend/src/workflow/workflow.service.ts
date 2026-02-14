@@ -45,13 +45,19 @@ export class WorkflowService {
   }
 
   async update(id: string, dto: UpdateWorkflowDto) {
-    this.validateWorkflow({
-      id,
-      name: dto.name,
-      nodes: dto.nodes,
-      edges: dto.edges,
+    // 只有当 nodes 和 edges 都存在时才验证
+    if (dto.nodes && dto.edges) {
+      this.validateWorkflow({
+        id,
+        name: dto.name || '',
+        nodes: dto.nodes,
+        edges: dto.edges,
+      })
+    }
+    await this.workflowRepo.update(id, {
+      ...dto,
+      updatedAt: new Date(),
     })
-    await this.workflowRepo.update(id, dto)
     return this.findOne(id)
   }
 

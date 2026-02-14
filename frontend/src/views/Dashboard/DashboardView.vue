@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus,
@@ -8,47 +8,90 @@ import {
   Clock,
   User
 } from '@element-plus/icons-vue'
+import { workflowApi } from '@/api'
+
+interface Workflow {
+  id: string
+  name: string
+  description?: string
+  status: string
+  icon?: string
+  color?: string
+  createdAt: string
+  updatedAt: string
+}
 
 const router = useRouter()
 const searchQuery = ref('')
 const activeTab = ref('all')
+const loading = ref(false)
+const workflows = ref<Workflow[]>([])
 
-// Mock App Data
-const apps = ref([
-  {
-    id: '1',
-    name: '智能客服助手',
-    desc: '基于知识库的自动问答机器人，处理常见客户咨询。',
-    icon: 'CustomerService',
-    color: '#475569', // Changed from #3b82f6 (blue) to #475569 (slate-700)
-    status: 'published',
-    updatedAt: '10分钟前',
-    author: 'Admin'
-  },
-  {
-    id: '2',
-    name: '文章摘要生成器',
-    desc: '自动提取长文本核心观点，生成简报。',
-    icon: 'Document',
-    color: '#10b981',
-    status: 'draft',
-    updatedAt: '2小时前',
-    author: 'Admin'
-  },
-  {
-    id: '3',
-    name: '代码审计专家',
-    desc: '分析代码潜在漏洞并给出修复建议。',
-    icon: 'Lock',
-    color: '#8b5cf6',
-    status: 'published',
-    updatedAt: '1天前',
-    author: 'User'
+// 颜色列表用于随机分配
+const colors = ['#475569', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6']
+
+// 格式化时间
+const formatTime = (dateStr: string) => {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 30) return `${days}天前`
+  return date.toLocaleDateString()
+}
+
+// 过滤后的应用列表
+const filteredApps = computed(() => {
+  let result = workflows.value
+
+  // 按状态过滤
+  if (activeTab.value === 'published') {
+    result = result.filter(w => w.status === 'published')
+  } else if (activeTab.value === 'draft') {
+    result = result.filter(w => w.status === 'draft')
   }
-])
+
+  // 按搜索词过滤
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(w =>
+      w.name.toLowerCase().includes(query) ||
+      w.description?.toLowerCase().includes(query)
+    )
+  }
+
+  return result
+})
+
+// 获取工作流列表
+const fetchWorkflows = async () => {
+  loading.value = true
+  try {
+    const res = await workflowApi.list()
+    // res 已经是数据数组（响应拦截器返回 response.data）
+    workflows.value = (res || []).map((w: any, index: number) => ({
+      ...w,
+      color: w.color || colors[index % colors.length],
+      status: w.status || 'draft'
+    }))
+  } catch (error) {
+    console.error('获取工作流列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchWorkflows()
+})
 
 const handleCreate = () => {
-    // Navigate to a new studio instance (mock ID)
     router.push('/studio/new')
 }
 
@@ -100,18 +143,13 @@ const handleOpen = (id: string) => {
       </div>
     </div>
 
-    <div class="apps-grid">
-        <!-- Create Card (Optional inline style) -->
-        <!-- 
-        <div class="app-card create-card" @click="handleCreate">
-            <div class="create-icon-box">
-                <el-icon><Plus /></el-icon>
-            </div>
-            <span class="create-text">新建应用</span>
-        </div> 
-        -->
+    <div class="apps-grid" v-loading="loading">
+        <!-- Empty state -->
+        <div v-if="!loading && filteredApps.length === 0" class="empty-state">
+            <p>暂无应用，点击"新建应用"开始创建</p>
+        </div>
 
-        <div v-for="app in apps" :key="app.id" class="app-card" @click="handleOpen(app.id)">
+        <div v-for="app in filteredApps" :key="app.id" class="app-card" @click="handleOpen(app.id)">
             <div class="card-header">
                 <div class="app-icon" :style="{ background: app.color + '15', color: app.color }">
                     <span class="icon-text">{{ app.name.slice(0,1) }}</span>
@@ -124,20 +162,20 @@ const handleOpen = (id: string) => {
                      <el-icon><MoreFilled /></el-icon>
                 </div>
             </div>
-            
+
             <div class="card-body">
                 <h3 class="app-name">{{ app.name }}</h3>
-                <p class="app-desc">{{ app.desc }}</p>
+                <p class="app-desc">{{ app.description || '暂无描述' }}</p>
             </div>
-            
+
             <div class="card-footer">
                 <div class="meta-item">
                     <el-icon><User /></el-icon>
-                    <span>{{ app.author }}</span>
+                    <span>Admin</span>
                 </div>
                 <div class="meta-item">
                     <el-icon><Clock /></el-icon>
-                    <span>{{ app.updatedAt }}</span>
+                    <span>{{ formatTime(app.updatedAt) }}</span>
                 </div>
                 <div class="enter-btn">
                     打开
@@ -390,5 +428,13 @@ const handleOpen = (id: string) => {
 
 .enter-btn:hover {
     background: #e2e8f0;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+    font-size: 14px;
 }
 </style>

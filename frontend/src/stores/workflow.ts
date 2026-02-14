@@ -7,6 +7,7 @@ export const useWorkflowStore = defineStore('workflow', {
   state: () => ({
     workflowId: '' as string,
     workflowName: '未命名工作流',
+    workflowStatus: 'draft' as string,
     nodes: [] as WorkflowNode[],
     edges: [] as WorkflowEdge[],
     saving: false,
@@ -33,12 +34,13 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     // 保存工作流（新建或更新）
-    async saveWorkflow(): Promise<Workflow> {
+    async saveWorkflow(status?: string): Promise<Workflow> {
       this.saving = true
       try {
         const payload = {
           id: this.workflowId || undefined,
           name: this.workflowName,
+          status: status || this.workflowStatus,
           nodes: this.nodes,
           edges: this.edges,
         }
@@ -48,10 +50,16 @@ export const useWorkflowStore = defineStore('workflow', {
           : await workflowApi.create(payload)
 
         this.workflowId = response.id
+        this.workflowStatus = response.status || 'draft'
         return response
       } finally {
         this.saving = false
       }
+    },
+
+    // 发布工作流
+    async publishWorkflow(): Promise<Workflow> {
+      return this.saveWorkflow('published')
     },
 
     // 加载工作流详情
@@ -59,6 +67,7 @@ export const useWorkflowStore = defineStore('workflow', {
       const response = await workflowApi.get(id)
       this.workflowId = response.id
       this.workflowName = response.name
+      this.workflowStatus = response.status || 'draft'
       this.nodes = response.nodes || []
       this.edges = response.edges || []
       return response

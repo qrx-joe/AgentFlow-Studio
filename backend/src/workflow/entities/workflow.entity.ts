@@ -13,6 +13,15 @@ export class WorkflowEntity {
   @Column({ type: 'text', nullable: true })
   description?: string
 
+  @Column({ type: 'varchar', length: 20, default: 'draft' })
+  status!: string // 'draft' | 'published'
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  icon?: string
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  color?: string
+
   @Column({ type: 'jsonb', default: () => "'[]'" })
   nodes: any
 

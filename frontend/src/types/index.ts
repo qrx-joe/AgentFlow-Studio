@@ -27,6 +27,9 @@ export interface Workflow {
   id: string
   name: string
   description?: string
+  status?: string
+  icon?: string
+  color?: string
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
   createdAt?: string

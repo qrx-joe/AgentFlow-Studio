@@ -34,24 +34,21 @@ import HttpNode from '@/components/nodes/HttpNode.vue'
 const route = useRoute()
 const workflowStore = useWorkflowStore()
 
-// Mock data loading based on ID
-onMounted(() => {
+// Load workflow based on route ID
+onMounted(async () => {
     const id = route.params.id as string
     if (id) {
         if (id === 'new') {
+            workflowStore.workflowId = ''
+            workflowStore.workflowStatus = 'draft'
             workflowStore.loadTemplate('hello-world')
         } else {
-            // In real app, fetch execution/workflow data here
-            // For now, just set a name
-            const mockNames: Record<string, string> = {
-                '1': '智能客服助手',
-                '2': '文章摘要生成器',
-                '3': '代码审计专家'
+            try {
+                await workflowStore.loadWorkflow(id)
+            } catch (e) {
+                console.error('加载工作流失败:', e)
+                ElMessage.error('加载工作流失败')
             }
-            workflowStore.workflowName = mockNames[id] || '未命名应用'
-            // Keep existing nodes if any, or load empty? 
-            // For demo, we might want to load template for existing ones too if empty, 
-            // but let's assume existing ones have data (not implemented in mock for now).
         }
     }
 })
@@ -136,8 +133,14 @@ const handleRun = async () => {
     }
 }
 
-const handlePublish = () => {
-    ElMessage.success('应用已发布')
+const handlePublish = async () => {
+    try {
+        await workflowStore.publishWorkflow()
+        ElMessage.success('应用已发布')
+    } catch (e: any) {
+        const msg = e?.response?.data?.message || e?.message || '发布失败'
+        ElMessage.error(msg)
+    }
 }
 
 // Replay logic (simplified for layout demo, restore full logic later if needed)
