@@ -248,12 +248,13 @@ const currentColor = computed(() => props.workflowColor || '#475569')
   justify-content: space-between;
   padding: 0 24px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  z-index: 100;
+  z-index: 1000;
   flex-shrink: 0;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
 }
 
 .left-section {

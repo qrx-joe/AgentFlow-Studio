@@ -287,7 +287,6 @@ const handleDebugRun = async (testData: any) => {
   width: 100vw;
   background: #f5f7fa;
   overflow: hidden;
-  padding-top: 64px; /* 为固定导航栏留出空间 */
 }
 
 .studio-body {
@@ -295,6 +294,7 @@ const handleDebugRun = async (testData: any) => {
   display: flex;
   overflow: hidden;
   gap: 0;
+  margin-top: 64px; /* 为固定导航栏留出空间 */
 }
 
 .studio-left {
@@ -351,5 +351,20 @@ const handleDebugRun = async (testData: any) => {
 .studio-left::-webkit-scrollbar-track,
 .studio-right::-webkit-scrollbar-track {
   background: transparent;
+}
+</style>
+
+<!-- 全局样式确保 StudioHeader 固定在顶部 -->
+<style>
+.studio-layout > header.studio-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #e4e7ed;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 </style>
