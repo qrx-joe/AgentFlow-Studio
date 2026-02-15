@@ -21,3 +21,31 @@ yarn-error.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Claude AI
+.claude/
+
+# Test files
+test_*.txt
+test_*.html
+test_*.js
+test_*.ts
+test-*.bat
+test-*.sh
+test-document.txt
+test-stream.html
+test-upload.txt
+nul
+
+# Scripts
+scripts/sample.txt
+scripts/test_health.js
+scripts/test_rag.js
+scripts/test_workflow_execution.js
+scripts/test_workflow_execution.ts
+
+# Backend test files
+backend/test_upload.txt
+
+# Documentation (untracked)
+功能探索报告.md
