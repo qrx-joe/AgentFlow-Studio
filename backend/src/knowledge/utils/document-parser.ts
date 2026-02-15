@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse')
-import mammoth from 'mammoth'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mammoth = require('mammoth')
 import { marked } from 'marked'
 
 export interface ParsedDocument {

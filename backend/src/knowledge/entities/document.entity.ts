@@ -12,7 +12,7 @@ export class DocumentEntity {
   @Column({ type: 'varchar', length: 255 })
   filename!: string
 
-  @Column({ type: 'varchar', length: 50, nullable: true, name: 'file_type' })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'file_type' })
   fileType?: string
 
   @Column({ type: 'int', nullable: true, name: 'file_size' })
