@@ -13,6 +13,7 @@ const selectedSource = ref<any>(null)
 const activeMessageId = ref('')
 const router = useRouter()
 const focusKey = 'knowledgeDocFocus'
+const sidebarCollapsed = ref(false)
 
 onMounted(() => {
   chatStore.fetchSessions()
@@ -59,16 +60,22 @@ const goToDocument = () => {
   )
   router.push('/knowledge')
 }
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
 </script>
 
 <template>
-  <div class="chat-page">
+  <div class="chat-page" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <ChatSessionsPanel
       :sessions="chatStore.sessions"
       :current-session-id="chatStore.currentSessionId"
+      :collapsed="sidebarCollapsed"
       @select="chatStore.selectSession"
       @create="chatStore.createSession"
       @delete="handleDeleteSession"
+      @toggle-collapse="toggleSidebar"
     />
 
     <ChatMessagesPanel
@@ -89,17 +96,26 @@ const goToDocument = () => {
 <style scoped>
 .chat-page {
   display: grid;
-  grid-template-columns: 280px 1fr; /* Slightly wider sidebar */
+  grid-template-columns: 280px 1fr;
   gap: 20px;
   height: 100%;
-  padding: 24px 32px; /* Consistent frame padding */
+  padding: 24px 32px;
   box-sizing: border-box;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.chat-page.sidebar-collapsed {
+  grid-template-columns: 60px 1fr;
 }
 
 @media (max-width: 768px) {
   .chat-page {
     grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .chat-page.sidebar-collapsed {
+    grid-template-columns: 1fr;
   }
 }
 </style>

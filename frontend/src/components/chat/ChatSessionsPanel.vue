@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import type { Session } from '@/types'
+import { Fold, Expand } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   sessions: Session[]
   currentSessionId: string
+  collapsed?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'select', id: string): void
   (e: 'create'): void
   (e: 'delete', id: string): void
+  (e: 'toggle-collapse'): void
 }>()
 
 const formatTime = (dateStr: string) => {
@@ -34,74 +37,191 @@ const handleDelete = (e: Event, id: string) => {
 </script>
 
 <template>
-  <aside class="sessions-sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <div class="logo-icon">💬</div>
-        <span class="logo-text">对话历史</span>
-      </div>
-      <button class="btn-new-chat" @click="emit('create')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <aside class="sessions-sidebar" :class="{ collapsed }">
+    <!-- 收起状态 -->
+    <div v-if="collapsed" class="collapsed-content">
+      <button class="btn-expand" @click="emit('toggle-collapse')" title="展开侧边栏">
+        <el-icon :size="20"><Expand /></el-icon>
+      </button>
+      <button class="btn-new-chat-mini" @click="emit('create')" title="新对话">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
-        新对话
       </button>
-    </div>
-
-    <div class="session-list">
-      <div
-        v-for="session in props.sessions"
-        :key="session.id"
-        class="session-item"
-        :class="{ active: session.id === props.currentSessionId }"
-        @click="emit('select', session.id)"
-      >
-        <div class="session-icon">
+      <div class="collapsed-sessions">
+        <div
+          v-for="session in props.sessions.slice(0, 8)"
+          :key="session.id"
+          class="session-dot"
+          :class="{ active: session.id === props.currentSessionId }"
+          @click="emit('select', session.id)"
+          :title="session.title || '新对话'"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </div>
-        <div class="session-info">
-          <div class="session-title">{{ session.title || '新对话' }}</div>
-          <div class="session-time">{{ formatTime(session.updatedAt || session.createdAt || '') }}</div>
-        </div>
-        <button class="btn-delete" @click="handleDelete($event, session.id)" title="删除">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-        </button>
       </div>
     </div>
 
-    <div v-if="sessions.length === 0" class="empty-sessions">
-      <div class="empty-icon">🗨️</div>
-      <div class="empty-text">还没有对话</div>
-      <div class="empty-hint">点击「新对话」开始</div>
-    </div>
+    <!-- 展开状态 -->
+    <template v-else>
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">💬</div>
+          <span class="logo-text">对话历史</span>
+          <button class="btn-collapse" @click="emit('toggle-collapse')" title="收起侧边栏">
+            <el-icon :size="16"><Fold /></el-icon>
+          </button>
+        </div>
+        <button class="btn-new-chat" @click="emit('create')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          新对话
+        </button>
+      </div>
+
+      <div class="session-list">
+        <div
+          v-for="session in props.sessions"
+          :key="session.id"
+          class="session-item"
+          :class="{ active: session.id === props.currentSessionId }"
+          @click="emit('select', session.id)"
+        >
+          <div class="session-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div class="session-info">
+            <div class="session-title">{{ session.title || '新对话' }}</div>
+            <div class="session-time">{{ formatTime(session.updatedAt || session.createdAt || '') }}</div>
+          </div>
+          <button class="btn-delete" @click="handleDelete($event, session.id)" title="删除">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div v-if="sessions.length === 0" class="empty-sessions">
+        <div class="empty-icon">🗨️</div>
+        <div class="empty-text">还没有对话</div>
+        <div class="empty-hint">点击「新对话」开始</div>
+      </div>
+    </template>
   </aside>
 </template>
 
 <style scoped>
 .sessions-sidebar {
-  background: #ffffff; 
-  /* Dify style light background */
-  border: 1px solid #e2e8f0; /* Full border */
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: 100%;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: width 0.3s ease;
+  width: 280px;
 }
 
+.sessions-sidebar.collapsed {
+  width: 60px;
+}
+
+/* 收起状态样式 */
+.collapsed-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  gap: 12px;
+  height: 100%;
+}
+
+.btn-expand {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-expand:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-new-chat-mini {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-900);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-new-chat-mini:hover {
+  background: var(--color-primary-800);
+}
+
+.collapsed-sessions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.session-dot {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: all 0.2s;
+}
+
+.session-dot:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.session-dot.active {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* 展开状态样式 */
 .sidebar-header {
   padding: 20px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* border-bottom: 1px solid #f3f4f6; */
 }
 
 .sidebar-logo {
@@ -113,15 +233,34 @@ const handleDelete = (e: Event, id: string) => {
 
 .logo-icon {
   font-size: 20px;
-  /* Dify logic: colorful icon */
   filter: grayscale(0.2);
 }
 
 .logo-text {
   font-size: 16px;
   font-weight: 700;
-  color: #111827; /* Dark text for light mode */
+  color: #111827;
   letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.btn-collapse {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-collapse:hover {
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .btn-new-chat {
@@ -155,7 +294,7 @@ const handleDelete = (e: Event, id: string) => {
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Slightly more gap */
+  gap: 4px;
 }
 
 .session-list::-webkit-scrollbar {
@@ -210,7 +349,7 @@ const handleDelete = (e: Event, id: string) => {
 }
 
 .session-title {
-  font-size: 14px; /* Slightly larger */
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
