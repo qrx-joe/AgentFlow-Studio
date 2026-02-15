@@ -106,13 +106,28 @@ async function parsePDF(buffer: Buffer): Promise<ParsedDocument> {
     const parser = new PDFParse({ data: buffer })
     await parser.load()
     const text = await parser.getText()
+
+    // 确保 text 是字符串类型
+    let textContent = ''
+    if (typeof text === 'string') {
+      textContent = text
+    } else if (Array.isArray(text)) {
+      // 如果是数组，合并所有文本
+      textContent = text.join('\n')
+    } else if (text && typeof text === 'object') {
+      // 如果是对象，尝试提取文本内容
+      textContent = text.text || text.content || String(text)
+    } else {
+      textContent = String(text || '')
+    }
+
     let info: any = {}
     try {
       info = await parser.getInfo()
     } catch {
       // getInfo 可能失败，忽略
     }
-    const content = cleanText(text || '')
+    const content = cleanText(textContent)
     await parser.destroy()
     return {
       content,
@@ -187,7 +202,16 @@ function parseCSV(buffer: Buffer): ParsedDocument {
 /**
  * 清理文本内容
  */
-function cleanText(text: string): string {
+function cleanText(text: string | any): string {
+  // 确保 text 是字符串类型
+  if (typeof text !== 'string') {
+    if (text === null || text === undefined) {
+      return ''
+    }
+    // 如果是对象或数组，尝试转换为字符串
+    text = String(text)
+  }
+
   return text
     .replace(/\0/g, '') // 移除空字节
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // 移除控制字符
