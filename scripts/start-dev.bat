@@ -2,55 +2,68 @@
 chcp 65001 >nul
 setlocal
 
-REM Start development environment
-cd /d "%~dp0.."
+set "ROOT_DIR=%~dp0.."
+cd /d "%ROOT_DIR%"
 
-REM Check Docker availability
-where docker >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [Error] Docker command not found!
-    echo Please install Docker Desktop for Windows: https://www.docker.com/products/docker-desktop
-    pause
-    exit /b 1
-)
+echo [AgentFlow] Root: %CD%
 
-REM Check Docker Compose availability
-set DOCKER_COMPOSE_CMD=docker-compose
-where docker-compose >nul 2>nul
-if %errorlevel% neq 0 (
-    REM Try "docker compose" plugin
-    docker compose version >nul 2>nul
-    if %errorlevel% equ 0 (
-        set DOCKER_COMPOSE_CMD=docker compose
-    ) else (
-        echo [Error] Docker Compose not found!
-        echo Please ensure Docker Desktop is installed and running.
+set "PKG_MANAGER=pnpm"
+set "INSTALL_CMD=pnpm install"
+set "RUN_BACKEND=pnpm run start:dev"
+set "RUN_FRONTEND=pnpm dev"
+
+where pnpm >nul 2>nul
+if errorlevel 1 (
+    where npm >nul 2>nul
+    if errorlevel 1 (
+        echo [Error] Neither pnpm nor npm is available.
+        echo Install Node.js first: https://nodejs.org/
         pause
         exit /b 1
     )
+    set "PKG_MANAGER=npm"
+    set "INSTALL_CMD=npm install"
+    set "RUN_BACKEND=npm run start:dev"
+    set "RUN_FRONTEND=npm run dev"
 )
 
-echo [AgentFlow] Using command: %DOCKER_COMPOSE_CMD%
+echo [AgentFlow] Package manager: %PKG_MANAGER%
 
-echo [AgentFlow] Starting database container...
-%DOCKER_COMPOSE_CMD% up -d
-if %errorlevel% neq 0 (
-    echo [AgentFlow] Docker start failed. Please check if Docker is running.
-    pause
-    exit /b 1
+set "DOCKER_COMPOSE_CMD="
+where docker >nul 2>nul
+if not errorlevel 1 (
+    where docker-compose >nul 2>nul
+    if not errorlevel 1 (
+        set "DOCKER_COMPOSE_CMD=docker-compose"
+    ) else (
+        docker compose version >nul 2>nul
+        if not errorlevel 1 (
+            set "DOCKER_COMPOSE_CMD=docker compose"
+        )
+    )
 )
 
-echo [AgentFlow] Starting backend service...
-start "AgentFlow Backend" cmd /k "cd /d backend && pnpm install && pnpm run start:dev"
+if defined DOCKER_COMPOSE_CMD (
+    echo [AgentFlow] Using: %DOCKER_COMPOSE_CMD%
+    echo [AgentFlow] Starting containers...
+    %DOCKER_COMPOSE_CMD% up -d
+    if errorlevel 1 (
+        echo [Warn] Failed to start containers. Continue without Docker.
+    )
+) else (
+    echo [Warn] Docker or Docker Compose not found. Continue without Docker.
+)
 
-echo [AgentFlow] Starting frontend service...
-start "AgentFlow Frontend" cmd /k "cd /d frontend && pnpm install && pnpm dev"
+echo [AgentFlow] Starting backend window...
+start "AgentFlow Backend" cmd /k "cd /d ""%ROOT_DIR%\backend"" && %INSTALL_CMD% && %RUN_BACKEND%"
 
-echo [AgentFlow] Waiting for services to start...
-timeout /t 5 >nul
+echo [AgentFlow] Starting frontend window...
+start "AgentFlow Frontend" cmd /k "cd /d ""%ROOT_DIR%\frontend"" && %INSTALL_CMD% && %RUN_FRONTEND%"
 
-echo [AgentFlow] Opening browser...
-start http://localhost:5173
+timeout /t 4 >nul
+start "" "http://localhost:5173"
 
 echo [AgentFlow] Startup complete.
+echo [AgentFlow] If backend cannot connect DB, install Docker and rerun this script.
+pause
 endlocal
