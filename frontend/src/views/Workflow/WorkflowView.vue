@@ -290,11 +290,11 @@ const handleDebugRun = async (testData: any) => {
 }
 
 .studio-body {
-  flex: 1;
+  height: calc(100vh - 64px); /* Subtract header height */
   display: flex;
   overflow: hidden;
   gap: 0;
-  margin-top: 64px; /* 为固定导航栏留出空间 */
+  margin-top: 64px; /* Space for the fixed header */
 }
 
 .studio-left {
@@ -354,17 +354,4 @@ const handleDebugRun = async (testData: any) => {
 }
 </style>
 
-<!-- 全局样式确保 StudioHeader 固定在顶部 -->
-<style>
-.studio-layout > header.studio-header {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 1000 !important;
-  height: 64px;
-  background: #ffffff;
-  border-bottom: 1px solid #e4e7ed;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-</style>
+<!-- Redundant global styles removed: StudioHeader handles its own fixed positioning -->

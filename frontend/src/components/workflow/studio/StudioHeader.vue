@@ -248,7 +248,7 @@ const currentColor = computed(() => props.workflowColor || '#475569')
   justify-content: space-between;
   padding: 0 24px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  z-index: 1000;
+  z-index: 1001; /* Higher than canvas elements */
   flex-shrink: 0;
   position: fixed;
   top: 0;
