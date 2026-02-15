@@ -110,7 +110,16 @@ const formatDate = (dateStr?: string) => {
     </div>
 
     <!-- 知识库卡片网格 -->
-    <div class="kb-grid" v-if="filteredKnowledgeBases.length > 0">
+    <div class="kb-grid" v-if="filteredKnowledgeBases.length > 0 || true">
+      <!-- 创建卡片 - 放在最前面 -->
+      <div class="kb-card create-card" @click="showCreateDialog = true">
+        <div class="create-content">
+          <el-icon class="create-icon"><Plus /></el-icon>
+          <span class="create-text">创建知识库</span>
+          <span class="create-hint">添加新的知识文档集合</span>
+        </div>
+      </div>
+
       <div
         v-for="kb in filteredKnowledgeBases"
         :key="kb.id"
@@ -158,24 +167,6 @@ const formatDate = (dateStr?: string) => {
           <span>创建于 {{ formatDate(kb.createdAt) }}</span>
         </div>
       </div>
-
-      <!-- 创建卡片 -->
-      <div class="kb-card create-card" @click="showCreateDialog = true">
-        <div class="create-content">
-          <el-icon class="create-icon"><Plus /></el-icon>
-          <span class="create-text">创建知识库</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 空状态 -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">📚</div>
-      <h2>还没有知识库</h2>
-      <p>创建您的第一个知识库，开始构建 AI 的知识基础</p>
-      <el-button type="primary" size="large" :icon="Plus" @click="showCreateDialog = true">
-        创建知识库
-      </el-button>
     </div>
 
     <!-- 创建对话框 -->
@@ -418,6 +409,11 @@ const formatDate = (dateStr?: string) => {
   font-size: 15px;
   font-weight: 600;
   transition: color 0.2s;
+}
+
+.create-hint {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .create-card:hover .create-text {
