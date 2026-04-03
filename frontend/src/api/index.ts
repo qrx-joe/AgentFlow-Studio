@@ -37,7 +37,8 @@ export const knowledgeApi = {
     if (options?.knowledgeBaseId) {
       formData.append('knowledgeBaseId', options.knowledgeBaseId)
     }
-    return request.post('/knowledge/upload', formData)
+    // 上传大文件需要更长超时（5分钟）
+    return request.post('/knowledge/upload', formData, { timeout: 300000 })
   },
   remove: (id: string) => request.delete(`/knowledge/documents/${id}`),
   search: (

@@ -182,27 +182,41 @@ export class KnowledgeService {
       const embedStart = Date.now()
       let embeddingDim = Number(process.env.EMBEDDING_DIMENSION || 1024)
 
-      for (let i = 0; i < chunks.length; i += 1) {
-        const chunk = chunks[i]
-        // 清理分块内容
-        const cleanedChunk = chunk
-          .replace(/\0/g, '')
-          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-          .trim()
+      // 3.1 清理所有 chunk
+      const cleanedChunks = chunks
+        .map((chunk) =>
+          chunk
+            .replace(/\0/g, '')
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+            .trim()
+        )
+        .filter((chunk) => chunk.length > 0)
 
-        if (!cleanedChunk) continue // 跳过空分块
+      // 3.2 批量生成向量（每批最多 2048 条，避免 API 限制）
+      const batchSize = 2048
+      const embeddings: number[][] = []
 
-        const embedding = await this.embeddingService.embed(cleanedChunk)
-        if (Array.isArray(embedding) && embedding.length > 0) {
-          embeddingDim = embedding.length
-        }
-        await this.chunkRepo.save({
-          documentId: document.id,
-          content: cleanedChunk,
-          chunkIndex: i,
-          embedding,
-        })
+      for (let i = 0; i < cleanedChunks.length; i += batchSize) {
+        const batch = cleanedChunks.slice(i, i + batchSize)
+        const batchEmbeds = await this.embeddingService.embedBatch(batch)
+        embeddings.push(...batchEmbeds)
       }
+
+      if (embeddings.length > 0) {
+        embeddingDim = embeddings[0].length
+      }
+
+      // 3.3 保存所有 chunk 到数据库
+      const chunkEntities = cleanedChunks.map((content, i) => ({
+        documentId: document.id,
+        content,
+        chunkIndex: i,
+        embedding: embeddings[i],
+      }))
+
+      // 批量插入
+      await this.chunkRepo.save(chunkEntities)
+
       const embedMs = Date.now() - embedStart
 
       console.log(`[KnowledgeService] Document processed: ${chunks.length} chunks, ${charCount} chars, ${Date.now() - startTime}ms`)

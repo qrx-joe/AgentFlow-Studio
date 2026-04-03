@@ -23,8 +23,10 @@ export class EmbeddingService {
     }
   }
 
-  async embed(text: string): Promise<number[]> {
-    // 运行时再检查一次，兼容 .env 热重载
+  // 批量生成 embedding，支持大量文本
+  async embedBatch(texts: string[]): Promise<number[][]> {
+    if (texts.length === 0) return []
+
     const skip = process.env.SKIP_EMBEDDING_API === 'true'
 
     if (this.client && !skip) {
@@ -32,22 +34,31 @@ export class EmbeddingService {
         const model = process.env.EMBEDDING_MODEL || 'text-embedding-3-small'
         const response = await this.client.embeddings.create({
           model,
-          input: text,
+          input: texts,
         })
-        return response.data[0].embedding as number[]
+        // 按输入顺序返回向量
+        const sorted = response.data.sort((a, b) => a.index - b.index)
+        return sorted.map((d) => d.embedding as number[])
       } catch (err) {
-        // Embedding API 调用失败时降级为伪向量，保证上传不中断
-        console.warn('[EmbeddingService] API 调用失败，降级为本地伪向量:', (err as Error).message)
+        console.warn('[EmbeddingService] Batch API 调用失败，降级为本地伪向量:', (err as Error).message)
       }
     }
 
-    // 无 API Key / 跳过 / 调用失败 时使用简单的伪向量，保证流程可跑通
+    // 降级为伪向量
     const dim = Number(process.env.EMBEDDING_DIMENSION || 1536)
-    const vector = new Array(dim).fill(0)
-    for (let i = 0; i < text.length; i += 1) {
-      const idx = i % dim
-      vector[idx] += text.charCodeAt(i) % 10
-    }
-    return vector
+    return texts.map((text) => {
+      const vector = new Array(dim).fill(0)
+      for (let i = 0; i < text.length; i += 1) {
+        const idx = i % dim
+        vector[idx] += text.charCodeAt(i) % 10
+      }
+      return vector
+    })
+  }
+
+  // 单文本 embedding，兼容旧调用
+  async embed(text: string): Promise<number[]> {
+    const results = await this.embedBatch([text])
+    return results[0]
   }
 }
