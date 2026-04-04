@@ -31,6 +31,9 @@ export class WorkflowEngine {
       // 先检测是否存在环，避免执行时死循环
       this.topologicalSort()
 
+      // 跟踪已执行的节点，防止条件分支走出环
+      const executedNodes = new Set<string>()
+
       // 按连线进行执行，符合真实工作流路径
       const startNode = this.findStartNode()
       let currentNode: WorkflowNode | undefined = startNode
@@ -41,6 +44,12 @@ export class WorkflowEngine {
         if (stepCount > 200) {
           throw new Error('工作流执行步数过多，可能存在循环')
         }
+
+        // 防止同一节点重复执行
+        if (executedNodes.has(currentNode.id)) {
+          throw new Error(`节点 ${currentNode.id} 已执行过，检测到循环`)
+        }
+        executedNodes.add(currentNode.id)
 
         const nodeResult = await this.executeNodeWithPolicy(currentNode, context)
         if (nodeResult === 'failed') {
@@ -267,43 +276,25 @@ export class WorkflowEngine {
 
     const isTrue = this.evaluateCondition(currentNode, context)
 
-    // 优先使用配置的目标边 ID
-    const trueEdgeId = currentNode.data?.trueEdgeId
-    if (isTrue && trueEdgeId) {
-      const edge = outgoing.find((item: any) => item.id === trueEdgeId)
+    // 查找配置的目标边 ID（优先级最高）
+    const edgeIdKey = isTrue ? 'trueEdgeId' : 'falseEdgeId'
+    const configuredEdgeId = currentNode.data?.[edgeIdKey]
+    if (configuredEdgeId) {
+      const edge = outgoing.find((item: any) => item.id === configuredEdgeId)
       if (edge?.target) return edge.target
     }
 
-    const falseEdgeId = currentNode.data?.falseEdgeId
-    if (!isTrue && falseEdgeId) {
-      const edge = outgoing.find((item: any) => item.id === falseEdgeId)
-      if (edge?.target) return edge.target
-    }
-
-    // 兼容旧配置：目标节点优先
-    const trueTarget = currentNode.data?.trueTarget
-    if (isTrue && trueTarget) {
-      return trueTarget
-    }
-
-    const falseTarget = currentNode.data?.falseTarget
-    if (!isTrue && falseTarget) {
-      return falseTarget
-    }
-
-    // 根据连线标签/分支类型选择目标
+    // 根据分支标签选择（True/False 标签）
+    const branchLabel = isTrue ? 'True' : 'False'
     const labeled = outgoing.find((edge: any) =>
-      (edge.branchType || edge.label) === (isTrue ? 'True' : 'False')
+      edge.branchType === branchLabel || edge.label === branchLabel
     )
     if (labeled?.target) {
       return labeled.target
     }
 
-    // 未配置目标时，默认取第一/第二条出边
-    if (isTrue) {
-      return outgoing[0]?.target
-    }
-    return outgoing[1]?.target || outgoing[0]?.target
+    // 默认取第一条边，条件为假时尝试第二条
+    return isTrue ? outgoing[0]?.target : (outgoing[1]?.target || outgoing[0]?.target)
   }
 
   // 条件判断：支持变量对比与输入真值判断

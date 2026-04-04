@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core'
+import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'
 
@@ -14,6 +15,14 @@ async function bootstrap() {
     // 开启跨域，便于前端本地访问
     app.enableCors()
     console.log('[Bootstrap] CORS enabled.')
+
+    // 全局验证管道
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true, // 过滤未定义的属性
+      forbidNonWhitelisted: true, // 拒绝未定义的属性
+      transform: true, // 自动转换类型
+    }))
+    console.log('[Bootstrap] ValidationPipe enabled.')
 
     // 全局异常过滤器，统一返回结构
     app.useGlobalFilters(new AllExceptionsFilter())

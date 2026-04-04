@@ -37,6 +37,10 @@ test-stream.html
 test-upload.txt
 nul
 
+# Auto-import generated files
+components.d.ts
+auto-imports.d.ts
+
 # Scripts
 scripts/sample.txt
 scripts/test_health.js
