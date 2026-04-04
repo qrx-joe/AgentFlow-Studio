@@ -2,6 +2,7 @@ import { Controller, Delete, Get, Param, Post, Put, Body, UseInterceptors, Uploa
 import { FileInterceptor } from '@nestjs/platform-express'
 import { KnowledgeService } from './knowledge.service'
 import { memoryStorage } from 'multer'
+import { Public } from '../common/common.module'
 
 // Multer 配置：增加文件大小限制
 const multerOptions = {
