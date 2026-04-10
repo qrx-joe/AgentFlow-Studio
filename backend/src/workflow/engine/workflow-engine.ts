@@ -28,28 +28,32 @@ export class WorkflowEngine {
     }
 
     try {
-      // 先检测是否存在环，避免执行时死循环
+      // 先检测是否存在静态环，避免执行时死循环
       this.topologicalSort()
 
-      // 跟踪已执行的节点，防止条件分支走出环
-      const executedNodes = new Set<string>()
+      // 跟踪节点访问次数，用于检测动态循环（条件分支可能导致的环）
+      // 使用访问次数而不是简单Set，允许合法的多路径但防止真正的循环
+      const nodeVisitCount = new Map<string, number>()
+      const MAX_VISITS_PER_NODE = 3  // 同一节点最多访问3次
 
       // 按连线进行执行，符合真实工作流路径
       const startNode = this.findStartNode()
       let currentNode: WorkflowNode | undefined = startNode
       let stepCount = 0
+      const MAX_TOTAL_STEPS = 200  // 总步数限制
 
       while (currentNode) {
         stepCount += 1
-        if (stepCount > 200) {
-          throw new Error('工作流执行步数过多，可能存在循环')
+        if (stepCount > MAX_TOTAL_STEPS) {
+          throw new Error(`工作流执行步数超过 ${MAX_TOTAL_STEPS} 步，可能存在无限循环`)
         }
 
-        // 防止同一节点重复执行
-        if (executedNodes.has(currentNode.id)) {
-          throw new Error(`节点 ${currentNode.id} 已执行过，检测到循环`)
+        // 检测节点访问次数，防止动态循环
+        const currentVisits = nodeVisitCount.get(currentNode.id) || 0
+        if (currentVisits >= MAX_VISITS_PER_NODE) {
+          throw new Error(`节点 ${currentNode.id} 已访问 ${MAX_VISITS_PER_NODE} 次，检测到循环执行`)
         }
-        executedNodes.add(currentNode.id)
+        nodeVisitCount.set(currentNode.id, currentVisits + 1)
 
         const nodeResult = await this.executeNodeWithPolicy(currentNode, context)
         if (nodeResult === 'failed') {
@@ -102,10 +106,20 @@ export class WorkflowEngine {
         return
 
       case 'llm':
-        // 调用大模型
+        // 调用大模型，支持变量模板替换
+        const llmPrompt = this.replaceVariables(
+          node.data?.prompt || '你是一个智能助手',
+          context.variables
+        )
+        // 支持指定输入源，默认为原始输入，也可引用上游节点输出
+        const inputSourceKey = node.data?.inputSource || 'input'
+        const llmInput = inputSourceKey === 'input'
+          ? context.input
+          : (context.variables[inputSourceKey] ?? context.input)
+
         context.variables[node.id] = await this.agentService.chat({
-          prompt: node.data?.prompt || '你是一个智能助手',
-          input: context.input,
+          prompt: llmPrompt,
+          input: llmInput,
           context: context.variables,
         })
         return
@@ -257,6 +271,33 @@ export class WorkflowEngine {
 
   private async sleep(ms: number) {
     await new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  /**
+   * 变量模板替换：将 {{variableName}} 替换为实际值
+   * 支持嵌套引用，如 {{node1.output}} 或简单变量名
+   */
+  private replaceVariables(template: string, variables: Record<string, any>): string {
+    if (!template || typeof template !== 'string') {
+      return template
+    }
+
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      const value = variables[key]
+      if (value === undefined || value === null) {
+        // 保留原样，不替换
+        return match
+      }
+      // 如果是对象或数组，转为JSON字符串
+      if (typeof value === 'object') {
+        try {
+          return JSON.stringify(value)
+        } catch {
+          return String(value)
+        }
+      }
+      return String(value)
+    })
   }
 
   // 选择下一个节点：普通节点取第一条边，条件节点分流
