@@ -8,6 +8,11 @@ export interface SearchResult {
   keywordHits?: number
   keywordScore?: number
   fusedScore?: number
+  // RRF 融合相关字段
+  rrfScore?: number
+  finalScore?: number
+  vectorRank?: number
+  keywordRank?: number
 }
 
 export interface KnowledgeSearchOptions {
