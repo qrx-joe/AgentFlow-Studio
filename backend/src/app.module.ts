@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { parse } from 'pg-connection-string'
 
 import { CommonModule, Public } from './common/common.module'
 import { WorkflowModule } from './workflow/workflow.module'
@@ -11,22 +12,60 @@ import { AppCacheModule } from './common/cache/cache.module'
 import { MetricsModule } from './metrics/metrics.module'
 import { HealthModule } from './health/health.module'
 
+// 辅助函数：判断是否为SQLite
+const isSQLiteDb = (url?: string) => url?.includes('.sqlite') || url?.startsWith('./')
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
     CommonModule,
 
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL,
-      autoLoadEntities: true,
-      synchronize: false,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('DATABASE_URL') || './data.sqlite'
+        const isSQLite = isSQLiteDb(databaseUrl)
+        const isDev = configService.get('NODE_ENV') === 'development'
 
-      ssl: {
-        rejectUnauthorized: false,
+        if (isSQLite) {
+          console.log('[Database] Using SQLite:', databaseUrl)
+          return {
+            type: 'sqlite' as const,
+            database: databaseUrl,
+            autoLoadEntities: true,
+            synchronize: true, // SQLite测试环境自动同步
+            logging: isDev,
+          }
+        }
+
+        console.log('[Database] Using PostgreSQL')
+        // 解析PostgreSQL连接字符串
+        const dbConfig = parse(databaseUrl)
+
+        return {
+          type: 'postgres' as const,
+          host: dbConfig.host || undefined,
+          port: dbConfig.port ? parseInt(dbConfig.port) : undefined,
+          username: dbConfig.user || undefined,
+          password: dbConfig.password || undefined,
+          database: dbConfig.database || undefined,
+          autoLoadEntities: true,
+          synchronize: false,
+          ssl: databaseUrl.includes('localhost')
+            ? false
+            : { rejectUnauthorized: false },
+          logging: isDev,
+          extra: {
+            max: 10,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000,
+          },
+          retryAttempts: 5,
+          retryDelay: 5000,
+        }
       },
-      logging: process.env.NODE_ENV === 'development',
+      inject: [ConfigService],
     }),
 
     AppCacheModule,

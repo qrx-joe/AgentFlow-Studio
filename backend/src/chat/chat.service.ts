@@ -39,12 +39,8 @@ export class ChatService {
     const { content } = payload
     const sessionId = await this.ensureSession(payload.sessionId)
 
-    // 0. 拉取最近对话，构建多轮上下文
-    const history = await this.messageRepo.find({
-      where: { sessionId },
-      order: { createdAt: 'ASC' },
-      take: 10,
-    })
+    // 0. 使用上下文压缩构建多轮对话
+    const history = await this.buildContext(sessionId, 10, 4000)
 
     // 1. 保存用户消息
     await this.messageRepo.save({
@@ -75,7 +71,7 @@ export class ChatService {
       prompt,
       input: content,
       context: { sources },
-      history: history.map(item => ({ role: item.role, content: item.content })),
+      history: history.map(item => ({ role: item.role as 'user' | 'assistant' | 'system', content: item.content })),
     })
 
     // 4. 保存助手消息
@@ -97,12 +93,8 @@ export class ChatService {
     const { content } = payload
     const sessionId = await this.ensureSession(payload.sessionId)
 
-    // 0. 拉取最近对话，构建多轮上下文
-    const history = await this.messageRepo.find({
-      where: { sessionId },
-      order: { createdAt: 'ASC' },
-      take: 10,
-    })
+    // 0. 使用上下文压缩构建多轮对话
+    const history = await this.buildContext(sessionId, 10, 4000)
 
     // 判断是否为第一条消息（用于生成标题）
     const isFirstMessage = history.length === 0
@@ -139,7 +131,7 @@ export class ChatService {
         prompt,
         input: content,
         context: { sources },
-        history: history.map(item => ({ role: item.role, content: item.content })),
+        history: history.map(item => ({ role: item.role as 'user' | 'assistant' | 'system', content: item.content })),
       })) {
         fullText += token
         onToken(token)
@@ -169,6 +161,105 @@ export class ChatService {
     }
 
     return assistant
+  }
+
+  /**
+   * 构建对话上下文，支持上下文压缩
+   * 当历史消息过多时，保留最近的 N 轮对话，对早期对话生成摘要
+   */
+  private async buildContext(sessionId: string, maxMessages = 10, maxTokensEstimate = 4000) {
+    // 获取最近的消息
+    const allHistory = await this.messageRepo.find({
+      where: { sessionId },
+      order: { createdAt: 'ASC' },
+    })
+
+    if (allHistory.length <= maxMessages) {
+      // 消息不多，直接返回全部
+      return allHistory.map(item => ({ role: item.role, content: item.content }))
+    }
+
+    // 需要压缩：保留最近 N 轮，对早期的生成摘要
+    const recentMessages = allHistory.slice(-maxMessages)
+    const earlyMessages = allHistory.slice(0, -maxMessages)
+
+    // 估算 token（简化版：中文字符按1.5 token，英文按1 token）
+    const estimateTokens = (text: string) => {
+      const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length
+      const otherChars = text.length - chineseChars
+      return Math.ceil(chineseChars * 1.5 + otherChars)
+    }
+
+    const totalTokens = allHistory.reduce((sum, msg) => sum + estimateTokens(msg.content), 0)
+
+    if (totalTokens <= maxTokensEstimate) {
+      // Token 数不多，直接返回全部
+      return allHistory.map(item => ({ role: item.role, content: item.content }))
+    }
+
+    // 需要生成摘要
+    try {
+      const summary = await this.summarizeHistory(earlyMessages)
+
+      // 组合：摘要 + 最近消息
+      return [
+        { role: 'system', content: `历史对话摘要：${summary}` },
+        ...recentMessages.map(item => ({ role: item.role, content: item.content })),
+      ]
+    } catch (error) {
+      console.warn('[ChatService] Failed to summarize history, using recent messages only:', error)
+      // 摘要生成失败，只返回最近消息
+      return recentMessages.map(item => ({ role: item.role, content: item.content }))
+    }
+  }
+
+  /**
+   * 生成历史对话摘要
+   */
+  private async summarizeHistory(messages: ChatMessageEntity[]): Promise<string> {
+    if (messages.length === 0) return ''
+
+    // 简单摘要：提取关键信息点
+    const keyPoints: string[] = []
+    let lastUserMessage = ''
+
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        lastUserMessage = msg.content.substring(0, 100) // 取前100字符
+        keyPoints.push(`用户询问：${lastUserMessage}`)
+      } else if (msg.role === 'assistant' && lastUserMessage) {
+        // 提取助手回复的第一句话
+        const firstSentence = msg.content.split(/[。！？.!?]/)[0]
+        if (firstSentence) {
+          keyPoints.push(`助手回复要点：${firstSentence.substring(0, 100)}`)
+        }
+        lastUserMessage = ''
+      }
+    }
+
+    // 如果消息不多，直接连接关键信息
+    if (messages.length <= 6) {
+      return keyPoints.join('；')
+    }
+
+    // 消息较多，使用 LLM 生成摘要
+    const summaryPrompt = `请对以下对话内容生成一个简短的摘要（不超过200字），保留关键信息点：
+
+${messages.map(m => `${m.role === 'user' ? '用户' : '助手'}：${m.content.substring(0, 200)}`).join('\n')}
+
+摘要：`
+
+    try {
+      const summary = await this.agentService.chat({
+        prompt: summaryPrompt,
+        input: '',
+        context: {},
+      })
+      return summary.trim()
+    } catch (error) {
+      // LLM 摘要失败，返回简单连接版
+      return keyPoints.slice(-5).join('；') // 只保留最近5个要点
+    }
   }
 
   // 生成会话标题

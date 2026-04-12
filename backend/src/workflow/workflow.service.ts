@@ -12,6 +12,8 @@ import { WorkflowDefinition } from './types'
 import { BusinessException, ErrorCodes } from '../common/exceptions/business.exception'
 import { MetricsService } from '../metrics/metrics.service'
 import { CompensationExecutor } from './engine/compensation-executor'
+import { WorkflowHttpService } from './services/http.service'
+import { CodeExecutionService } from './services/code-execution.service'
 
 @Injectable()
 export class WorkflowService {
@@ -22,7 +24,9 @@ export class WorkflowService {
     private agentService: AgentService,
     private knowledgeService: KnowledgeService,
     private metricsService: MetricsService,
-    private compensationExecutor: CompensationExecutor
+    private compensationExecutor: CompensationExecutor,
+    private workflowHttpService: WorkflowHttpService,
+    private codeExecutionService: CodeExecutionService
   ) {}
 
   async findAll() {
@@ -93,7 +97,9 @@ export class WorkflowService {
       definition,
       this.agentService,
       this.knowledgeService,
-      this.compensationExecutor
+      this.compensationExecutor,
+      this.workflowHttpService,
+      this.codeExecutionService
     )
     const start = Date.now()
     const result = await engine.execute(input || '')

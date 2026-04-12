@@ -1,18 +1,24 @@
-import { ExecutionContext, ExecutionResult, WorkflowDefinition, WorkflowNode } from '../types'
+import { ExecutionContext, ExecutionResult, WorkflowDefinition, WorkflowNode, PerformanceMetrics } from '../types'
 import { CompensationExecutor, CompensationAction } from './compensation-executor'
 import { AgentService } from '../../agent/agent.service'
 import { KnowledgeService } from '../../knowledge/knowledge.service'
+import { WorkflowHttpService } from '../services/http.service'
+import { CodeExecutionService } from '../services/code-execution.service'
+import { WorkflowError, ErrorSeverity } from '../types/error.types'
 
 // 工作流执行引擎：负责解析节点并执行
 export class WorkflowEngine {
   private nodes: Map<string, WorkflowNode>
   private edges: Array<{ source: string; target: string }>
+  private metrics: PerformanceMetrics[] = []
 
   constructor(
     private workflow: WorkflowDefinition,
     private agentService: AgentService,
     private knowledgeService: KnowledgeService,
-    private compensationExecutor: CompensationExecutor
+    private compensationExecutor: CompensationExecutor,
+    private httpService?: WorkflowHttpService,
+    private codeExecutionService?: CodeExecutionService
   ) {
     this.nodes = new Map(workflow.nodes.map((n) => [n.id, n]))
     this.edges = workflow.edges
@@ -25,7 +31,12 @@ export class WorkflowEngine {
       logs: [],
       compensations: [],
       steps: [],
+      metrics: [],
     }
+
+    // 重置性能指标
+    this.metrics = []
+    const workflowStartTime = Date.now()
 
     try {
       // 先检测是否存在静态环，避免执行时死循环
@@ -130,7 +141,47 @@ export class WorkflowEngine {
         return
 
       case 'code':
-        context.logs.push('代码节点暂未执行自定义逻辑')
+        // 执行代码节点
+        if (!this.codeExecutionService) {
+          throw new Error('代码执行服务未初始化')
+        }
+        const codeConfig = {
+          code: node.data?.code || '',
+          timeout: node.data?.timeout || 5000,
+          context: context.variables,
+        }
+        context.variables[node.id] = await this.codeExecutionService.execute(
+          codeConfig,
+          node.id
+        )
+        return
+
+      case 'http':
+        // HTTP 请求节点
+        if (!this.httpService) {
+          throw new Error('HTTP 服务未初始化')
+        }
+        const httpConfig = node.data?.httpConfig || {
+          url: node.data?.url,
+          method: node.data?.method || 'GET',
+          headers: node.data?.headers,
+          body: node.data?.body,
+          timeout: node.data?.timeout || 30000,
+          retries: node.data?.retries || 0,
+          retryDelay: node.data?.retryDelay || 1000,
+        }
+
+        // 替换 URL 和 Body 中的变量
+        const resolvedUrl = this.httpService.replaceVariables(httpConfig.url, context.variables)
+        const resolvedBody = httpConfig.body
+          ? this.httpService.replaceVariablesInBody(httpConfig.body, context.variables)
+          : undefined
+
+        context.variables[node.id] = await this.httpService.execute({
+          ...httpConfig,
+          url: resolvedUrl,
+          body: resolvedBody,
+        })
         return
 
       case 'end':
@@ -156,30 +207,72 @@ export class WorkflowEngine {
       startTime,
     }) - 1
 
+    // 性能指标基础数据
+    let tokensUsed = 0
+    let httpRequests = 0
+    let httpDuration = 0
+    let cacheHit = false
+
     for (let attempt = 0; attempt <= retryCount; attempt += 1) {
       try {
         if (attempt > 0) {
           context.variables = { ...snapshot }
         }
+
+        // 记录节点执行前的变量快照（用于性能分析）
+        const nodeStartTime = Date.now()
+
         if (timeoutMs > 0) {
           await this.withTimeout(this.executeNode(node, context), timeoutMs)
         } else {
           await this.executeNode(node, context)
         }
+
+        // 根据节点类型收集特定指标
+        const nodeOutput = context.variables[node.id]
+        if (node.type === 'http' && nodeOutput) {
+          httpRequests = 1
+          httpDuration = nodeOutput.duration || 0
+        }
+
         this.registerCompensation(node, context)
 
         // Record Success
         const endTime = Date.now()
+        const duration = endTime - startTime
         const step = context.steps[stepIndex]
         step.endTime = endTime
-        step.duration = endTime - startTime
+        step.duration = duration
         step.status = 'success'
-        step.output = context.variables[node.id]
+        step.output = nodeOutput
+
+        // 记录性能指标
+        this.recordMetric({
+          nodeId: node.id,
+          nodeType: node.type,
+          startTime,
+          endTime,
+          duration,
+          tokensUsed,
+          httpRequests,
+          httpDuration,
+          cacheHit,
+        })
 
         return 'ok'
       } catch (error: any) {
         const message = error?.message || '执行失败'
         context.logs.push(`节点 ${node.id} 执行失败（${attempt + 1}/${retryCount + 1}）：${message}`)
+
+        // 检查是否是 WorkflowError，根据严重级别决定是否重试
+        if (error instanceof WorkflowError) {
+          if (!error.shouldRetry() && attempt === 0) {
+            // 不可重试的错误，直接跳出
+            context.logs.push(`错误级别: ${error.severity}，不可重试`)
+            break
+          }
+        }
+
         if (attempt < retryCount && retryDelayMs > 0) {
           await this.sleep(retryDelayMs)
         }
@@ -188,11 +281,25 @@ export class WorkflowEngine {
 
     // Record Failure (initial)
     const endTime = Date.now()
+    const duration = endTime - startTime
     const step = context.steps[stepIndex]
     step.endTime = endTime
-    step.duration = endTime - startTime
+    step.duration = duration
     step.status = 'failed'
     step.output = { error: 'Execution failed after retries' }
+
+    // 记录失败的性能指标
+    this.recordMetric({
+      nodeId: node.id,
+      nodeType: node.type,
+      startTime,
+      endTime,
+      duration,
+      tokensUsed,
+      httpRequests,
+      httpDuration,
+      cacheHit,
+    })
 
     if (node.data?.onError === 'compensate') {
       await this.runCompensations(context)
@@ -271,6 +378,35 @@ export class WorkflowEngine {
 
   private async sleep(ms: number) {
     await new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  /**
+   * 记录性能指标
+   */
+  private recordMetric(metric: PerformanceMetrics) {
+    this.metrics.push(metric)
+  }
+
+  /**
+   * 获取执行性能统计
+   */
+  getPerformanceStats() {
+    const totalDuration = this.metrics.reduce((sum, m) => sum + m.duration, 0)
+    const nodeTypeStats = new Map<string, { count: number; totalDuration: number }>()
+
+    for (const metric of this.metrics) {
+      const stats = nodeTypeStats.get(metric.nodeType) || { count: 0, totalDuration: 0 }
+      stats.count += 1
+      stats.totalDuration += metric.duration
+      nodeTypeStats.set(metric.nodeType, stats)
+    }
+
+    return {
+      totalNodes: this.metrics.length,
+      totalDuration,
+      avgDuration: this.metrics.length > 0 ? totalDuration / this.metrics.length : 0,
+      byType: Object.fromEntries(nodeTypeStats),
+    }
   }
 
   /**

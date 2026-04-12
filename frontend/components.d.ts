@@ -17,11 +17,15 @@ declare module 'vue' {
     ConditionNode: typeof import('./src/components/nodes/ConditionNode.vue')['default']
     DebugPanel: typeof import('./src/components/workflow/DebugPanel.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDrawer: typeof import('element-plus/es')['ElDrawer']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
+    ElForm: typeof import('element-plus/es')['ElForm']
+    ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElInput: typeof import('element-plus/es')['ElInput']
     EndNode: typeof import('./src/components/nodes/EndNode.vue')['default']
     ExecutionDetailDialog: typeof import('./src/components/workflow/ExecutionDetailDialog.vue')['default']
     HttpNode: typeof import('./src/components/nodes/HttpNode.vue')['default']
@@ -46,5 +50,8 @@ declare module 'vue' {
     StudioHeader: typeof import('./src/components/workflow/studio/StudioHeader.vue')['default']
     TriggerNode: typeof import('./src/components/nodes/TriggerNode.vue')['default']
     WorkflowCanvasPanel: typeof import('./src/components/workflow/panels/WorkflowCanvasPanel.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
