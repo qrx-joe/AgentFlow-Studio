@@ -29,6 +29,8 @@ const handleLogin = async () => {
   loading.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
+    const token = `mock-token-${Date.now()}-${loginForm.username}`
+    localStorage.setItem('token', token)
     localStorage.setItem('isLoggedIn', 'true')
     localStorage.setItem('username', loginForm.username)
     ElMessage.success('登录成功')
@@ -45,6 +47,8 @@ const handleSocialLogin = async (type: 'github' | 'wechat') => {
   try {
     await new Promise(resolve => setTimeout(resolve, 800))
     const username = type === 'github' ? 'GitHub用户' : '微信用户'
+    const token = `mock-token-${Date.now()}-${type}`
+    localStorage.setItem('token', token)
     localStorage.setItem('isLoggedIn', 'true')
     localStorage.setItem('username', username)
     ElMessage.success(`${type === 'github' ? 'GitHub' : '微信'}登录成功`)
@@ -58,6 +62,8 @@ const handleSocialLogin = async (type: 'github' | 'wechat') => {
 
 const handleRegister = () => {
   // 模拟注册：直接创建账户并登录
+  const token = `mock-token-${Date.now()}-newuser`
+  localStorage.setItem('token', token)
   localStorage.setItem('isLoggedIn', 'true')
   localStorage.setItem('username', '新用户')
   ElMessage.success('注册成功，已自动登录')

@@ -66,6 +66,13 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, _from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const token = localStorage.getItem('token')
+
+  // 兼容处理：已登录但没有token（修复前登录的用户），自动添加token
+  if (isLoggedIn && !token) {
+    const username = localStorage.getItem('username') || 'user'
+    localStorage.setItem('token', `mock-token-${Date.now()}-${username}`)
+  }
 
   // 需要登录的页面
   if (to.matched.some(record => record.meta.requiresAuth)) {
