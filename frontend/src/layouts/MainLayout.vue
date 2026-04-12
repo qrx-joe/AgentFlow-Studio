@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Files, ChatLineRound, Monitor, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
-import { ElMessageBox } from 'element-plus'
 
 // 主布局：现代化侧边栏与内容区
 const route = useRoute()
@@ -21,19 +21,19 @@ const handleSelect = (path: string) => {
 
 const username = localStorage.getItem('username') || 'User'
 
-const handleLogout = async () => {
-  try {
-    await ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
-      confirmButtonText: '退出',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    localStorage.removeItem('isLoggedIn')
-    localStorage.removeItem('username')
-    router.push('/login')
-  } catch {
-    // 用户取消
-  }
+// 退出确认弹窗
+const logoutDialogVisible = ref(false)
+
+const showLogoutConfirm = () => {
+  logoutDialogVisible.value = true
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('isLoggedIn')
+  localStorage.removeItem('username')
+  localStorage.removeItem('token')
+  logoutDialogVisible.value = false
+  router.push('/login')
 }
 </script>
 
@@ -66,7 +66,7 @@ const handleLogout = async () => {
       </nav>
 
       <div class="navbar-right">
-        <el-dropdown trigger="click" @command="handleLogout">
+        <el-dropdown trigger="click">
           <div class="user-profile">
             <div class="avatar">{{ username.charAt(0).toUpperCase() }}</div>
             <span class="username">{{ username }}</span>
@@ -78,7 +78,7 @@ const handleLogout = async () => {
                 <el-icon><user /></el-icon>
                 <span>{{ username }}</span>
               </el-dropdown-item>
-              <el-dropdown-item divided command="logout">
+              <el-dropdown-item divided @click="showLogoutConfirm">
                 <el-icon><switch-button /></el-icon>
                 <span>退出登录</span>
               </el-dropdown-item>
@@ -98,6 +98,31 @@ const handleLogout = async () => {
         </router-view>
       </div>
     </main>
+
+    <!-- 退出登录确认弹窗 -->
+    <el-dialog
+      v-model="logoutDialogVisible"
+      width="420px"
+      align-center
+      :show-close="false"
+      class="logout-dialog"
+    >
+      <div class="logout-content">
+        <div class="logout-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </div>
+        <h3 class="logout-title">确认退出登录？</h3>
+        <p class="logout-desc">退出后将需要重新登录才能访问您的数据</p>
+      </div>
+      <template #footer>
+        <div class="logout-footer">
+          <el-button size="large" @click="logoutDialogVisible = false">取消</el-button>
+          <el-button size="large" type="primary" @click="handleLogout">确认退出</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -277,5 +302,94 @@ const handleLogout = async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 退出登录弹窗样式 */
+:deep(.logout-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.logout-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.logout-dialog .el-dialog__body) {
+  padding: 40px 40px 24px;
+}
+
+:deep(.logout-dialog .el-dialog__footer) {
+  padding: 0 40px 40px;
+  border: none;
+}
+
+.logout-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.logout-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.logout-icon svg {
+  width: 32px;
+  height: 32px;
+  color: #f59e0b;
+}
+
+.logout-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+
+.logout-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.logout-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.logout-footer .el-button {
+  min-width: 120px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.logout-footer .el-button--default {
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.logout-footer .el-button--default:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.logout-footer .el-button--primary {
+  background: #0f172a;
+  border-color: #0f172a;
+}
+
+.logout-footer .el-button--primary:hover {
+  background: #1f2937;
+  border-color: #1f2937;
 }
 </style>
