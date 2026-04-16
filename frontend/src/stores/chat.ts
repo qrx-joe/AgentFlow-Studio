@@ -75,9 +75,16 @@ export const useChatStore = defineStore('chat', {
         // 使用后端 SSE 流式接口
         const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
         const streamUrl = `${baseUrl}/chat/messages/stream`
+        const token = localStorage.getItem('token')
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
         const response = await fetch(streamUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ sessionId: this.currentSessionId, content }),
           signal: this.abortController.signal,
         })
