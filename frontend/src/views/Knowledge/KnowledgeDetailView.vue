@@ -51,11 +51,13 @@ onMounted(async () => {
   if (id) {
     loading.value = true
     try {
-      await knowledgeStore.fetchKnowledgeBase(id)
-      await knowledgeStore.fetchDocuments(id)
+      const [kbData] = await Promise.all([
+        knowledgeStore.fetchKnowledgeBase(id),
+        knowledgeStore.fetchDocuments(id),
+      ])
       // 从知识库设置初始化检索参数
-      if (kb.value?.settings?.retrieval) {
-        const r = kb.value.settings.retrieval
+      if (kbData?.settings?.retrieval) {
+        const r = kbData.settings.retrieval
         topK.value = r.topK || 5
         scoreThreshold.value = r.scoreThreshold || 0.5
         hybrid.value = r.mode === 'hybrid'
@@ -63,9 +65,9 @@ onMounted(async () => {
         vectorWeight.value = r.vectorWeight || 1
         keywordWeight.value = r.keywordWeight || 0.5
       }
-      if (kb.value?.settings?.chunk) {
-        chunkSize.value = kb.value.settings.chunk.chunkSize || 500
-        overlap.value = kb.value.settings.chunk.overlap || 50
+      if (kbData?.settings?.chunk) {
+        chunkSize.value = kbData.settings.chunk.chunkSize || 500
+        overlap.value = kbData.settings.chunk.overlap || 50
       }
     } finally {
       loading.value = false

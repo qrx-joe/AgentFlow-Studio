@@ -110,7 +110,7 @@ const formatDate = (dateStr?: string) => {
     </div>
 
     <!-- 知识库卡片网格 -->
-    <div class="kb-grid" v-if="filteredKnowledgeBases.length > 0 || true">
+    <div class="kb-grid" v-loading="knowledgeStore.loadingBases">
       <!-- 创建卡片 - 放在最前面 -->
       <div class="kb-card create-card" @click="showCreateDialog = true">
         <div class="create-content">

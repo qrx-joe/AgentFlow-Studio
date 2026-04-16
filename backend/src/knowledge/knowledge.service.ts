@@ -27,14 +27,35 @@ export class KnowledgeService {
 
   async listKnowledgeBases() {
     const kbs = await this.kbRepo.find({ order: { createdAt: 'DESC' } })
-    // 为每个知识库添加统计信息
-    const result = await Promise.all(
-      kbs.map(async (kb) => {
-        const stats = await this.getKnowledgeBaseStats(kb.id)
-        return { ...kb, ...stats }
-      })
+    if (kbs.length === 0) return []
+
+    // 一次性聚合查询所有知识库的统计信息，避免 N+1 和全表加载
+    const kbIds = kbs.map(kb => kb.id)
+    const stats = await this.documentRepo
+      .createQueryBuilder('doc')
+      .select('doc.knowledge_base_id', 'knowledgeBaseId')
+      .addSelect('COUNT(doc.id)', 'documentCount')
+      .addSelect('COALESCE(SUM((doc.metadata->>\'chunkCount\')::int), 0)', 'chunkCount')
+      .addSelect('COALESCE(SUM((doc.metadata->>\'charCount\')::int), 0)', 'totalChars')
+      .where('doc.knowledge_base_id IN (:...ids)', { ids: kbIds })
+      .groupBy('doc.knowledge_base_id')
+      .getRawMany()
+
+    const statsMap = new Map(
+      stats.map(s => [
+        s.knowledgeBaseId,
+        {
+          documentCount: parseInt(s.documentCount, 10) || 0,
+          chunkCount: parseInt(s.chunkCount, 10) || 0,
+          totalChars: parseInt(s.totalChars, 10) || 0,
+        },
+      ])
     )
-    return result
+
+    return kbs.map(kb => ({
+      ...kb,
+      ...(statsMap.get(kb.id) || { documentCount: 0, chunkCount: 0, totalChars: 0 }),
+    }))
   }
 
   async createKnowledgeBase(data: {
