@@ -84,7 +84,7 @@ const renderMarkdown = (text: string) => {
   html = html.replace(/^## (.+)$/gm, '<h3 class="md-h3">$1</h3>')
   html = html.replace(/^# (.+)$/gm, '<h2 class="md-h2">$1</h2>')
   // 无序列表
-  html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>')
   html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul class="md-list">$1</ul>')
   // 有序列表
   html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
@@ -155,22 +155,41 @@ const handleQuickPrompt = (text: string) => {
 <template>
   <section class="chat-main">
     <!-- 1. 消息列表区 -->
-    <div ref="messagesContainer" class="messages-scroll-area">
+    <div
+      ref="messagesContainer"
+      class="messages-scroll-area"
+    >
       <!-- 空状态 -->
-      <div v-if="props.messages.length === 0" class="welcome-container">
+      <div
+        v-if="props.messages.length === 0"
+        class="welcome-container"
+      >
         <div class="welcome-content">
           <div class="welcome-logo">
             <div class="logo-icon-large">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
-                <path d="M9 12h.01"></path>
-                <path d="M15 12h.01"></path>
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+                <path d="M9 12h.01" />
+                <path d="M15 12h.01" />
               </svg>
             </div>
             <!-- <div class="logo-ring"></div> -->
           </div>
-          <h2 class="welcome-title">有什么可以帮你的吗？</h2>
-          <p class="welcome-desc">AgentFlow AI 助手，基于你的知识库进行智能对话</p>
+          <h2 class="welcome-title">
+            有什么可以帮你的吗？
+          </h2>
+          <p class="welcome-desc">
+            AgentFlow AI 助手，基于你的知识库进行智能对话
+          </p>
           <div class="quick-prompts">
             <button
               v-for="(prompt, index) in quickPrompts"
@@ -179,14 +198,56 @@ const handleQuickPrompt = (text: string) => {
               @click="handleQuickPrompt(prompt.text)"
             >
               <div class="qp-icon">
-                <svg v-if="index === 0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path><path d="M9 21h6"></path></svg>
-                <svg v-else-if="index === 1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg
+                  v-if="index === 0"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                ><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 21h6" /></svg>
+                <svg
+                  v-else-if="index === 1"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                ><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                <svg
+                  v-else
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                ><circle
+                  cx="11"
+                  cy="11"
+                  r="8"
+                /><line
+                  x1="21"
+                  y1="21"
+                  x2="16.65"
+                  y2="16.65"
+                /></svg>
               </div>
-              <div class="qp-text">{{ prompt.text }}</div>
+              <div class="qp-text">
+                {{ prompt.text }}
+              </div>
               <div class="qp-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </div>
             </button>
@@ -195,22 +256,48 @@ const handleQuickPrompt = (text: string) => {
       </div>
 
       <!-- 消息流 -->
-      <div v-else class="chat-flow">
+      <div
+        v-else
+        class="chat-flow"
+      >
         <div
           v-for="msg in props.messages"
-          :key="msg.id"
           :id="`msg-${msg.id}`"
+          :key="msg.id"
           class="message-row"
           :class="[msg.role]"
         >
           <!-- 头像 -->
-          <div class="avatar" :class="msg.role">
-            <svg v-if="msg.role === 'user'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
+          <div
+            class="avatar"
+            :class="msg.role"
+          >
+            <svg
+              v-if="msg.role === 'user'"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle
+                cx="12"
+                cy="7"
+                r="4"
+              />
             </svg>
-            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-               <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+            <svg
+              v-else
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
             </svg>
           </div>
 
@@ -221,16 +308,24 @@ const handleQuickPrompt = (text: string) => {
               <span class="msg-time">{{ formatTime(msg.createdAt) }}</span>
             </div>
 
-            <div class="message-bubble" :class="msg.role">
+            <div
+              class="message-bubble"
+              :class="msg.role"
+            >
               <!-- AI 消息（无气泡背景） -->
               <div
                 v-if="msg.role === 'assistant'"
                 class="markdown-body"
-                v-html="renderContent(msg)"
                 @click="handleContentClick(msg, $event)"
+                v-html="renderContent(msg)"
               />
               <!-- 用户消息（有气泡背景） -->
-              <div v-else class="user-text">{{ msg.content }}</div>
+              <div
+                v-else
+                class="user-text"
+              >
+                {{ msg.content }}
+              </div>
 
               <!-- 打字光标 -->
               <span
@@ -240,8 +335,13 @@ const handleQuickPrompt = (text: string) => {
             </div>
 
             <!-- 来源 (仅 AI) -->
-            <div v-if="msg.role === 'assistant' && msg.sources?.length" class="sources-area">
-              <div class="sources-title">引用来源</div>
+            <div
+              v-if="msg.role === 'assistant' && msg.sources?.length"
+              class="sources-area"
+            >
+              <div class="sources-title">
+                引用来源
+              </div>
               <div class="source-list">
                 <div
                   v-for="(src, index) in msg.sources"
@@ -256,17 +356,47 @@ const handleQuickPrompt = (text: string) => {
             </div>
             
             <!-- 底部操作栏 (仅 AI) -->
-            <div v-if="msg.role === 'assistant' && !props.streaming" class="message-actions">
-              <button class="action-btn" title="复制">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            <div
+              v-if="msg.role === 'assistant' && !props.streaming"
+              class="message-actions"
+            >
+              <button
+                class="action-btn"
+                title="复制"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect
+                    x="9"
+                    y="9"
+                    width="13"
+                    height="13"
+                    rx="2"
+                    ry="2"
+                  />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>
               </button>
-              <button class="action-btn" title="重新生成">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              <button
+                class="action-btn"
+                title="重新生成"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
                 </svg>
               </button>
             </div>
@@ -274,15 +404,26 @@ const handleQuickPrompt = (text: string) => {
         </div>
 
         <!-- 流式加载中指示 -->
-        <div v-if="props.streaming" class="streaming-status">
-           <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-             <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-           </svg>
-           AI 思考中...
+        <div
+          v-if="props.streaming"
+          class="streaming-status"
+        >
+          <svg
+            class="animate-spin"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          AI 思考中...
         </div>
         
         <!-- 底部垫高，防止被输入框遮挡 -->
-        <div style="height: 120px;"></div>
+        <div style="height: 120px;" />
       </div>
     </div>
 
@@ -299,9 +440,19 @@ const handleQuickPrompt = (text: string) => {
         />
         <div class="input-actions-row">
           <div class="start-actions">
-            <button class="tool-btn" title="上传附件">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            <button
+              class="tool-btn"
+              title="上传附件"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
             </button>
           </div>
@@ -311,26 +462,51 @@ const handleQuickPrompt = (text: string) => {
               class="send-btn stop"
               @click="emit('stop')"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="6" width="12" height="12" rx="2" />
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <rect
+                  x="6"
+                  y="6"
+                  width="12"
+                  height="12"
+                  rx="2"
+                />
               </svg>
             </button>
-             <button
+            <button
               v-else
               class="send-btn"
               :class="{ active: props.input?.trim() }"
               :disabled="!props.input?.trim() || props.loading"
               @click="emit('send')"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="22" y1="2" x2="11" y2="13" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line
+                  x1="22"
+                  y1="2"
+                  x2="11"
+                  y2="13"
+                />
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
           </div>
         </div>
       </div>
-      <div class="footer-hint">AgentFlow AI 提供技术支持</div>
+      <div class="footer-hint">
+        AgentFlow AI 提供技术支持
+      </div>
     </div>
   </section>
 </template>

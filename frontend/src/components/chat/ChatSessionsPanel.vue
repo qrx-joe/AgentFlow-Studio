@@ -37,16 +37,49 @@ const handleDelete = (e: Event, id: string) => {
 </script>
 
 <template>
-  <aside class="sessions-sidebar" :class="{ collapsed }">
+  <aside
+    class="sessions-sidebar"
+    :class="{ collapsed }"
+  >
     <!-- 收起状态 -->
-    <div v-if="collapsed" class="collapsed-content">
-      <button class="btn-expand" @click="emit('toggle-collapse')" title="展开侧边栏">
-        <el-icon :size="20"><Expand /></el-icon>
+    <div
+      v-if="collapsed"
+      class="collapsed-content"
+    >
+      <button
+        class="btn-expand"
+        title="展开侧边栏"
+        @click="emit('toggle-collapse')"
+      >
+        <el-icon :size="20">
+          <Expand />
+        </el-icon>
       </button>
-      <button class="btn-new-chat-mini" @click="emit('create')" title="新对话">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
+      <button
+        class="btn-new-chat-mini"
+        title="新对话"
+        @click="emit('create')"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line
+            x1="12"
+            y1="5"
+            x2="12"
+            y2="19"
+          />
+          <line
+            x1="5"
+            y1="12"
+            x2="19"
+            y2="12"
+          />
         </svg>
       </button>
       <div class="collapsed-sessions">
@@ -55,10 +88,17 @@ const handleDelete = (e: Event, id: string) => {
           :key="session.id"
           class="session-dot"
           :class="{ active: session.id === props.currentSessionId }"
-          @click="emit('select', session.id)"
           :title="session.title || '新对话'"
+          @click="emit('select', session.id)"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         </div>
@@ -69,16 +109,44 @@ const handleDelete = (e: Event, id: string) => {
     <template v-else>
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <div class="logo-icon">💬</div>
+          <div class="logo-icon">
+            💬
+          </div>
           <span class="logo-text">对话历史</span>
-          <button class="btn-collapse" @click="emit('toggle-collapse')" title="收起侧边栏">
-            <el-icon :size="16"><Fold /></el-icon>
+          <button
+            class="btn-collapse"
+            title="收起侧边栏"
+            @click="emit('toggle-collapse')"
+          >
+            <el-icon :size="16">
+              <Fold />
+            </el-icon>
           </button>
         </div>
-        <button class="btn-new-chat" @click="emit('create')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+        <button
+          class="btn-new-chat"
+          @click="emit('create')"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line
+              x1="12"
+              y1="5"
+              x2="12"
+              y2="19"
+            />
+            <line
+              x1="5"
+              y1="12"
+              x2="19"
+              y2="12"
+            />
           </svg>
           新对话
         </button>
@@ -93,16 +161,38 @@ const handleDelete = (e: Event, id: string) => {
           @click="emit('select', session.id)"
         >
           <div class="session-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
           <div class="session-info">
-            <div class="session-title">{{ session.title || '新对话' }}</div>
-            <div class="session-time">{{ formatTime(session.updatedAt || session.createdAt || '') }}</div>
+            <div class="session-title">
+              {{ session.title || '新对话' }}
+            </div>
+            <div class="session-time">
+              {{ formatTime(session.updatedAt || session.createdAt || '') }}
+            </div>
           </div>
-          <button class="btn-delete" @click="handleDelete($event, session.id)" title="删除">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button
+            class="btn-delete"
+            title="删除"
+            @click="handleDelete($event, session.id)"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>
@@ -110,10 +200,19 @@ const handleDelete = (e: Event, id: string) => {
         </div>
       </div>
 
-      <div v-if="sessions.length === 0" class="empty-sessions">
-        <div class="empty-icon">🗨️</div>
-        <div class="empty-text">还没有对话</div>
-        <div class="empty-hint">点击「新对话」开始</div>
+      <div
+        v-if="sessions.length === 0"
+        class="empty-sessions"
+      >
+        <div class="empty-icon">
+          🗨️
+        </div>
+        <div class="empty-text">
+          还没有对话
+        </div>
+        <div class="empty-hint">
+          点击「新对话」开始
+        </div>
       </div>
     </template>
   </aside>

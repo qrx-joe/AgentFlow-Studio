@@ -208,10 +208,10 @@ export class WorkflowEngine {
     }) - 1
 
     // 性能指标基础数据
-    let tokensUsed = 0
+    const tokensUsed = 0
     let httpRequests = 0
     let httpDuration = 0
-    let cacheHit = false
+    const cacheHit = false
 
     for (let attempt = 0; attempt <= retryCount; attempt += 1) {
       try {

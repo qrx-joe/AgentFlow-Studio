@@ -70,7 +70,10 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="page" v-loading="loading">
+  <div
+    v-loading="loading"
+    class="page"
+  >
     <MonitoringToolbar
       v-model:days="days"
       v-model:failure-threshold="failureThreshold"
@@ -79,38 +82,71 @@ onMounted(load)
       @export="exportCsv"
     />
 
-    <div v-if="summary?.alerts?.length" class="alert">
-      <div v-for="(item, index) in summary.alerts" :key="index" class="alert-item">
+    <div
+      v-if="summary?.alerts?.length"
+      class="alert"
+    >
+      <div
+        v-for="(item, index) in summary.alerts"
+        :key="index"
+        class="alert-item"
+      >
         {{ item.message }}
       </div>
     </div>
     <div class="card">
-      <div class="title">工作流执行</div>
-      <div class="metric">总次数：{{ summary?.workflow?.total ?? 0 }}</div>
-      <div class="metric">失败次数：{{ summary?.workflow?.failed ?? 0 }}</div>
-      <div class="metric">平均耗时：{{ summary?.workflow?.avgDurationMs ?? 0 }}ms</div>
+      <div class="title">
+        工作流执行
+      </div>
+      <div class="metric">
+        总次数：{{ summary?.workflow?.total ?? 0 }}
+      </div>
+      <div class="metric">
+        失败次数：{{ summary?.workflow?.failed ?? 0 }}
+      </div>
+      <div class="metric">
+        平均耗时：{{ summary?.workflow?.avgDurationMs ?? 0 }}ms
+      </div>
     </div>
 
     <div class="card">
-      <div class="title">知识检索</div>
-      <div class="metric">总次数：{{ summary?.knowledge?.total ?? 0 }}</div>
-      <div class="metric">平均耗时：{{ summary?.knowledge?.avgDurationMs ?? 0 }}ms</div>
+      <div class="title">
+        知识检索
+      </div>
+      <div class="metric">
+        总次数：{{ summary?.knowledge?.total ?? 0 }}
+      </div>
+      <div class="metric">
+        平均耗时：{{ summary?.knowledge?.avgDurationMs ?? 0 }}ms
+      </div>
     </div>
 
     <div class="card">
-      <div class="title">RAG 缓存</div>
-      <div class="metric">命中：{{ summary?.ragCache?.hits ?? 0 }}</div>
-      <div class="metric">未命中：{{ summary?.ragCache?.misses ?? 0 }}</div>
-      <div class="metric">命中率：{{ ((summary?.ragCache?.hitRate ?? 0) * 100).toFixed(2) }}%</div>
+      <div class="title">
+        RAG 缓存
+      </div>
+      <div class="metric">
+        命中：{{ summary?.ragCache?.hits ?? 0 }}
+      </div>
+      <div class="metric">
+        未命中：{{ summary?.ragCache?.misses ?? 0 }}
+      </div>
+      <div class="metric">
+        命中率：{{ ((summary?.ragCache?.hitRate ?? 0) * 100).toFixed(2) }}%
+      </div>
     </div>
 
     <div class="card full">
-      <div class="title">每日统计</div>
+      <div class="title">
+        每日统计
+      </div>
       <MonitoringDailyTable :daily="summary?.daily || []" />
     </div>
 
     <div class="card full">
-      <div class="title">趋势图</div>
+      <div class="title">
+        趋势图
+      </div>
       <MonitoringTrends
         :labels="dailyLabels"
         :workflow-values="dailyWorkflowTotal"

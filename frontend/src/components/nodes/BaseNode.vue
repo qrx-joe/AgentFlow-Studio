@@ -31,45 +31,73 @@ const iconStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="base-node" :class="{ selected: selected, running: status === 'running', failed: status === 'failed', success: status === 'success' }">
+  <div
+    class="base-node"
+    :class="{ selected: selected, running: status === 'running', failed: status === 'failed', success: status === 'success' }"
+  >
     <!-- Header -->
-    <div class="node-header" :style="headerStyle">
-      <div class="icon-box" :style="iconStyle">
-        <component :is="icon" v-if="icon" />
+    <div
+      class="node-header"
+      :style="headerStyle"
+    >
+      <div
+        class="icon-box"
+        :style="iconStyle"
+      >
+        <component
+          :is="icon"
+          v-if="icon"
+        />
       </div>
-      <div class="node-title">{{ label }}
-           <span v-if="status === 'running'" class="status-badge running"><el-icon class="is-loading"><Loading /></el-icon></span>
+      <div class="node-title">
+        {{ label }}
+        <span
+          v-if="status === 'running'"
+          class="status-badge running"
+        ><el-icon class="is-loading"><Loading /></el-icon></span>
       </div>
       <div class="node-actions">
         <!-- Optional status icon -->
-        <el-icon v-if="status === 'success'" color="#10b981"><Check /></el-icon>
-        <el-icon v-if="status === 'failed'" color="#ef4444"><Close /></el-icon>
-        <el-icon class="more-btn"><MoreFilled /></el-icon>
+        <el-icon
+          v-if="status === 'success'"
+          color="#10b981"
+        >
+          <Check />
+        </el-icon>
+        <el-icon
+          v-if="status === 'failed'"
+          color="#ef4444"
+        >
+          <Close />
+        </el-icon>
+        <el-icon class="more-btn">
+          <MoreFilled />
+        </el-icon>
       </div>
     </div>
 
     <!-- Body -->
     <div class="node-body">
-      <slot></slot>
+      <slot />
     </div>
 
     <!-- Connection Handles (Dynamic) -->
     <!-- Inputs (Left) -->
     <div class="inputs">
-        <Handle 
-            type="target" 
-            :position="Position.Left" 
-            class="handle-input"
-        />
+      <Handle 
+        type="target" 
+        :position="Position.Left" 
+        class="handle-input"
+      />
     </div>
 
     <!-- Outputs (Right) -->
     <div class="outputs">
-        <Handle 
-            type="source" 
-            :position="Position.Right" 
-            class="handle-output"
-        />
+      <Handle 
+        type="source" 
+        :position="Position.Right" 
+        class="handle-output"
+      />
     </div>
   </div>
 </template>

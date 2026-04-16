@@ -103,22 +103,43 @@ const currentColor = computed(() => props.workflowColor || '#475569')
 <template>
   <header class="studio-header">
     <div class="left-section">
-      <el-tooltip content="返回首页" placement="bottom">
-        <div class="back-btn" @click="handleBack">
+      <el-tooltip
+        content="返回首页"
+        placement="bottom"
+      >
+        <div
+          class="back-btn"
+          @click="handleBack"
+        >
           <el-icon><ArrowLeft /></el-icon>
         </div>
       </el-tooltip>
-      <div class="divider"></div>
-      <div class="workflow-info" @click="handleShowEdit">
+      <div class="divider" />
+      <div
+        class="workflow-info"
+        @click="handleShowEdit"
+      >
         <div class="workflow-name-row">
-          <div class="workflow-icon" :style="{ background: currentColor + '15', color: currentColor }">
+          <div
+            class="workflow-icon"
+            :style="{ background: currentColor + '15', color: currentColor }"
+          >
             {{ (workflowName || '未').slice(0, 1) }}
           </div>
-          <div class="workflow-name">{{ workflowName || '未命名应用' }}</div>
-          <el-icon class="edit-icon"><Edit /></el-icon>
+          <div class="workflow-name">
+            {{ workflowName || '未命名应用' }}
+          </div>
+          <el-icon class="edit-icon">
+            <Edit />
+          </el-icon>
         </div>
         <div class="save-status">
-          <el-icon v-if="saving" class="is-loading"><Loading /></el-icon>
+          <el-icon
+            v-if="saving"
+            class="is-loading"
+          >
+            <Loading />
+          </el-icon>
           {{ saveStatusText }}
         </div>
       </div>
@@ -130,7 +151,10 @@ const currentColor = computed(() => props.workflowColor || '#475569')
 
     <div class="right-section">
       <!-- 保存按钮 -->
-      <el-tooltip content="保存工作流 (Ctrl+S)" placement="bottom">
+      <el-tooltip
+        content="保存工作流 (Ctrl+S)"
+        placement="bottom"
+      >
         <el-button
           :icon="Document"
           :loading="saving"
@@ -141,7 +165,10 @@ const currentColor = computed(() => props.workflowColor || '#475569')
       </el-tooltip>
 
       <!-- 版本管理 -->
-      <el-tooltip content="版本管理" placement="bottom">
+      <el-tooltip
+        content="版本管理"
+        placement="bottom"
+      >
         <el-button
           :icon="Clock"
           circle
@@ -151,8 +178,15 @@ const currentColor = computed(() => props.workflowColor || '#475569')
       </el-tooltip>
 
       <!-- 设置 -->
-      <el-dropdown trigger="click" @command="handleShowSettings">
-        <el-button :icon="More" circle class="icon-btn" />
+      <el-dropdown
+        trigger="click"
+        @command="handleShowSettings"
+      >
+        <el-button
+          :icon="More"
+          circle
+          class="icon-btn"
+        />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="settings">
@@ -167,7 +201,11 @@ const currentColor = computed(() => props.workflowColor || '#475569')
               <el-icon><Upload /></el-icon>
               <span>导入配置</span>
             </el-dropdown-item>
-            <el-dropdown-item divided command="delete" style="color: #f56c6c">
+            <el-dropdown-item
+              divided
+              command="delete"
+              style="color: #f56c6c"
+            >
               <el-icon><Delete /></el-icon>
               <span>删除工作流</span>
             </el-dropdown-item>
@@ -175,18 +213,28 @@ const currentColor = computed(() => props.workflowColor || '#475569')
         </template>
       </el-dropdown>
 
-      <div class="divider"></div>
+      <div class="divider" />
 
       <!-- 调试按钮 -->
-      <el-tooltip content="调试运行" placement="bottom">
-        <el-button class="action-btn" @click="$emit('run')">
+      <el-tooltip
+        content="调试运行"
+        placement="bottom"
+      >
+        <el-button
+          class="action-btn"
+          @click="$emit('run')"
+        >
           <el-icon><VideoPlay /></el-icon>
           <span class="btn-text">调试</span>
         </el-button>
       </el-tooltip>
 
       <!-- 发布按钮 -->
-      <el-button type="primary" class="publish-btn" @click="$emit('publish')">
+      <el-button
+        type="primary"
+        class="publish-btn"
+        @click="$emit('publish')"
+      >
         发布
       </el-button>
     </div>
@@ -198,8 +246,14 @@ const currentColor = computed(() => props.workflowColor || '#475569')
       width="480px"
       :close-on-click-modal="false"
     >
-      <el-form :model="editForm" label-position="top">
-        <el-form-item label="应用名称" required>
+      <el-form
+        :model="editForm"
+        label-position="top"
+      >
+        <el-form-item
+          label="应用名称"
+          required
+        >
           <el-input
             v-model="editForm.name"
             placeholder="输入应用名称"
@@ -231,8 +285,15 @@ const currentColor = computed(() => props.workflowColor || '#475569')
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
+        <el-button @click="editDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleSaveEdit"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </header>

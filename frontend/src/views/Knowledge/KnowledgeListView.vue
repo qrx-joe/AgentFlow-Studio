@@ -92,8 +92,12 @@ const formatDate = (dateStr?: string) => {
     <!-- 头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1 class="page-title">知识库</h1>
-        <p class="page-desc">管理和组织您的知识文档，为 AI 应用提供上下文</p>
+        <h1 class="page-title">
+          知识库
+        </h1>
+        <p class="page-desc">
+          管理和组织您的知识文档，为 AI 应用提供上下文
+        </p>
       </div>
       <div class="header-right">
         <el-input
@@ -103,18 +107,30 @@ const formatDate = (dateStr?: string) => {
           clearable
           class="search-input"
         />
-        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">
+        <el-button
+          type="primary"
+          :icon="Plus"
+          @click="showCreateDialog = true"
+        >
           创建知识库
         </el-button>
       </div>
     </div>
 
     <!-- 知识库卡片网格 -->
-    <div class="kb-grid" v-loading="knowledgeStore.loadingBases">
+    <div
+      v-loading="knowledgeStore.loadingBases"
+      class="kb-grid"
+    >
       <!-- 创建卡片 - 放在最前面 -->
-      <div class="kb-card create-card" @click="showCreateDialog = true">
+      <div
+        class="kb-card create-card"
+        @click="showCreateDialog = true"
+      >
         <div class="create-content">
-          <el-icon class="create-icon"><Plus /></el-icon>
+          <el-icon class="create-icon">
+            <Plus />
+          </el-icon>
           <span class="create-text">创建知识库</span>
           <span class="create-hint">添加新的知识文档集合</span>
         </div>
@@ -127,15 +143,28 @@ const formatDate = (dateStr?: string) => {
         @click="handleOpen(kb.id)"
       >
         <div class="card-header">
-          <div class="kb-icon" :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }">
+          <div
+            class="kb-icon"
+            :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }"
+          >
             <span>{{ kb.name.slice(0, 1) }}</span>
           </div>
-          <el-dropdown trigger="click" @click.stop>
-            <el-icon class="more-btn"><MoreFilled /></el-icon>
+          <el-dropdown
+            trigger="click"
+            @click.stop
+          >
+            <el-icon class="more-btn">
+              <MoreFilled />
+            </el-icon>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleOpen(kb.id)">打开</el-dropdown-item>
-                <el-dropdown-item divided @click="handleDelete(kb, $event)">
+                <el-dropdown-item @click="handleOpen(kb.id)">
+                  打开
+                </el-dropdown-item>
+                <el-dropdown-item
+                  divided
+                  @click="handleDelete(kb, $event)"
+                >
                   <span style="color: #ef4444;">删除</span>
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -144,8 +173,12 @@ const formatDate = (dateStr?: string) => {
         </div>
 
         <div class="card-body">
-          <h3 class="kb-name">{{ kb.name }}</h3>
-          <p class="kb-desc">{{ kb.description || '暂无描述' }}</p>
+          <h3 class="kb-name">
+            {{ kb.name }}
+          </h3>
+          <p class="kb-desc">
+            {{ kb.description || '暂无描述' }}
+          </p>
         </div>
 
         <div class="card-footer">
@@ -170,9 +203,16 @@ const formatDate = (dateStr?: string) => {
     </div>
 
     <!-- 创建对话框 -->
-    <el-dialog v-model="showCreateDialog" title="创建知识库" width="500px">
+    <el-dialog
+      v-model="showCreateDialog"
+      title="创建知识库"
+      width="500px"
+    >
       <el-form label-position="top">
-        <el-form-item label="名称" required>
+        <el-form-item
+          label="名称"
+          required
+        >
           <el-input
             v-model="newKbName"
             placeholder="给知识库起个名字"
@@ -204,8 +244,15 @@ const formatDate = (dateStr?: string) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">创建</el-button>
+        <el-button @click="showCreateDialog = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleCreate"
+        >
+          创建
+        </el-button>
       </template>
     </el-dialog>
   </div>

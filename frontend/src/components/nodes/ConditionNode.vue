@@ -16,7 +16,7 @@ defineProps<{
     :selected="selected"
     :status="data.status"
   >
-     <div class="node-content">
+    <div class="node-content">
       <div class="param-row">
         <span class="label">If:</span>
         <span class="value code">{{ data.expression || 'x > 0' }}</span>

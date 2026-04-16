@@ -34,13 +34,18 @@ const methodColor = computed(() => {
 </script>
 
 <template>
-  <div class="http-node" :style="{ borderColor: statusColor }">
+  <div
+    class="http-node"
+    :style="{ borderColor: statusColor }"
+  >
     <div class="node-header">
       <div class="icon-wrapper">
         <el-icon><Connection /></el-icon>
       </div>
       <div class="node-info">
-        <div class="node-label">{{ data.label || 'HTTP 请求' }}</div>
+        <div class="node-label">
+          {{ data.label || 'HTTP 请求' }}
+        </div>
         <div class="node-meta">
           <el-tag
             :color="methodColor"
@@ -53,11 +58,16 @@ const methodColor = computed(() => {
         </div>
       </div>
     </div>
-    <div v-if="data.url" class="node-body">
-      <div class="url-display">{{ data.url }}</div>
+    <div
+      v-if="data.url"
+      class="node-body"
+    >
+      <div class="url-display">
+        {{ data.url }}
+      </div>
     </div>
     <div class="node-handles">
-      <div class="handle handle-source"></div>
+      <div class="handle handle-source" />
     </div>
   </div>
 </template>

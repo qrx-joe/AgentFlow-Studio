@@ -204,7 +204,9 @@ const handleClose = () => {
       <!-- 输入区 -->
       <section class="debug-section">
         <div class="section-header">
-          <h3 class="section-title">测试输入</h3>
+          <h3 class="section-title">
+            测试输入
+          </h3>
           <el-button
             type="primary"
             :icon="VideoPlay"
@@ -275,14 +277,25 @@ const handleClose = () => {
               <div class="log-entry">
                 <div class="log-header">
                   <span class="log-node">{{ log.nodeName }}</span>
-                  <span v-if="log.duration" class="log-duration">
+                  <span
+                    v-if="log.duration"
+                    class="log-duration"
+                  >
                     {{ log.duration }}ms
                   </span>
                 </div>
-                <div class="log-message">{{ log.message }}</div>
-                <div v-if="log.data" class="log-data">
+                <div class="log-message">
+                  {{ log.message }}
+                </div>
+                <div
+                  v-if="log.data"
+                  class="log-data"
+                >
                   <el-collapse>
-                    <el-collapse-item title="查看详细数据" name="1">
+                    <el-collapse-item
+                      title="查看详细数据"
+                      name="1"
+                    >
                       <pre class="data-preview">{{ JSON.stringify(log.data, null, 2) }}</pre>
                     </el-collapse-item>
                   </el-collapse>
@@ -294,9 +307,14 @@ const handleClose = () => {
       </section>
 
       <!-- 输出结果 -->
-      <section v-if="executionResult" class="debug-section">
+      <section
+        v-if="executionResult"
+        class="debug-section"
+      >
         <div class="section-header">
-          <h3 class="section-title">执行结果</h3>
+          <h3 class="section-title">
+            执行结果
+          </h3>
           <el-tag
             :type="executionResult.status === 'success' ? 'success' : 'danger'"
             size="large"
@@ -326,7 +344,9 @@ const handleClose = () => {
             </template>
           </el-alert>
           <div class="output-data">
-            <div class="output-label">输出数据:</div>
+            <div class="output-label">
+              输出数据:
+            </div>
             <pre class="data-preview">{{ JSON.stringify(executionResult.output, null, 2) }}</pre>
           </div>
         </div>

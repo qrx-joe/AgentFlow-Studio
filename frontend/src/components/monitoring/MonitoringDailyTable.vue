@@ -12,7 +12,10 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="table" v-if="props.daily.length">
+  <div
+    v-if="props.daily.length"
+    class="table"
+  >
     <div class="row header">
       <span>日期</span>
       <span>工作流</span>
@@ -20,7 +23,11 @@ const props = defineProps<{
       <span>检索</span>
       <span>缓存命中率</span>
     </div>
-    <div v-for="item in props.daily" :key="item.date" class="row">
+    <div
+      v-for="item in props.daily"
+      :key="item.date"
+      class="row"
+    >
       <span>{{ item.date }}</span>
       <span>{{ item.workflowTotal }}</span>
       <span>{{ item.workflowFailed }}</span>
@@ -35,7 +42,12 @@ const props = defineProps<{
       </span>
     </div>
   </div>
-  <div v-else class="muted">暂无数据</div>
+  <div
+    v-else
+    class="muted"
+  >
+    暂无数据
+  </div>
 </template>
 
 <style scoped>

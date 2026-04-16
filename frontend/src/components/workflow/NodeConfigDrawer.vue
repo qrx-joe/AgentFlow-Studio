@@ -118,26 +118,49 @@ const handleSave = () => {
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="节点配置" size="360px">
+  <el-drawer
+    v-model="visible"
+    title="节点配置"
+    size="360px"
+  >
     <el-form label-width="80px">
       <el-form-item label="名称">
-        <el-input v-model="form.label" placeholder="节点名称" />
+        <el-input
+          v-model="form.label"
+          placeholder="节点名称"
+        />
       </el-form-item>
 
       <template v-if="node?.type === 'llm'">
         <el-form-item label="模型">
-          <el-input v-model="form.model" placeholder="模型名称" />
+          <el-input
+            v-model="form.model"
+            placeholder="模型名称"
+          />
         </el-form-item>
         <el-form-item label="Prompt">
-          <el-input v-model="form.prompt" type="textarea" :rows="4" />
+          <el-input
+            v-model="form.prompt"
+            type="textarea"
+            :rows="4"
+          />
         </el-form-item>
       </template>
       <template v-if="node?.type === 'knowledge'">
         <el-form-item label="TopK">
-          <el-input-number v-model="form.topK" :min="1" :max="10" />
+          <el-input-number
+            v-model="form.topK"
+            :min="1"
+            :max="10"
+          />
         </el-form-item>
         <el-form-item label="阈值">
-          <el-input-number v-model="form.scoreThreshold" :min="0" :max="1" :step="0.05" />
+          <el-input-number
+            v-model="form.scoreThreshold"
+            :min="0"
+            :max="1"
+            :step="0.05"
+          />
         </el-form-item>
         <el-form-item label="混合检索">
           <el-switch v-model="form.hybrid" />
@@ -146,18 +169,34 @@ const handleSave = () => {
           <el-switch v-model="form.rerank" />
         </el-form-item>
         <el-form-item label="分块大小">
-          <el-input-number v-model="form.chunkSize" :min="100" :max="2000" :step="50" />
+          <el-input-number
+            v-model="form.chunkSize"
+            :min="100"
+            :max="2000"
+            :step="50"
+          />
         </el-form-item>
         <el-form-item label="重叠">
-          <el-input-number v-model="form.overlap" :min="0" :max="500" :step="10" />
+          <el-input-number
+            v-model="form.overlap"
+            :min="0"
+            :max="500"
+            :step="10"
+          />
         </el-form-item>
       </template>
       <template v-if="node?.type === 'condition'">
         <el-form-item label="变量Key">
-          <el-input v-model="form.variableKey" placeholder="如：node-1" />
+          <el-input
+            v-model="form.variableKey"
+            placeholder="如：node-1"
+          />
         </el-form-item>
         <el-form-item label="期望值">
-          <el-input v-model="form.expectedValue" placeholder="为空表示仅判断真值" />
+          <el-input
+            v-model="form.expectedValue"
+            placeholder="为空表示仅判断真值"
+          />
         </el-form-item>
         <el-form-item label="提示">
           <div class="hint">
@@ -165,19 +204,44 @@ const handleSave = () => {
           </div>
         </el-form-item>
         <el-form-item label="True目标">
-          <el-select v-model="form.trueTarget" placeholder="选择 True 分支目标" clearable filterable>
-            <el-option v-for="option in props.nodeOptions || []" :key="option.value" :label="option.label" :value="option.value" />
+          <el-select
+            v-model="form.trueTarget"
+            placeholder="选择 True 分支目标"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="option in props.nodeOptions || []"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="False目标">
-          <el-select v-model="form.falseTarget" placeholder="选择 False 分支目标" clearable filterable>
-            <el-option v-for="option in props.nodeOptions || []" :key="option.value" :label="option.label" :value="option.value" />
+          <el-select
+            v-model="form.falseTarget"
+            placeholder="选择 False 分支目标"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="option in props.nodeOptions || []"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
           </el-select>
         </el-form-item>
       </template><NodePolicyFields :form="form" />
     </el-form>
     <div class="actions">
-      <el-button type="primary" @click="handleSave">保存配置</el-button>
+      <el-button
+        type="primary"
+        @click="handleSave"
+      >
+        保存配置
+      </el-button>
     </div>
   </el-drawer>
 </template>

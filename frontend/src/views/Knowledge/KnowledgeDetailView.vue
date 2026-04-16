@@ -196,45 +196,100 @@ const formatNumber = (num: number) => {
 </script>
 
 <template>
-  <div class="knowledge-detail-page" v-loading="loading">
+  <div
+    v-loading="loading"
+    class="knowledge-detail-page"
+  >
     <!-- 顶部导航 -->
     <div class="page-header">
       <div class="header-left">
-        <el-button :icon="ArrowLeft" text @click="handleBack">返回</el-button>
-        <div class="kb-title" v-if="kb">
-          <div class="kb-icon" :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }">
+        <el-button
+          :icon="ArrowLeft"
+          text
+          @click="handleBack"
+        >
+          返回
+        </el-button>
+        <div
+          v-if="kb"
+          class="kb-title"
+        >
+          <div
+            class="kb-icon"
+            :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }"
+          >
             {{ kb.name.slice(0, 1) }}
           </div>
           <div class="kb-info">
-            <h1 class="kb-name">{{ kb.name }}</h1>
-            <p class="kb-desc">{{ kb.description || '暂无描述' }}</p>
+            <h1 class="kb-name">
+              {{ kb.name }}
+            </h1>
+            <p class="kb-desc">
+              {{ kb.description || '暂无描述' }}
+            </p>
           </div>
         </div>
       </div>
       <div class="header-right">
-        <el-button :icon="Edit" @click="handleEdit">编辑</el-button>
-        <el-button :icon="Setting" @click="handleOpenSettings">设置</el-button>
-        <el-button :icon="Delete" type="danger" plain @click="handleDelete">删除</el-button>
+        <el-button
+          :icon="Edit"
+          @click="handleEdit"
+        >
+          编辑
+        </el-button>
+        <el-button
+          :icon="Setting"
+          @click="handleOpenSettings"
+        >
+          设置
+        </el-button>
+        <el-button
+          :icon="Delete"
+          type="danger"
+          plain
+          @click="handleDelete"
+        >
+          删除
+        </el-button>
       </div>
     </div>
 
     <!-- 统计卡片 -->
-    <div class="stats-row" v-if="kb">
+    <div
+      v-if="kb"
+      class="stats-row"
+    >
       <div class="stat-card">
-        <div class="stat-value">{{ kb.documentCount || 0 }}</div>
-        <div class="stat-label">文档数</div>
+        <div class="stat-value">
+          {{ kb.documentCount || 0 }}
+        </div>
+        <div class="stat-label">
+          文档数
+        </div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">{{ formatNumber(kb.chunkCount || 0) }}</div>
-        <div class="stat-label">分块数</div>
+        <div class="stat-value">
+          {{ formatNumber(kb.chunkCount || 0) }}
+        </div>
+        <div class="stat-label">
+          分块数
+        </div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">{{ formatNumber(kb.totalChars || 0) }}</div>
-        <div class="stat-label">总字符</div>
+        <div class="stat-value">
+          {{ formatNumber(kb.totalChars || 0) }}
+        </div>
+        <div class="stat-label">
+          总字符
+        </div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">{{ kb.settings?.retrieval?.mode || 'hybrid' }}</div>
-        <div class="stat-label">检索模式</div>
+        <div class="stat-value">
+          {{ kb.settings?.retrieval?.mode || 'hybrid' }}
+        </div>
+        <div class="stat-label">
+          检索模式
+        </div>
       </div>
     </div>
 
@@ -261,37 +316,46 @@ const formatNumber = (num: number) => {
     <!-- Tab 内容 -->
     <div class="tab-content">
       <!-- 文档管理 -->
-      <div v-show="activeTab === 'documents'" class="content-panel">
+      <div
+        v-show="activeTab === 'documents'"
+        class="content-panel"
+      >
         <KnowledgeDocumentsPanel
+          v-model:chunk-size="chunkSize"
+          v-model:overlap="overlap"
           :documents="knowledgeStore.documents"
           :loading="knowledgeStore.loading"
           :uploading="knowledgeStore.uploading"
-          v-model:chunkSize="chunkSize"
-          v-model:overlap="overlap"
           @upload="handleUpload"
-          @openDoc="openDocDetail"
-          @removeDoc="handleDeleteDoc"
+          @open-doc="openDocDetail"
+          @remove-doc="handleDeleteDoc"
         />
       </div>
 
       <!-- 检索测试 -->
-      <div v-show="activeTab === 'retrieval'" class="content-panel">
+      <div
+        v-show="activeTab === 'retrieval'"
+        class="content-panel"
+      >
         <div class="panel-card">
           <KnowledgeSearchPanel
-            v-model:searchQuery="searchQuery"
-            v-model:topK="topK"
-            v-model:scoreThreshold="scoreThreshold"
+            v-model:search-query="searchQuery"
+            v-model:top-k="topK"
+            v-model:score-threshold="scoreThreshold"
             v-model:hybrid="hybrid"
             v-model:rerank="rerank"
-            v-model:vectorWeight="vectorWeight"
-            v-model:keywordWeight="keywordWeight"
-            v-model:keywordMode="keywordMode"
+            v-model:vector-weight="vectorWeight"
+            v-model:keyword-weight="keywordWeight"
+            v-model:keyword-mode="keywordMode"
             :searching="knowledgeStore.searching"
             @search="handleSearch"
           />
         </div>
 
-        <div class="panel-card" v-if="knowledgeStore.searchResults.length > 0">
+        <div
+          v-if="knowledgeStore.searchResults.length > 0"
+          class="panel-card"
+        >
           <KnowledgeResults
             :search-results="knowledgeStore.searchResults"
             :search-stats="knowledgeStore.searchStats"
@@ -310,7 +374,7 @@ const formatNumber = (num: number) => {
     <!-- 文档详情抽屉 -->
     <KnowledgeDocDrawer
       v-model="showDocDrawer"
-      v-model:chunkLimit="chunkLimit"
+      v-model:chunk-limit="chunkLimit"
       :selected-doc="selectedDoc"
       :document-chunks="knowledgeStore.documentChunks"
       :chunk-loading="knowledgeStore.chunkLoading"
@@ -319,10 +383,21 @@ const formatNumber = (num: number) => {
     />
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑知识库" width="480px">
+    <el-dialog
+      v-model="showEditDialog"
+      title="编辑知识库"
+      width="480px"
+    >
       <el-form label-position="top">
-        <el-form-item label="名称" required>
-          <el-input v-model="editForm.name" maxlength="50" show-word-limit />
+        <el-form-item
+          label="名称"
+          required
+        >
+          <el-input
+            v-model="editForm.name"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="描述">
           <el-input
@@ -335,15 +410,31 @@ const formatNumber = (num: number) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveEdit">保存</el-button>
+        <el-button @click="showEditDialog = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleSaveEdit"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
 
     <!-- 设置对话框 -->
-    <el-dialog v-model="showSettingsDialog" title="知识库设置" width="560px">
-      <el-form v-if="settingsForm" label-position="top">
-        <h4 class="settings-section-title">分块设置</h4>
+    <el-dialog
+      v-model="showSettingsDialog"
+      title="知识库设置"
+      width="560px"
+    >
+      <el-form
+        v-if="settingsForm"
+        label-position="top"
+      >
+        <h4 class="settings-section-title">
+          分块设置
+        </h4>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="分块大小">
@@ -367,18 +458,30 @@ const formatNumber = (num: number) => {
           </el-col>
         </el-row>
 
-        <h4 class="settings-section-title">检索设置</h4>
+        <h4 class="settings-section-title">
+          检索设置
+        </h4>
         <el-form-item label="检索模式">
           <el-radio-group v-model="settingsForm.retrieval.mode">
-            <el-radio value="vector">向量检索</el-radio>
-            <el-radio value="fulltext">全文检索</el-radio>
-            <el-radio value="hybrid">混合检索</el-radio>
+            <el-radio value="vector">
+              向量检索
+            </el-radio>
+            <el-radio value="fulltext">
+              全文检索
+            </el-radio>
+            <el-radio value="hybrid">
+              混合检索
+            </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="返回数量 (Top K)">
-              <el-input-number v-model="settingsForm.retrieval.topK" :min="1" :max="20" />
+              <el-input-number
+                v-model="settingsForm.retrieval.topK"
+                :min="1"
+                :max="20"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -399,8 +502,15 @@ const formatNumber = (num: number) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showSettingsDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveSettings">保存</el-button>
+        <el-button @click="showSettingsDialog = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleSaveSettings"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>

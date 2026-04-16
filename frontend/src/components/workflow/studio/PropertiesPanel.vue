@@ -45,13 +45,21 @@ const toggleSection = (section: string) => {
 <template>
   <div class="properties-panel">
     <!-- 空状态 -->
-    <div v-if="!node && !edge" class="empty-state">
-      <el-icon class="empty-icon"><Setting /></el-icon>
+    <div
+      v-if="!node && !edge"
+      class="empty-state"
+    >
+      <el-icon class="empty-icon">
+        <Setting />
+      </el-icon>
       <span class="empty-text">选择节点或连线进行配置</span>
     </div>
 
     <!-- 边编辑面板 -->
-    <div v-else-if="edge" class="config-content">
+    <div
+      v-else-if="edge"
+      class="config-content"
+    >
       <div class="panel-header">
         <div class="header-left">
           <span class="node-type-badge type-edge">
@@ -60,47 +68,76 @@ const toggleSection = (section: string) => {
           </span>
           <span class="node-id">ID: {{ edge.id.slice(0, 8) }}</span>
         </div>
-        <el-button link type="danger" :icon="Delete" @click="$emit('delete-edge', edge.id)" />
+        <el-button
+          link
+          type="danger"
+          :icon="Delete"
+          @click="$emit('delete-edge', edge.id)"
+        />
       </div>
 
       <div class="config-sections">
         <div class="section">
-          <div class="section-header" @click="toggleSection('basic')">
+          <div
+            class="section-header"
+            @click="toggleSection('basic')"
+          >
             <span class="section-title">连线配置</span>
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.basic }">
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.basic }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.basic" class="section-content">
-              <el-form label-position="top" size="default">
+            <div
+              v-show="expandedSections.basic"
+              class="section-content"
+            >
+              <el-form
+                label-position="top"
+                size="default"
+              >
                 <el-form-item label="连线标签">
                   <el-input
                     :model-value="edge.label"
-                    @input="$emit('update-edge', edge.id, { label: $event })"
                     placeholder="输入连线标签（可选）"
+                    @input="$emit('update-edge', edge.id, { label: $event })"
                   />
                 </el-form-item>
                 <el-form-item label="分支类型">
                   <el-select
                     :model-value="edge.branchType || ''"
-                    @update:model-value="$emit('update-edge', edge.id, { branchType: $event || undefined, label: $event || edge.label })"
                     style="width: 100%"
                     clearable
                     placeholder="选择分支类型"
+                    @update:model-value="$emit('update-edge', edge.id, { branchType: $event || undefined, label: $event || edge.label })"
                   >
-                    <el-option label="True (条件成立)" value="True" />
-                    <el-option label="False (条件不成立)" value="False" />
+                    <el-option
+                      label="True (条件成立)"
+                      value="True"
+                    />
+                    <el-option
+                      label="False (条件不成立)"
+                      value="False"
+                    />
                   </el-select>
                 </el-form-item>
                 <el-form-item label="连线样式">
                   <el-select
                     :model-value="edge.type || 'default'"
-                    @update:model-value="$emit('update-edge', edge.id, { type: $event })"
                     style="width: 100%"
+                    @update:model-value="$emit('update-edge', edge.id, { type: $event })"
                   >
-                    <el-option label="默认" value="default" />
-                    <el-option label="分支线" value="branch" />
+                    <el-option
+                      label="默认"
+                      value="default"
+                    />
+                    <el-option
+                      label="分支线"
+                      value="branch"
+                    />
                   </el-select>
                 </el-form-item>
                 <el-form-item label="动画效果">
@@ -115,14 +152,23 @@ const toggleSection = (section: string) => {
         </div>
 
         <div class="section">
-          <div class="section-header" @click="toggleSection('config')">
+          <div
+            class="section-header"
+            @click="toggleSection('config')"
+          >
             <span class="section-title">连接信息</span>
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.config }">
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.config }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.config" class="section-content">
+            <div
+              v-show="expandedSections.config"
+              class="section-content"
+            >
               <div class="info-row">
                 <span class="info-label">源节点</span>
                 <span class="info-value">{{ edge.source }}</span>
@@ -131,11 +177,17 @@ const toggleSection = (section: string) => {
                 <span class="info-label">目标节点</span>
                 <span class="info-value">{{ edge.target }}</span>
               </div>
-              <div v-if="edge.sourceHandle" class="info-row">
+              <div
+                v-if="edge.sourceHandle"
+                class="info-row"
+              >
                 <span class="info-label">源端口</span>
                 <span class="info-value">{{ edge.sourceHandle }}</span>
               </div>
-              <div v-if="edge.targetHandle" class="info-row">
+              <div
+                v-if="edge.targetHandle"
+                class="info-row"
+              >
                 <span class="info-label">目标端口</span>
                 <span class="info-value">{{ edge.targetHandle }}</span>
               </div>
@@ -146,35 +198,58 @@ const toggleSection = (section: string) => {
     </div>
 
     <!-- 节点编辑面板 -->
-    <div v-else class="config-content">
+    <div
+      v-else
+      class="config-content"
+    >
       <!-- 节点头部 -->
       <div class="panel-header">
         <div class="header-left">
-          <span class="node-type-badge" :class="`type-${node.type}`">
+          <span
+            class="node-type-badge"
+            :class="`type-${node.type}`"
+          >
             {{ node.type?.toUpperCase() || 'NODE' }}
           </span>
           <span class="node-id">ID: {{ node.id.slice(0, 8) }}</span>
         </div>
-        <el-button link type="danger" :icon="Delete" @click="$emit('delete', node.id)" />
+        <el-button
+          link
+          type="danger"
+          :icon="Delete"
+          @click="$emit('delete', node.id)"
+        />
       </div>
 
       <div class="config-sections">
         <!-- 基本信息 -->
         <div class="section">
-          <div class="section-header" @click="toggleSection('basic')">
+          <div
+            class="section-header"
+            @click="toggleSection('basic')"
+          >
             <span class="section-title">基本信息</span>
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.basic }">
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.basic }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.basic" class="section-content">
-              <el-form label-position="top" size="default">
+            <div
+              v-show="expandedSections.basic"
+              class="section-content"
+            >
+              <el-form
+                label-position="top"
+                size="default"
+              >
                 <el-form-item label="节点名称">
                   <el-input
                     :model-value="node.data?.label"
-                    @input="$emit('update', node.id, { label: $event })"
                     placeholder="输入节点名称"
+                    @input="$emit('update', node.id, { label: $event })"
                   />
                 </el-form-item>
                 <el-form-item label="节点描述">
@@ -182,8 +257,8 @@ const toggleSection = (section: string) => {
                     type="textarea"
                     :rows="2"
                     :model-value="node.data?.description"
-                    @input="$emit('update', node.id, { description: $event })"
                     placeholder="描述节点功能（可选）"
+                    @input="$emit('update', node.id, { description: $event })"
                   />
                 </el-form-item>
               </el-form>
@@ -193,26 +268,47 @@ const toggleSection = (section: string) => {
 
         <!-- 节点配置 -->
         <div class="section">
-          <div class="section-header" @click="toggleSection('config')">
+          <div
+            class="section-header"
+            @click="toggleSection('config')"
+          >
             <span class="section-title">节点配置</span>
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.config }">
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.config }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.config" class="section-content">
-              <el-form label-position="top" size="default">
+            <div
+              v-show="expandedSections.config"
+              class="section-content"
+            >
+              <el-form
+                label-position="top"
+                size="default"
+              >
                 <!-- LLM Specific -->
                 <template v-if="isLLM">
                   <el-form-item label="模型选择">
                     <el-select
                       :model-value="node.data?.model || 'deepseek-chat'"
-                      @update:model-value="$emit('update', node.id, { model: $event })"
                       style="width: 100%"
+                      @update:model-value="$emit('update', node.id, { model: $event })"
                     >
-                      <el-option label="DeepSeek Chat" value="deepseek-chat" />
-                      <el-option label="GPT-3.5 Turbo" value="gpt-3.5-turbo" />
-                      <el-option label="GPT-4" value="gpt-4" />
+                      <el-option
+                        label="DeepSeek Chat"
+                        value="deepseek-chat"
+                      />
+                      <el-option
+                        label="GPT-3.5 Turbo"
+                        value="gpt-3.5-turbo"
+                      />
+                      <el-option
+                        label="GPT-4"
+                        value="gpt-4"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="系统提示词">
@@ -220,18 +316,18 @@ const toggleSection = (section: string) => {
                       type="textarea"
                       :rows="4"
                       :model-value="node.data?.systemPrompt"
-                      @input="$emit('update', node.id, { systemPrompt: $event })"
                       placeholder="你是一个专业的AI助手..."
+                      @input="$emit('update', node.id, { systemPrompt: $event })"
                     />
                   </el-form-item>
                   <el-form-item label="温度 (Temperature)">
                     <el-slider
                       :model-value="node.data?.temperature || 0.7"
-                      @update:model-value="$emit('update', node.id, { temperature: $event })"
                       :min="0"
                       :max="2"
                       :step="0.1"
                       show-input
+                      @update:model-value="$emit('update', node.id, { temperature: $event })"
                     />
                   </el-form-item>
                 </template>
@@ -242,12 +338,21 @@ const toggleSection = (section: string) => {
                     <el-select
                       placeholder="选择知识库"
                       :model-value="node.data?.dataset || 'default'"
-                      @update:model-value="$emit('update', node.id, { dataset: $event })"
                       style="width: 100%"
+                      @update:model-value="$emit('update', node.id, { dataset: $event })"
                     >
-                      <el-option label="默认知识库" value="default" />
-                      <el-option label="公司规章制度" value="doc-1" />
-                      <el-option label="产品技术文档" value="doc-2" />
+                      <el-option
+                        label="默认知识库"
+                        value="default"
+                      />
+                      <el-option
+                        label="公司规章制度"
+                        value="doc-1"
+                      />
+                      <el-option
+                        label="产品技术文档"
+                        value="doc-2"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="召回数量 (TopK)">
@@ -255,18 +360,18 @@ const toggleSection = (section: string) => {
                       :model-value="node.data?.topK || 3"
                       :min="1"
                       :max="10"
-                      @update:model-value="$emit('update', node.id, { topK: $event })"
                       style="width: 100%"
+                      @update:model-value="$emit('update', node.id, { topK: $event })"
                     />
                   </el-form-item>
                   <el-form-item label="相似度阈值">
                     <el-slider
                       :model-value="node.data?.scoreThreshold || 0.7"
-                      @update:model-value="$emit('update', node.id, { scoreThreshold: $event })"
                       :min="0"
                       :max="1"
                       :step="0.05"
                       show-input
+                      @update:model-value="$emit('update', node.id, { scoreThreshold: $event })"
                     />
                   </el-form-item>
                 </template>
@@ -282,7 +387,11 @@ const toggleSection = (section: string) => {
                       @input="$emit('update', node.id, { expression: $event })"
                     />
                   </el-form-item>
-                  <el-alert type="info" :closable="false" show-icon>
+                  <el-alert
+                    type="info"
+                    :closable="false"
+                    show-icon
+                  >
                     <template #default>
                       <div class="tip-content">
                         支持 JavaScript 表达式，返回 true/false
@@ -299,8 +408,8 @@ const toggleSection = (section: string) => {
                       :rows="8"
                       placeholder="// JavaScript 代码&#10;return { result: 'ok' }"
                       :model-value="node.data?.code"
-                      @input="$emit('update', node.id, { code: $event })"
                       class="code-editor"
+                      @input="$emit('update', node.id, { code: $event })"
                     />
                   </el-form-item>
                 </template>
@@ -318,7 +427,10 @@ const toggleSection = (section: string) => {
 
                 <!-- Trigger Specific -->
                 <template v-if="isTrigger">
-                  <el-alert type="success" :closable="false">
+                  <el-alert
+                    type="success"
+                    :closable="false"
+                  >
                     <template #default>
                       <div class="tip-content">
                         <el-icon><InfoFilled /></el-icon>
@@ -333,20 +445,32 @@ const toggleSection = (section: string) => {
                   <el-form-item label="请求方法">
                     <el-select
                       :model-value="node.data?.method || 'GET'"
-                      @update:model-value="$emit('update', node.id, { method: $event })"
                       style="width: 100%"
+                      @update:model-value="$emit('update', node.id, { method: $event })"
                     >
-                      <el-option label="GET" value="GET" />
-                      <el-option label="POST" value="POST" />
-                      <el-option label="PUT" value="PUT" />
-                      <el-option label="DELETE" value="DELETE" />
+                      <el-option
+                        label="GET"
+                        value="GET"
+                      />
+                      <el-option
+                        label="POST"
+                        value="POST"
+                      />
+                      <el-option
+                        label="PUT"
+                        value="PUT"
+                      />
+                      <el-option
+                        label="DELETE"
+                        value="DELETE"
+                      />
                     </el-select>
                   </el-form-item>
                   <el-form-item label="请求 URL">
                     <el-input
                       :model-value="node.data?.url"
-                      @input="$emit('update', node.id, { url: $event })"
                       placeholder="https://api.example.com/endpoint"
+                      @input="$emit('update', node.id, { url: $event })"
                     />
                   </el-form-item>
                   <el-form-item label="请求头 (Headers)">
@@ -354,27 +478,30 @@ const toggleSection = (section: string) => {
                       type="textarea"
                       :rows="3"
                       :model-value="node.data?.headers"
+                      placeholder="{&quot;Content-Type&quot;: &quot;application/json&quot;}"
                       @input="$emit('update', node.id, { headers: $event })"
-                      placeholder='{"Content-Type": "application/json"}'
                     />
                   </el-form-item>
-                  <el-form-item v-if="node.data?.method !== 'GET'" label="请求体 (Body)">
+                  <el-form-item
+                    v-if="node.data?.method !== 'GET'"
+                    label="请求体 (Body)"
+                  >
                     <el-input
                       type="textarea"
                       :rows="4"
                       :model-value="node.data?.body"
+                      placeholder="{&quot;key&quot;: &quot;value&quot;}"
                       @input="$emit('update', node.id, { body: $event })"
-                      placeholder='{"key": "value"}'
                     />
                   </el-form-item>
                   <el-form-item label="超时时间 (ms)">
                     <el-input-number
                       :model-value="node.data?.timeout || 30000"
-                      @update:model-value="$emit('update', node.id, { timeout: $event })"
                       :min="1000"
                       :max="300000"
                       :step="1000"
                       style="width: 100%"
+                      @update:model-value="$emit('update', node.id, { timeout: $event })"
                     />
                   </el-form-item>
                 </template>
@@ -384,18 +511,39 @@ const toggleSection = (section: string) => {
         </div>
 
         <!-- 输入变量 -->
-        <div v-if="!isTrigger" class="section">
-          <div class="section-header" @click="toggleSection('input')">
+        <div
+          v-if="!isTrigger"
+          class="section"
+        >
+          <div
+            class="section-header"
+            @click="toggleSection('input')"
+          >
             <span class="section-title">输入变量</span>
-            <el-badge :value="(node.data?.inputs || []).length" :hidden="(node.data?.inputs || []).length === 0" type="primary" class="section-badge" />
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.input }">
+            <el-badge
+              :value="(node.data?.inputs || []).length"
+              :hidden="(node.data?.inputs || []).length === 0"
+              type="primary"
+              class="section-badge"
+            />
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.input }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.input" class="section-content">
+            <div
+              v-show="expandedSections.input"
+              class="section-content"
+            >
               <div class="var-list">
-                <div v-for="(item, index) in (node.data?.inputs || [])" :key="index" class="var-item">
+                <div
+                  v-for="(item, index) in (node.data?.inputs || [])"
+                  :key="index"
+                  class="var-item"
+                >
                   <el-input 
                     v-model="item.name" 
                     placeholder="变量名" 
@@ -410,11 +558,26 @@ const toggleSection = (section: string) => {
                     class="var-type"
                     @change="$emit('update', node.id, { inputs: [...(node.data?.inputs || [])] })"
                   >
-                    <el-option label="String" value="string" />
-                    <el-option label="Number" value="number" />
-                    <el-option label="Boolean" value="boolean" />
-                    <el-option label="Object" value="object" />
-                    <el-option label="Array" value="array" />
+                    <el-option
+                      label="String"
+                      value="string"
+                    />
+                    <el-option
+                      label="Number"
+                      value="number"
+                    />
+                    <el-option
+                      label="Boolean"
+                      value="boolean"
+                    />
+                    <el-option
+                      label="Object"
+                      value="object"
+                    />
+                    <el-option
+                      label="Array"
+                      value="array"
+                    />
                   </el-select>
                   <el-button 
                     link 
@@ -444,18 +607,39 @@ const toggleSection = (section: string) => {
         </div>
 
         <!-- 输出变量 -->
-        <div v-if="!isEnd" class="section">
-          <div class="section-header" @click="toggleSection('output')">
+        <div
+          v-if="!isEnd"
+          class="section"
+        >
+          <div
+            class="section-header"
+            @click="toggleSection('output')"
+          >
             <span class="section-title">输出变量</span>
-            <el-badge :value="(node.data?.outputs || []).length" :hidden="(node.data?.outputs || []).length === 0" type="success" class="section-badge" />
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.output }">
+            <el-badge
+              :value="(node.data?.outputs || []).length"
+              :hidden="(node.data?.outputs || []).length === 0"
+              type="success"
+              class="section-badge"
+            />
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.output }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.output" class="section-content">
+            <div
+              v-show="expandedSections.output"
+              class="section-content"
+            >
               <div class="var-list">
-                <div v-for="(item, index) in (node.data?.outputs || [])" :key="index" class="var-item">
+                <div
+                  v-for="(item, index) in (node.data?.outputs || [])"
+                  :key="index"
+                  class="var-item"
+                >
                   <el-input 
                     v-model="item.name" 
                     placeholder="变量名" 
@@ -470,11 +654,26 @@ const toggleSection = (section: string) => {
                     class="var-type"
                     @change="$emit('update', node.id, { outputs: [...(node.data?.outputs || [])] })"
                   >
-                    <el-option label="String" value="string" />
-                    <el-option label="Number" value="number" />
-                    <el-option label="Boolean" value="boolean" />
-                    <el-option label="Object" value="object" />
-                    <el-option label="Array" value="array" />
+                    <el-option
+                      label="String"
+                      value="string"
+                    />
+                    <el-option
+                      label="Number"
+                      value="number"
+                    />
+                    <el-option
+                      label="Boolean"
+                      value="boolean"
+                    />
+                    <el-option
+                      label="Object"
+                      value="object"
+                    />
+                    <el-option
+                      label="Array"
+                      value="array"
+                    />
                   </el-select>
                   <el-button 
                     link 
@@ -489,7 +688,7 @@ const toggleSection = (section: string) => {
                   />
                 </div>
               </div>
-               <el-button 
+              <el-button 
                 class="add-btn" 
                 size="small" 
                 @click="() => {
@@ -505,33 +704,57 @@ const toggleSection = (section: string) => {
 
         <!-- 错误处理 -->
         <div class="section">
-          <div class="section-header" @click="toggleSection('error')">
+          <div
+            class="section-header"
+            @click="toggleSection('error')"
+          >
             <span class="section-title">错误处理</span>
-            <el-icon class="toggle-icon" :class="{ expanded: expandedSections.error }">
+            <el-icon
+              class="toggle-icon"
+              :class="{ expanded: expandedSections.error }"
+            >
               <ArrowRight />
             </el-icon>
           </div>
           <el-collapse-transition>
-            <div v-show="expandedSections.error" class="section-content">
-              <el-form label-position="top" size="default">
+            <div
+              v-show="expandedSections.error"
+              class="section-content"
+            >
+              <el-form
+                label-position="top"
+                size="default"
+              >
                 <el-form-item label="失败时">
                   <el-select
                     :model-value="node.data?.onError || 'stop'"
-                    @update:model-value="$emit('update', node.id, { onError: $event })"
                     style="width: 100%"
+                    @update:model-value="$emit('update', node.id, { onError: $event })"
                   >
-                    <el-option label="停止执行" value="stop" />
-                    <el-option label="继续执行" value="continue" />
-                    <el-option label="重试" value="retry" />
+                    <el-option
+                      label="停止执行"
+                      value="stop"
+                    />
+                    <el-option
+                      label="继续执行"
+                      value="continue"
+                    />
+                    <el-option
+                      label="重试"
+                      value="retry"
+                    />
                   </el-select>
                 </el-form-item>
-                <el-form-item v-if="node.data?.onError === 'retry'" label="重试次数">
+                <el-form-item
+                  v-if="node.data?.onError === 'retry'"
+                  label="重试次数"
+                >
                   <el-input-number
                     :model-value="node.data?.retryCount || 3"
-                    @update:model-value="$emit('update', node.id, { retryCount: $event })"
                     :min="1"
                     :max="10"
                     style="width: 100%"
+                    @update:model-value="$emit('update', node.id, { retryCount: $event })"
                   />
                 </el-form-item>
               </el-form>

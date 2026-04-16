@@ -67,7 +67,10 @@ const toggleSidebar = () => {
 </script>
 
 <template>
-  <div class="chat-page" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div
+    class="chat-page"
+    :class="{ 'sidebar-collapsed': sidebarCollapsed }"
+  >
     <ChatSessionsPanel
       :sessions="chatStore.sessions"
       :current-session-id="chatStore.currentSessionId"
@@ -86,10 +89,14 @@ const toggleSidebar = () => {
       :streaming="chatStore.streaming"
       @send="handleSend"
       @stop="handleStop"
-      @selectSource="handleSelectSource"
+      @select-source="handleSelectSource"
     />
 
-    <ChatSourceDrawer v-model="showSourceDrawer" :selected-source="selectedSource" @openDoc="goToDocument" />
+    <ChatSourceDrawer
+      v-model="showSourceDrawer"
+      :selected-source="selectedSource"
+      @open-doc="goToDocument"
+    />
   </div>
 </template>
 

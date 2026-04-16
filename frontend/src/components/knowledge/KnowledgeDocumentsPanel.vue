@@ -126,7 +126,9 @@ const getFileIcon = (fileType?: string) => {
     <!-- 头部 -->
     <div class="panel-header">
       <div class="header-left">
-        <h2 class="panel-title">📚 知识库</h2>
+        <h2 class="panel-title">
+          📚 知识库
+        </h2>
         <div class="stats">
           <span class="stat-item">{{ stats.total }} 个文档</span>
           <span class="stat-divider">·</span>
@@ -146,7 +148,10 @@ const getFileIcon = (fileType?: string) => {
           :show-file-list="false"
           action=""
         >
-          <el-button type="primary" :loading="props.uploading">
+          <el-button
+            type="primary"
+            :loading="props.uploading"
+          >
             <span class="btn-icon">📤</span>
             上传文档
           </el-button>
@@ -155,7 +160,10 @@ const getFileIcon = (fileType?: string) => {
     </div>
 
     <!-- 设置面板 -->
-    <div v-if="showSettings" class="settings-panel">
+    <div
+      v-if="showSettings"
+      class="settings-panel"
+    >
       <div class="setting-item">
         <label class="setting-label">分块大小</label>
         <el-input-number
@@ -194,10 +202,24 @@ const getFileIcon = (fileType?: string) => {
           <span>🔍</span>
         </template>
       </el-input>
-      <div class="batch-actions" v-if="selectedDocs.size > 0">
+      <div
+        v-if="selectedDocs.size > 0"
+        class="batch-actions"
+      >
         <span class="selected-count">已选择 {{ selectedDocs.size }} 项</span>
-        <el-button size="small" @click="selectedDocs.clear()">取消</el-button>
-        <el-button size="small" type="danger" @click="handleBatchDelete">批量删除</el-button>
+        <el-button
+          size="small"
+          @click="selectedDocs.clear()"
+        >
+          取消
+        </el-button>
+        <el-button
+          size="small"
+          type="danger"
+          @click="handleBatchDelete"
+        >
+          批量删除
+        </el-button>
       </div>
     </div>
 
@@ -210,14 +232,26 @@ const getFileIcon = (fileType?: string) => {
       @dragover.prevent="handleDragOver"
       @dragleave="handleDragLeave"
     >
-      <div class="upload-icon">📁</div>
-      <div class="upload-title">拖拽文件到这里上传</div>
-      <div class="upload-hint">或点击上方"上传文档"按钮</div>
-      <div class="upload-formats">支持 TXT, MD, PDF, DOCX, JSON, CSV, HTML 格式</div>
+      <div class="upload-icon">
+        📁
+      </div>
+      <div class="upload-title">
+        拖拽文件到这里上传
+      </div>
+      <div class="upload-hint">
+        或点击上方"上传文档"按钮
+      </div>
+      <div class="upload-formats">
+        支持 TXT, MD, PDF, DOCX, JSON, CSV, HTML 格式
+      </div>
     </div>
 
     <!-- 文档卡片列表 -->
-    <div v-else class="documents-grid" v-loading="props.loading">
+    <div
+      v-else
+      v-loading="props.loading"
+      class="documents-grid"
+    >
       <div
         v-for="doc in filteredDocuments"
         :key="doc.id"
@@ -226,7 +260,10 @@ const getFileIcon = (fileType?: string) => {
         @click="emit('openDoc', doc)"
       >
         <!-- 选择框 -->
-        <div class="card-checkbox" @click.stop>
+        <div
+          class="card-checkbox"
+          @click.stop
+        >
           <el-checkbox
             :model-value="selectedDocs.has(doc.id)"
             @change="toggleSelect(doc.id)"
@@ -240,7 +277,10 @@ const getFileIcon = (fileType?: string) => {
 
         <!-- 文件信息 -->
         <div class="card-content">
-          <div class="card-title" :title="doc.filename">
+          <div
+            class="card-title"
+            :title="doc.filename"
+          >
             {{ doc.filename }}
           </div>
           <div class="card-meta">
@@ -259,7 +299,10 @@ const getFileIcon = (fileType?: string) => {
         </div>
 
         <!-- 操作按钮 -->
-        <div class="card-actions" @click.stop>
+        <div
+          class="card-actions"
+          @click.stop
+        >
           <el-button
             size="small"
             text
@@ -285,9 +328,16 @@ const getFileIcon = (fileType?: string) => {
     </div>
 
     <!-- 空状态 -->
-    <div v-if="filteredDocuments.length === 0 && searchKeyword && !props.loading" class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-text">未找到匹配的文档</div>
+    <div
+      v-if="filteredDocuments.length === 0 && searchKeyword && !props.loading"
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        🔍
+      </div>
+      <div class="empty-text">
+        未找到匹配的文档
+      </div>
     </div>
   </div>
 </template>

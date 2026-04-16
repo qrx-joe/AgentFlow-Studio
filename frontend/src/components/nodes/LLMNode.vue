@@ -21,7 +21,10 @@ defineProps<{
         <span class="label">模型:</span>
         <span class="value">{{ data.model || 'gpt-3.5-turbo' }}</span>
       </div>
-      <div class="param-row" v-if="data.systemPrompt">
+      <div
+        v-if="data.systemPrompt"
+        class="param-row"
+      >
         <span class="label">提示词:</span>
         <span class="value prompt">{{ data.systemPrompt }}</span>
       </div>

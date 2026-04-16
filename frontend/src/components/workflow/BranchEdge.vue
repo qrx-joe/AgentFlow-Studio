@@ -26,7 +26,10 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
 </script>
 
 <template>
-  <g class="edge-group" :class="{ selected }">
+  <g
+    class="edge-group"
+    :class="{ selected }"
+  >
     <defs>
       <marker
         :id="`${id}-arrow`"
@@ -37,7 +40,10 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
         orient="auto"
         markerUnits="strokeWidth"
       >
-        <path d="M0,0 L0,6 L9,3 z" :fill="strokeColor" />
+        <path
+          d="M0,0 L0,6 L9,3 z"
+          :fill="strokeColor"
+        />
       </marker>
     </defs>
 
@@ -59,8 +65,20 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
     />
 
     <!-- 端点标记 -->
-    <circle v-if="!selected" :cx="sourceX" :cy="sourceY" r="3" :fill="strokeColor" />
-    <circle v-if="!selected" :cx="targetX" :cy="targetY" r="3" :fill="strokeColor" />
+    <circle
+      v-if="!selected"
+      :cx="sourceX"
+      :cy="sourceY"
+      r="3"
+      :fill="strokeColor"
+    />
+    <circle
+      v-if="!selected"
+      :cx="targetX"
+      :cy="targetY"
+      r="3"
+      :fill="strokeColor"
+    />
 
     <!-- 标签 -->
     <EdgeLabelRenderer>

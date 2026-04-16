@@ -44,8 +44,15 @@ const handleLogout = () => {
       <div class="navbar-left">
         <div class="brand">
           <div class="logo-box">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
           <span class="brand-text">AgentFlow</span>
@@ -60,7 +67,9 @@ const handleLogout = () => {
           :class="{ active: route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)) }"
           @click="handleSelect(item.path)"
         >
-          <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+          <el-icon class="nav-icon">
+            <component :is="item.icon" />
+          </el-icon>
           <span class="nav-text">{{ item.name }}</span>
         </button>
       </nav>
@@ -68,9 +77,13 @@ const handleLogout = () => {
       <div class="navbar-right">
         <el-dropdown trigger="click">
           <div class="user-profile">
-            <div class="avatar">{{ username.charAt(0).toUpperCase() }}</div>
+            <div class="avatar">
+              {{ username.charAt(0).toUpperCase() }}
+            </div>
             <span class="username">{{ username }}</span>
-            <el-icon class="dropdown-arrow"><arrow-down /></el-icon>
+            <el-icon class="dropdown-arrow">
+              <arrow-down />
+            </el-icon>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
@@ -78,7 +91,10 @@ const handleLogout = () => {
                 <el-icon><user /></el-icon>
                 <span>{{ username }}</span>
               </el-dropdown-item>
-              <el-dropdown-item divided @click="showLogoutConfirm">
+              <el-dropdown-item
+                divided
+                @click="showLogoutConfirm"
+              >
                 <el-icon><switch-button /></el-icon>
                 <span>退出登录</span>
               </el-dropdown-item>
@@ -92,8 +108,11 @@ const handleLogout = () => {
     <main class="content-wrapper">
       <div class="page-content">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-             <component :is="Component" />
+          <transition
+            name="fade"
+            mode="out-in"
+          >
+            <component :is="Component" />
           </transition>
         </router-view>
       </div>
@@ -109,17 +128,37 @@ const handleLogout = () => {
     >
       <div class="logout-content">
         <div class="logout-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
           </svg>
         </div>
-        <h3 class="logout-title">确认退出登录？</h3>
-        <p class="logout-desc">退出后将需要重新登录才能访问您的数据</p>
+        <h3 class="logout-title">
+          确认退出登录？
+        </h3>
+        <p class="logout-desc">
+          退出后将需要重新登录才能访问您的数据
+        </p>
       </div>
       <template #footer>
         <div class="logout-footer">
-          <el-button size="large" @click="logoutDialogVisible = false">取消</el-button>
-          <el-button size="large" type="primary" @click="handleLogout">确认退出</el-button>
+          <el-button
+            size="large"
+            @click="logoutDialogVisible = false"
+          >
+            取消
+          </el-button>
+          <el-button
+            size="large"
+            type="primary"
+            @click="handleLogout"
+          >
+            确认退出
+          </el-button>
         </div>
       </template>
     </el-dialog>

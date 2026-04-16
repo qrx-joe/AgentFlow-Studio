@@ -211,11 +211,21 @@ const handleOpen = (id: string) => {
   <div class="dashboard-container">
     <div class="header-section">
       <div class="welcome-box">
-        <h1 class="page-title">工作室</h1>
-        <p class="page-subtitle">管理与构建所有的 AI 智能体应用</p>
+        <h1 class="page-title">
+          工作室
+        </h1>
+        <p class="page-subtitle">
+          管理与构建所有的 AI 智能体应用
+        </p>
       </div>
       <div class="action-box">
-        <el-button type="primary" size="large" :icon="Plus" class="create-btn" @click="handleShowCreate">
+        <el-button
+          type="primary"
+          size="large"
+          :icon="Plus"
+          class="create-btn"
+          @click="handleShowCreate"
+        >
           新建应用
         </el-button>
       </div>
@@ -224,98 +234,138 @@ const handleOpen = (id: string) => {
     <div class="filter-section">
       <div class="tabs">
         <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'all' }"
-            @click="activeTab = 'all'"
-        >全部应用</button>
+          class="tab-btn"
+          :class="{ active: activeTab === 'all' }"
+          @click="activeTab = 'all'"
+        >
+          全部应用
+        </button>
         <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'published' }"
-             @click="activeTab = 'published'"
-        >已发布</button>
+          class="tab-btn"
+          :class="{ active: activeTab === 'published' }"
+          @click="activeTab = 'published'"
+        >
+          已发布
+        </button>
         <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'draft' }"
-             @click="activeTab = 'draft'"
-        >草稿箱</button>
+          class="tab-btn"
+          :class="{ active: activeTab === 'draft' }"
+          @click="activeTab = 'draft'"
+        >
+          草稿箱
+        </button>
       </div>
       <div class="search-box">
         <el-input
-            v-model="searchQuery"
-            placeholder="搜索应用..."
-            :prefix-icon="Search"
-            clearable
-            class="search-input"
+          v-model="searchQuery"
+          placeholder="搜索应用..."
+          :prefix-icon="Search"
+          clearable
+          class="search-input"
         />
       </div>
     </div>
 
-    <div class="apps-grid" v-loading="loading">
-        <!-- 新建应用卡片 -->
-        <div class="app-card create-card" @click="handleShowCreate">
-          <div class="create-icon-box">
-            <el-icon :size="32"><Plus /></el-icon>
+    <div
+      v-loading="loading"
+      class="apps-grid"
+    >
+      <!-- 新建应用卡片 -->
+      <div
+        class="app-card create-card"
+        @click="handleShowCreate"
+      >
+        <div class="create-icon-box">
+          <el-icon :size="32">
+            <Plus />
+          </el-icon>
+        </div>
+        <span class="create-text">新建应用</span>
+        <span class="create-hint">创建一个新的 AI 智能体</span>
+      </div>
+
+      <!-- 应用卡片列表 -->
+      <div
+        v-for="app in filteredApps"
+        :key="app.id"
+        class="app-card"
+        @click="handleOpen(app.id)"
+      >
+        <div class="card-header">
+          <div
+            class="app-icon"
+            :style="{ background: app.color + '15', color: app.color }"
+          >
+            <span class="icon-text">{{ app.name.slice(0,1) }}</span>
           </div>
-          <span class="create-text">新建应用</span>
-          <span class="create-hint">创建一个新的 AI 智能体</span>
+          <div class="app-status">
+            <span
+              class="status-dot"
+              :class="app.status"
+            />
+            {{ app.status === 'published' ? '已发布' : '草稿' }}
+          </div>
+          <el-dropdown
+            trigger="click"
+            @click.stop
+            @command="(cmd: string) => {
+              if (cmd === 'edit') handleShowEdit(app)
+              else if (cmd === 'delete') handleDelete(app)
+              else if (cmd === 'duplicate') handleDuplicate(app)
+            }"
+          >
+            <div
+              class="app-menu"
+              @click.stop
+            >
+              <el-icon><MoreFilled /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="edit">
+                  <el-icon><Edit /></el-icon>
+                  <span>编辑信息</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="duplicate">
+                  <el-icon><CopyDocument /></el-icon>
+                  <span>复制应用</span>
+                </el-dropdown-item>
+                <el-dropdown-item
+                  command="delete"
+                  divided
+                  style="color: #f56c6c"
+                >
+                  <el-icon><Delete /></el-icon>
+                  <span>删除应用</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
 
-        <!-- 应用卡片列表 -->
-        <div v-for="app in filteredApps" :key="app.id" class="app-card" @click="handleOpen(app.id)">
-            <div class="card-header">
-                <div class="app-icon" :style="{ background: app.color + '15', color: app.color }">
-                    <span class="icon-text">{{ app.name.slice(0,1) }}</span>
-                </div>
-                <div class="app-status">
-                    <span class="status-dot" :class="app.status"></span>
-                    {{ app.status === 'published' ? '已发布' : '草稿' }}
-                </div>
-                <el-dropdown trigger="click" @click.stop @command="(cmd: string) => {
-                  if (cmd === 'edit') handleShowEdit(app)
-                  else if (cmd === 'delete') handleDelete(app)
-                  else if (cmd === 'duplicate') handleDuplicate(app)
-                }">
-                  <div class="app-menu" @click.stop>
-                    <el-icon><MoreFilled /></el-icon>
-                  </div>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="edit">
-                        <el-icon><Edit /></el-icon>
-                        <span>编辑信息</span>
-                      </el-dropdown-item>
-                      <el-dropdown-item command="duplicate">
-                        <el-icon><CopyDocument /></el-icon>
-                        <span>复制应用</span>
-                      </el-dropdown-item>
-                      <el-dropdown-item command="delete" divided style="color: #f56c6c">
-                        <el-icon><Delete /></el-icon>
-                        <span>删除应用</span>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-            </div>
-
-            <div class="card-body">
-                <h3 class="app-name">{{ app.name }}</h3>
-                <p class="app-desc">{{ app.description || '暂无描述' }}</p>
-            </div>
-
-            <div class="card-footer">
-                <div class="meta-item">
-                    <el-icon><User /></el-icon>
-                    <span>Admin</span>
-                </div>
-                <div class="meta-item">
-                    <el-icon><Clock /></el-icon>
-                    <span>{{ formatTime(app.updatedAt) }}</span>
-                </div>
-                <div class="enter-btn">
-                    打开
-                </div>
-            </div>
+        <div class="card-body">
+          <h3 class="app-name">
+            {{ app.name }}
+          </h3>
+          <p class="app-desc">
+            {{ app.description || '暂无描述' }}
+          </p>
         </div>
+
+        <div class="card-footer">
+          <div class="meta-item">
+            <el-icon><User /></el-icon>
+            <span>Admin</span>
+          </div>
+          <div class="meta-item">
+            <el-icon><Clock /></el-icon>
+            <span>{{ formatTime(app.updatedAt) }}</span>
+          </div>
+          <div class="enter-btn">
+            打开
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 新建/编辑对话框 -->
@@ -325,8 +375,14 @@ const handleOpen = (id: string) => {
       width="480px"
       :close-on-click-modal="false"
     >
-      <el-form :model="formData" label-position="top">
-        <el-form-item label="应用名称" required>
+      <el-form
+        :model="formData"
+        label-position="top"
+      >
+        <el-form-item
+          label="应用名称"
+          required
+        >
           <el-input
             v-model="formData.name"
             placeholder="输入应用名称"
@@ -358,8 +414,14 @@ const handleOpen = (id: string) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="formLoading" @click="handleSubmit">
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="formLoading"
+          @click="handleSubmit"
+        >
           {{ dialogMode === 'create' ? '创建并编辑' : '保存' }}
         </el-button>
       </template>

@@ -85,9 +85,9 @@ const handleKeyPress = (e: KeyboardEvent) => {
   <div class="login-page">
     <!-- 背景装饰 -->
     <div class="bg-decoration">
-      <div class="circle circle-1"></div>
-      <div class="circle circle-2"></div>
-      <div class="circle circle-3"></div>
+      <div class="circle circle-1" />
+      <div class="circle circle-2" />
+      <div class="circle circle-3" />
     </div>
 
     <!-- 登录卡片 -->
@@ -96,44 +96,65 @@ const handleKeyPress = (e: KeyboardEvent) => {
       <div class="login-header">
         <div class="brand">
           <div class="logo-box">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
           <span class="brand-text">AgentFlow</span>
         </div>
-        <h1 class="login-title">欢迎回来</h1>
-        <p class="login-subtitle">登录您的账户以继续使用</p>
+        <h1 class="login-title">
+          欢迎回来
+        </h1>
+        <p class="login-subtitle">
+          登录您的账户以继续使用
+        </p>
       </div>
 
       <!-- 登录表单 -->
-      <div class="login-form" @keypress="handleKeyPress">
+      <div
+        class="login-form"
+        @keypress="handleKeyPress"
+      >
         <div class="form-item">
           <label class="form-label">用户名</label>
           <div class="input-wrapper">
-            <el-icon class="input-icon"><User /></el-icon>
+            <el-icon class="input-icon">
+              <User />
+            </el-icon>
             <input
               v-model="loginForm.username"
               type="text"
               class="form-input"
               placeholder="请输入用户名"
               autocomplete="username"
-            />
+            >
           </div>
         </div>
 
         <div class="form-item">
           <label class="form-label">密码</label>
           <div class="input-wrapper">
-            <el-icon class="input-icon"><Lock /></el-icon>
+            <el-icon class="input-icon">
+              <Lock />
+            </el-icon>
             <input
               v-model="loginForm.password"
               :type="showPassword ? 'text' : 'password'"
               class="form-input"
               placeholder="请输入密码"
               autocomplete="current-password"
-            />
-            <el-icon class="toggle-password" @click="showPassword = !showPassword">
+            >
+            <el-icon
+              class="toggle-password"
+              @click="showPassword = !showPassword"
+            >
               <View v-if="!showPassword" />
               <Hide v-else />
             </el-icon>
@@ -142,10 +163,17 @@ const handleKeyPress = (e: KeyboardEvent) => {
 
         <div class="form-options">
           <label class="remember-me">
-            <input type="checkbox" v-model="loginForm.remember" />
+            <input
+              v-model="loginForm.remember"
+              type="checkbox"
+            >
             <span class="checkbox-label">记住我</span>
           </label>
-          <a href="javascript:void(0)" class="forgot-link" @click="handleForgotPassword">忘记密码？</a>
+          <a
+            href="javascript:void(0)"
+            class="forgot-link"
+            @click="handleForgotPassword"
+          >忘记密码？</a>
         </div>
 
         <button
@@ -155,8 +183,11 @@ const handleKeyPress = (e: KeyboardEvent) => {
           @click="handleLogin"
         >
           <span v-if="!loading">登录</span>
-          <span v-else class="loading-text">
-            <span class="spinner"></span>
+          <span
+            v-else
+            class="loading-text"
+          >
+            <span class="spinner" />
             登录中...
           </span>
         </button>
@@ -175,9 +206,20 @@ const handleKeyPress = (e: KeyboardEvent) => {
           :disabled="!!socialLoading"
           @click="handleSocialLogin('github')"
         >
-          <span v-if="socialLoading === 'github'" class="btn-spinner"></span>
-          <svg v-else viewBox="0 0 24 24" width="20" height="20">
-            <path fill="#1677FF" d="M12.5 2C6.7 2 2 6.7 2 12.5c0 4.5 2.9 8.4 6.9 9.8.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1 .8-.2 1.6-.3 2.4-.3.8 0 1.6.1 2.4.3 1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5 4-1.4 6.9-5.3 6.9-9.8C23 6.7 18.3 2 12.5 2z"/>
+          <span
+            v-if="socialLoading === 'github'"
+            class="btn-spinner"
+          />
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+          >
+            <path
+              fill="#1677FF"
+              d="M12.5 2C6.7 2 2 6.7 2 12.5c0 4.5 2.9 8.4 6.9 9.8.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1 .8-.2 1.6-.3 2.4-.3.8 0 1.6.1 2.4.3 1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5 4-1.4 6.9-5.3 6.9-9.8C23 6.7 18.3 2 12.5 2z"
+            />
           </svg>
           <span>GitHub 登录</span>
         </button>
@@ -187,9 +229,20 @@ const handleKeyPress = (e: KeyboardEvent) => {
           :disabled="!!socialLoading"
           @click="handleSocialLogin('wechat')"
         >
-          <span v-if="socialLoading === 'wechat'" class="btn-spinner"></span>
-          <svg v-else viewBox="0 0 24 24" width="20" height="20">
-            <path fill="#07C160" d="M8.7 17c-2.5 0-4.7-1.3-5.9-3.3l1.7-1c.9 1.4 2.4 2.3 4.2 2.3 1.5 0 2.8-.6 3.8-1.5l1.4 1.2c-1.3 1.4-3.2 2.3-5.2 2.3zm8.6-5c0 2.5-2 4.5-4.5 4.5-1.2 0-2.3-.5-3.1-1.3l1.4-1.2c.5.5 1.1.8 1.7.8 1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5c-.8 0-1.5.4-2 1l-1.4-1.2c.8-.9 2-1.5 3.4-1.5 2.5-.1 4.5 1.9 4.5 4.4zm-5.5-6c-3.9 0-7 3.1-7 7s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0-2c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z"/>
+          <span
+            v-if="socialLoading === 'wechat'"
+            class="btn-spinner"
+          />
+          <svg
+            v-else
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+          >
+            <path
+              fill="#07C160"
+              d="M8.7 17c-2.5 0-4.7-1.3-5.9-3.3l1.7-1c.9 1.4 2.4 2.3 4.2 2.3 1.5 0 2.8-.6 3.8-1.5l1.4 1.2c-1.3 1.4-3.2 2.3-5.2 2.3zm8.6-5c0 2.5-2 4.5-4.5 4.5-1.2 0-2.3-.5-3.1-1.3l1.4-1.2c.5.5 1.1.8 1.7.8 1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5c-.8 0-1.5.4-2 1l-1.4-1.2c.8-.9 2-1.5 3.4-1.5 2.5-.1 4.5 1.9 4.5 4.4zm-5.5-6c-3.9 0-7 3.1-7 7s3.1 7 7 7 7-3.1 7-7-3.1-7-7-7zm0-2c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z"
+            />
           </svg>
           <span>微信登录</span>
         </button>
@@ -197,7 +250,10 @@ const handleKeyPress = (e: KeyboardEvent) => {
 
       <!-- 注册链接 -->
       <div class="register-link">
-        还没有账户？<a href="javascript:void(0)" @click="handleRegister">立即注册</a>
+        还没有账户？<a
+          href="javascript:void(0)"
+          @click="handleRegister"
+        >立即注册</a>
       </div>
     </div>
 

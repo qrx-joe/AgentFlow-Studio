@@ -98,18 +98,22 @@ const emit = defineEmits<{
       @export-replay-txt="emit('exportReplayTxt')"
     />
 
-    <div class="canvas" @dragover="props.onDragOver" @drop="props.onDrop">
+    <div
+      class="canvas"
+      @dragover="props.onDragOver"
+      @drop="props.onDrop"
+    >
       <VueFlow
         :id="props.flowId"
         v-model:nodes="nodes"
         v-model:edges="edges"
         :node-types="props.nodeTypes"
         :edge-types="props.edgeTypes"
+        :fit-view-on-init="true"
         @node-click="(event: any) => emit('nodeClick', event.node)"
         @node-double-click="(event: any) => emit('nodeDoubleClick', event.node)"
         @pane-click="() => emit('paneClick')"
         @edge-click="(event: any) => emit('edgeClick', event.edge)"
-        :fit-view-on-init="true"
       >
         <Background />
         <Controls />

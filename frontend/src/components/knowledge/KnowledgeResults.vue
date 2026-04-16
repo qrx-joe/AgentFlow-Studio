@@ -40,14 +40,21 @@ const highlightKeywords = (text: string) => {
 </script>
 
 <template>
-  <div class="result" v-if="props.searchResults.length">
+  <div
+    v-if="props.searchResults.length"
+    class="result"
+  >
     <div class="stats">
       过滤前：{{ props.searchStats.total }} | 过滤后：{{ props.searchStats.filtered }} | threshold:
       {{ props.scoreThreshold }} | hybrid: {{ props.hybrid ? 'on' : 'off' }} | rerank:
       {{ props.rerank ? 'on' : 'off' }} | mode: {{ props.keywordMode }} | vw: {{ props.vectorWeight }} | kw:
       {{ props.keywordWeight }}
     </div>
-    <div v-for="item in props.searchResults" :key="item.id" class="result-item">
+    <div
+      v-for="item in props.searchResults"
+      :key="item.id"
+      class="result-item"
+    >
       <div class="meta">
         相似度：{{ item.similarity.toFixed(3) }}
         <span v-if="item.fusedScore !== undefined">| 融合分：{{ item.fusedScore.toFixed(3) }}</span>
@@ -58,12 +65,20 @@ const highlightKeywords = (text: string) => {
         <div
           class="score-fill"
           :style="{ width: `${Math.min((item.fusedScore ?? item.similarity) / 1.5, 1) * 100}%` }"
-        ></div>
+        />
       </div>
-      <div class="content" v-html="highlightKeywords(item.content)"></div>
+      <div
+        class="content"
+        v-html="highlightKeywords(item.content)"
+      />
     </div>
   </div>
-  <div v-else class="empty">暂无检索结果</div>
+  <div
+    v-else
+    class="empty"
+  >
+    暂无检索结果
+  </div>
 </template>
 
 <style scoped>

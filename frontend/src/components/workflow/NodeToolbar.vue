@@ -36,68 +36,118 @@ const emit = defineEmits([
 <template>
   <div class="toolbar-container glass-panel">
     <!-- Group 1: Core Actions -->
-    <div v-if="!minimal" class="tool-group">
-      <el-tooltip content="保存工作流 (Ctrl+S)" placement="bottom">
-        <el-button type="primary" :loading="saving" circle @click="$emit('save')">
+    <div
+      v-if="!minimal"
+      class="tool-group"
+    >
+      <el-tooltip
+        content="保存工作流 (Ctrl+S)"
+        placement="bottom"
+      >
+        <el-button
+          type="primary"
+          :loading="saving"
+          circle
+          @click="$emit('save')"
+        >
           <el-icon><Download /></el-icon> <!-- Using Download icon for save/export metaphor or check mark -->
         </el-button>
       </el-tooltip>
       
-      <el-tooltip content="运行工作流 (Ctrl+R)" placement="bottom">
-        <el-button type="success" :loading="executing" circle @click="$emit('run')">
+      <el-tooltip
+        content="运行工作流 (Ctrl+R)"
+        placement="bottom"
+      >
+        <el-button
+          type="success"
+          :loading="executing"
+          circle
+          @click="$emit('run')"
+        >
           <el-icon><VideoPlay /></el-icon>
         </el-button>
       </el-tooltip>
     </div>
 
-    <div v-if="!minimal" class="divider"></div>
+    <div
+      v-if="!minimal"
+      class="divider"
+    />
 
     <!-- Group 2: Canvas View -->
     <div class="tool-group">
-      <el-tooltip content="恢复视角" placement="bottom">
-        <el-button text circle @click="$emit('restore')">
+      <el-tooltip
+        content="恢复视角"
+        placement="bottom"
+      >
+        <el-button
+          text
+          circle
+          @click="$emit('restore')"
+        >
           <el-icon><Aim /></el-icon>
         </el-button>
       </el-tooltip>
-      <el-tooltip content="清空画布" placement="bottom">
-        <el-button text circle @click="$emit('clear')">
+      <el-tooltip
+        content="清空画布"
+        placement="bottom"
+      >
+        <el-button
+          text
+          circle
+          @click="$emit('clear')"
+        >
           <el-icon><Delete /></el-icon>
         </el-button>
       </el-tooltip>
     </div>
 
     <!-- Group 3: Replay Control -->
-    <div class="divider"></div>
+    <div class="divider" />
     
     <div class="tool-group replay-group">
       <template v-if="!replaying">
-        <el-tooltip content="回放执行记录" placement="bottom">
-          <el-button text round @click="$emit('replay')">
-            <el-icon class="mr-1"><VideoPlay /></el-icon> 回放
+        <el-tooltip
+          content="回放执行记录"
+          placement="bottom"
+        >
+          <el-button
+            text
+            round
+            @click="$emit('replay')"
+          >
+            <el-icon class="mr-1">
+              <VideoPlay />
+            </el-icon> 回放
           </el-button>
         </el-tooltip>
       </template>
       
       <template v-else>
-         <el-button type="danger" text circle @click="$emit('stop-replay')">
-            <el-icon><VideoPause /></el-icon>
-         </el-button>
+        <el-button
+          type="danger"
+          text
+          circle
+          @click="$emit('stop-replay')"
+        >
+          <el-icon><VideoPause /></el-icon>
+        </el-button>
          
-         <div class="slider-box">
-            <span class="label">进度</span>
-            <el-slider 
-                :model-value="replayProgress" 
-                :max="replayTotal" 
-                :step="1"
-                :show-tooltip="false"
-                @input="$emit('seek-replay', $event)" 
-                style="width: 100px"
-            />
-         </div>
+        <div class="slider-box">
+          <span class="label">进度</span>
+          <el-slider 
+            :model-value="replayProgress" 
+            :max="replayTotal" 
+            :step="1"
+            :show-tooltip="false"
+            style="width: 100px" 
+            @input="$emit('seek-replay', $event)"
+          />
+        </div>
          
-         <div class="slider-box">
-            <span class="label">{{ replaySpeed }}x</span>
-         </div>
+        <div class="slider-box">
+          <span class="label">{{ replaySpeed }}x</span>
+        </div>
       </template>
     </div>
     

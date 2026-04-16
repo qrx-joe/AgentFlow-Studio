@@ -104,8 +104,8 @@ export class RecursiveCharacterTextSplitter {
 
     private recursiveSplit(text: string, separators: string[]): string[] {
         const finalChunks: string[] = []
-        let separator = separators[0]
-        let newSeparators = separators.slice(1)
+        const separator = separators[0]
+        const newSeparators = separators.slice(1)
 
         let splits: string[] = []
         if (separators.length === 0) {
@@ -116,7 +116,7 @@ export class RecursiveCharacterTextSplitter {
             splits = text.split('')
         }
 
-        let goodSplits: string[] = []
+        const goodSplits: string[] = []
         for (const s of splits) {
             if (s.length < this.chunkSize) {
                 goodSplits.push(s)
@@ -134,7 +134,7 @@ export class RecursiveCharacterTextSplitter {
 
     private mergeSplits(splits: string[], separator: string): string[] {
         const docs: string[] = []
-        let currentDoc: string[] = []
+        const currentDoc: string[] = []
         let total = 0
 
         for (const d of splits) {

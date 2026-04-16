@@ -17,7 +17,7 @@ defineProps<{
     :status="data.status"
   >
     <div class="code-preview">
-        {{ data.code || '// Write code here' }}
+      {{ data.code || '// Write code here' }}
     </div>
   </BaseNode>
 </template>

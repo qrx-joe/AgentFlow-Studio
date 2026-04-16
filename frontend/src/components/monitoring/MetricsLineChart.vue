@@ -29,11 +29,25 @@ const points = computed(() => {
 
 <template>
   <div class="chart">
-    <div class="title">{{ props.title }}</div>
-    <svg :width="width" :height="height" class="svg">
-      <polyline :points="points" fill="none" stroke="#38bdf8" stroke-width="2" />
+    <div class="title">
+      {{ props.title }}
+    </div>
+    <svg
+      :width="width"
+      :height="height"
+      class="svg"
+    >
+      <polyline
+        :points="points"
+        fill="none"
+        stroke="#38bdf8"
+        stroke-width="2"
+      />
     </svg>
-    <div class="labels" v-if="props.labels.length">
+    <div
+      v-if="props.labels.length"
+      class="labels"
+    >
       <span>{{ props.labels[0] }}</span>
       <span>{{ props.labels[props.labels.length - 1] }}</span>
     </div>

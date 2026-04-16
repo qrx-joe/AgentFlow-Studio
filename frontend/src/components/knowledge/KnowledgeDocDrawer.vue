@@ -22,25 +22,54 @@ const emit = defineEmits<{
     size="420px"
     @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
-    <div v-if="props.selectedDoc" class="doc-detail">
-      <div class="detail-row"><span class="label">文件名</span>{{ props.selectedDoc.filename }}</div>
-      <div class="detail-row"><span class="label">类型</span>{{ props.selectedDoc.fileType || '-' }}</div>
-      <div class="detail-row"><span class="label">大小</span>{{ props.selectedDoc.fileSize || '-' }}</div>
-
-      <div class="detail-section">
-        <div class="section-title">分块参数</div>
-        <div class="detail-row"><span class="label">size</span>{{ props.selectedDoc.metadata?.chunkSize ?? '-' }}</div>
-        <div class="detail-row"><span class="label">overlap</span>{{ props.selectedDoc.metadata?.overlap ?? '-' }}</div>
-        <div class="detail-row"><span class="label">chunks</span>{{ props.selectedDoc.metadata?.chunkCount ?? '-' }}</div>
-        <div class="detail-row"><span class="label">chars</span>{{ props.selectedDoc.metadata?.charCount ?? '-' }}</div>
-        <div class="detail-row"><span class="label">dim</span>{{ props.selectedDoc.metadata?.embeddingDim ?? '-' }}</div>
-        <div class="detail-row"><span class="label">chunkMs</span>{{ props.selectedDoc.metadata?.chunkMs ?? '-' }}</div>
-        <div class="detail-row"><span class="label">embedMs</span>{{ props.selectedDoc.metadata?.embedMs ?? '-' }}</div>
-        <div class="detail-row"><span class="label">processMs</span>{{ props.selectedDoc.metadata?.processMs ?? '-' }}</div>
+    <div
+      v-if="props.selectedDoc"
+      class="doc-detail"
+    >
+      <div class="detail-row">
+        <span class="label">文件名</span>{{ props.selectedDoc.filename }}
+      </div>
+      <div class="detail-row">
+        <span class="label">类型</span>{{ props.selectedDoc.fileType || '-' }}
+      </div>
+      <div class="detail-row">
+        <span class="label">大小</span>{{ props.selectedDoc.fileSize || '-' }}
       </div>
 
       <div class="detail-section">
-        <div class="section-title">分块示例</div>
+        <div class="section-title">
+          分块参数
+        </div>
+        <div class="detail-row">
+          <span class="label">size</span>{{ props.selectedDoc.metadata?.chunkSize ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">overlap</span>{{ props.selectedDoc.metadata?.overlap ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">chunks</span>{{ props.selectedDoc.metadata?.chunkCount ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">chars</span>{{ props.selectedDoc.metadata?.charCount ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">dim</span>{{ props.selectedDoc.metadata?.embeddingDim ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">chunkMs</span>{{ props.selectedDoc.metadata?.chunkMs ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">embedMs</span>{{ props.selectedDoc.metadata?.embedMs ?? '-' }}
+        </div>
+        <div class="detail-row">
+          <span class="label">processMs</span>{{ props.selectedDoc.metadata?.processMs ?? '-' }}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-title">
+          分块示例
+        </div>
         <div class="chunk-config">
           <el-input-number
             :model-value="props.chunkLimit"
@@ -49,19 +78,36 @@ const emit = defineEmits<{
             :step="1"
             @update:model-value="(value: number | undefined) => emit('update:chunkLimit', Number(value))"
           />
-          <el-button size="small" @click="emit('refresh')">刷新</el-button>
+          <el-button
+            size="small"
+            @click="emit('refresh')"
+          >
+            刷新
+          </el-button>
         </div>
-        <div v-if="props.chunkLoading" class="loading">加载中...</div>
-        <div v-else class="chunks">
+        <div
+          v-if="props.chunkLoading"
+          class="loading"
+        >
+          加载中...
+        </div>
+        <div
+          v-else
+          class="chunks"
+        >
           <div
             v-for="chunk in props.documentChunks"
-            :key="chunk.id"
             :id="`chunk-${chunk.id}`"
+            :key="chunk.id"
             class="chunk-item"
             :class="{ focused: chunk.id === props.focusedChunkId }"
           >
-            <div class="chunk-title">#{{ chunk.chunkIndex }}</div>
-            <div class="chunk-content">{{ chunk.content }}</div>
+            <div class="chunk-title">
+              #{{ chunk.chunkIndex }}
+            </div>
+            <div class="chunk-content">
+              {{ chunk.content }}
+            </div>
           </div>
         </div>
       </div>

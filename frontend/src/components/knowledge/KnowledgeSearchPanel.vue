@@ -152,16 +152,24 @@ const applyPreset = (preset: typeof presets[0]) => {
         </div>
       </div>
 
-      <button class="advanced-toggle" @click="showAdvanced = !showAdvanced">
+      <button
+        class="advanced-toggle"
+        @click="showAdvanced = !showAdvanced"
+      >
         <span>{{ showAdvanced ? '收起' : '高级设置' }}</span>
         <span class="toggle-icon">{{ showAdvanced ? '▲' : '▼' }}</span>
       </button>
     </div>
 
     <!-- 高级设置 -->
-    <div v-if="showAdvanced" class="advanced-panel">
+    <div
+      v-if="showAdvanced"
+      class="advanced-panel"
+    >
       <div class="advanced-section">
-        <h4 class="section-title">权重配置</h4>
+        <h4 class="section-title">
+          权重配置
+        </h4>
         <div class="weight-controls">
           <div class="weight-item">
             <label class="weight-label">
@@ -200,7 +208,9 @@ const applyPreset = (preset: typeof presets[0]) => {
       </div>
 
       <div class="advanced-section">
-        <h4 class="section-title">关键词算法</h4>
+        <h4 class="section-title">
+          关键词算法
+        </h4>
         <div class="keyword-modes">
           <button
             v-for="mode in [
@@ -213,8 +223,12 @@ const applyPreset = (preset: typeof presets[0]) => {
             :class="{ active: props.keywordMode === mode.value }"
             @click="emit('update:keywordMode', mode.value as any)"
           >
-            <div class="mode-label">{{ mode.label }}</div>
-            <div class="mode-desc">{{ mode.desc }}</div>
+            <div class="mode-label">
+              {{ mode.label }}
+            </div>
+            <div class="mode-desc">
+              {{ mode.desc }}
+            </div>
           </button>
         </div>
       </div>

@@ -70,8 +70,14 @@ const onDragStart = (event: DragEvent, nodeType: string) => {
     </div>
 
     <div class="library-content">
-      <div v-for="group in nodeGroups" :key="group.title" class="group">
-        <div class="group-title">{{ group.title }}</div>
+      <div
+        v-for="group in nodeGroups"
+        :key="group.title"
+        class="group"
+      >
+        <div class="group-title">
+          {{ group.title }}
+        </div>
         <div class="grid-container">
           <div
             v-for="node in group.items"
@@ -80,13 +86,18 @@ const onDragStart = (event: DragEvent, nodeType: string) => {
             draggable="true"
             @dragstart="onDragStart($event, node.type)"
           >
-            <div class="icon-wrapper" :style="{ background: node.color + '15', color: node.color }">
+            <div
+              class="icon-wrapper"
+              :style="{ background: node.color + '15', color: node.color }"
+            >
               <el-icon><component :is="node.icon" /></el-icon>
             </div>
             <div class="info">
               <span class="label">{{ node.label }}</span>
             </div>
-            <div class="hover-tip">{{ node.desc }}</div>
+            <div class="hover-tip">
+              {{ node.desc }}
+            </div>
           </div>
         </div>
       </div>

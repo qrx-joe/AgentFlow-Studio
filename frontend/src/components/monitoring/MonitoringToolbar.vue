@@ -17,7 +17,13 @@ const emit = defineEmits<{
 <template>
   <div class="toolbar">
     <span class="label">时间范围(天)</span>
-    <el-input-number :model-value="props.days" :min="1" :max="30" :step="1" @update:model-value="emit('update:days', $event)" />
+    <el-input-number
+      :model-value="props.days"
+      :min="1"
+      :max="30"
+      :step="1"
+      @update:model-value="emit('update:days', $event)"
+    />
     <span class="label">失败阈值</span>
     <el-input-number
       :model-value="props.failureThreshold"
@@ -34,8 +40,19 @@ const emit = defineEmits<{
       :step="0.05"
       @update:model-value="emit('update:cacheHitThreshold', $event)"
     />
-    <el-button size="small" @click="emit('refresh')">刷新</el-button>
-    <el-button size="small" type="primary" @click="emit('export')">导出CSV</el-button>
+    <el-button
+      size="small"
+      @click="emit('refresh')"
+    >
+      刷新
+    </el-button>
+    <el-button
+      size="small"
+      type="primary"
+      @click="emit('export')"
+    >
+      导出CSV
+    </el-button>
   </div>
 </template>
 

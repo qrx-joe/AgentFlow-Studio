@@ -198,15 +198,15 @@ const handleDebugRun = async (testData: any) => {
 <template>
   <div class="studio-layout">
     <StudioHeader
-        :workflow-name="workflowStore.workflowName"
-        :workflow-description="workflowStore.workflowDescription"
-        :workflow-color="workflowStore.workflowColor"
-        @run="handleShowDebug"
-        @publish="handlePublish"
-        @save="handleSave"
-        @update:workflow-name="workflowStore.workflowName = $event"
-        @update:workflow-description="workflowStore.workflowDescription = $event"
-        @update:workflow-color="workflowStore.workflowColor = $event"
+      :workflow-name="workflowStore.workflowName"
+      :workflow-description="workflowStore.workflowDescription"
+      :workflow-color="workflowStore.workflowColor"
+      @run="handleShowDebug"
+      @publish="handlePublish"
+      @save="handleSave"
+      @update:workflow-name="workflowStore.workflowName = $event"
+      @update:workflow-description="workflowStore.workflowDescription = $event"
+      @update:workflow-color="workflowStore.workflowColor = $event"
     />
 
     <div class="studio-body">
@@ -225,30 +225,30 @@ const handleDebugRun = async (testData: any) => {
              but we might need to hide its internal Toolbar since we moved actions to Header
         -->
         <div class="canvas-wrapper">
-             <WorkflowCanvasPanel
-                :flow-id="FLOW_ID"
-                v-model:nodes="workflowStore.nodes"
-                v-model:edges="workflowStore.edges"
-                :node-types="nodeTypes"
-                :edge-types="edgeTypes"
-                :saving="false"
-                :executing="workflowStore.executing"
-                :replaying="replaying"
-                :replay-speed="1000"
-                :replay-progress="0"
-                :replay-total="0"
-                :preserve-trail="false"
-                :compare-last="false"
-                :snapshot-options="[]"
-                :selected-snapshot-id="''"
-                :apply-snapshot-meta="false"
-                :on-drag-over="onDragOver"
-                :on-drop="onDrop"
-                @node-click="onNodeClick"
-                @edge-click="onEdgeClick"
-                @pane-click="onPaneClick"
-             />
-             <!-- Note: WorkflowCanvasPanel currently has a Toolbar inside. 
+          <WorkflowCanvasPanel
+            v-model:nodes="workflowStore.nodes"
+            v-model:edges="workflowStore.edges"
+            :flow-id="FLOW_ID"
+            :node-types="nodeTypes"
+            :edge-types="edgeTypes"
+            :saving="false"
+            :executing="workflowStore.executing"
+            :replaying="replaying"
+            :replay-speed="1000"
+            :replay-progress="0"
+            :replay-total="0"
+            :preserve-trail="false"
+            :compare-last="false"
+            :snapshot-options="[]"
+            :selected-snapshot-id="''"
+            :apply-snapshot-meta="false"
+            :on-drag-over="onDragOver"
+            :on-drop="onDrop"
+            @node-click="onNodeClick"
+            @edge-click="onEdgeClick"
+            @pane-click="onPaneClick"
+          />
+          <!-- Note: WorkflowCanvasPanel currently has a Toolbar inside. 
                   In Phase 2 we should strip it or make it hideable via props. 
                   For now we live with duplicate controls or ignore it. 
              -->
@@ -261,12 +261,12 @@ const handleDebugRun = async (testData: any) => {
       <!-- Right: Properties -->
       <aside class="studio-right">
         <PropertiesPanel
-            :node="selectedNode"
-            :edge="selectedEdge"
-            @update="handleUpdateNode"
-            @delete="handleDeleteNode"
-            @update-edge="handleUpdateEdge"
-            @delete-edge="handleDeleteEdge"
+          :node="selectedNode"
+          :edge="selectedEdge"
+          @update="handleUpdateNode"
+          @delete="handleDeleteNode"
+          @update-edge="handleUpdateEdge"
+          @delete-edge="handleDeleteEdge"
         />
       </aside>
     </div>
