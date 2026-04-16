@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { VideoPlay, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useWorkflowStore } from '@/stores/workflow'
 
 interface ExecutionLog {
   id: string
@@ -12,13 +13,6 @@ interface ExecutionLog {
   message: string
   data?: any
   duration?: number
-}
-
-interface ExecutionResult {
-  status: 'success' | 'error'
-  output?: any
-  error?: string
-  duration: number
 }
 
 interface InputField {
@@ -35,19 +29,125 @@ defineProps<{
 
 const emit = defineEmits(['update:visible', 'run'])
 
+const workflowStore = useWorkflowStore()
+
 // 测试数据
 const testData = ref<Record<string, any>>({
   input: '什么是人工智能？'
 })
 
-// 执行日志
-const executionLogs = ref<ExecutionLog[]>([])
+// 执行日志（由后端真实数据转换而来）
+const displayLogs = computed<ExecutionLog[]>(() => {
+  const response = workflowStore.lastExecutionResponse
+  if (!response) return []
+
+  const logs: ExecutionLog[] = []
+  const steps = response.steps || []
+  const plainLogs = response.logs || []
+
+  // 开始日志
+  logs.push({
+    id: 'start',
+    nodeId: 'start',
+    nodeName: '开始',
+    timestamp: new Date().toLocaleTimeString(),
+    level: 'info',
+    message: '工作流开始执行',
+    data: testData.value
+  })
+
+  // 步骤日志
+  for (const step of steps) {
+    const node = workflowStore.nodes.find(n => n.id === step.nodeId)
+    const nodeName = node?.data?.label || node?.type || step.nodeId
+    const levelMap: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
+      running: 'info',
+      success: 'success',
+      failed: 'error',
+      skipped: 'warning'
+    }
+
+    let message = `节点执行${step.status || '完成'}`
+    if (step.status === 'success') message = '节点执行成功'
+    if (step.status === 'failed') message = '节点执行失败'
+    if (step.status === 'skipped') message = '节点已跳过'
+
+    logs.push({
+      id: `step-${step.nodeId}-${step.startTime}`,
+      nodeId: step.nodeId,
+      nodeName,
+      timestamp: new Date(step.endTime || step.startTime).toLocaleTimeString(),
+      level: levelMap[step.status] || 'info',
+      message,
+      data: step.output,
+      duration: step.duration
+    })
+  }
+
+  // 后端原始字符串日志（过滤掉已在步骤中体现的简单日志）
+  for (const log of plainLogs) {
+    if (typeof log !== 'string') continue
+    // 跳过已在步骤中体现的节点执行日志
+    if (log.startsWith('执行节点：') || log.startsWith('到达结束节点') || log.startsWith('条件节点已评估')) {
+      continue
+    }
+    logs.push({
+      id: `log-${log.slice(0, 20)}-${Date.now()}`,
+      nodeId: 'system',
+      nodeName: '系统',
+      timestamp: new Date().toLocaleTimeString(),
+      level: log.includes('失败') || log.includes('错误') ? 'error' : 'info',
+      message: log
+    })
+  }
+
+  // 结束日志
+  const duration = steps.length > 0
+    ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
+    : 0
+
+  if (response.status === 'completed') {
+    logs.push({
+      id: 'end',
+      nodeId: 'end',
+      nodeName: '结束',
+      timestamp: new Date().toLocaleTimeString(),
+      level: 'success',
+      message: '工作流执行完成',
+      duration
+    })
+  } else if (response.status === 'failed') {
+    logs.push({
+      id: 'end',
+      nodeId: 'end',
+      nodeName: '结束',
+      timestamp: new Date().toLocaleTimeString(),
+      level: 'error',
+      message: `工作流执行失败: ${response.error || '未知错误'}`,
+      duration
+    })
+  }
+
+  return logs
+})
 
 // 执行结果
-const executionResult = ref<ExecutionResult | null>(null)
+const executionResult = computed(() => {
+  const response = workflowStore.lastExecutionResponse
+  if (!response) return null
 
-// 执行状态
-const isRunning = ref(false)
+  const steps = response.steps || []
+  const duration = steps.length > 0
+    ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
+    : 0
+
+  return {
+    status: response.status === 'completed' ? 'success' : 'error',
+    output: response.output,
+    error: response.error,
+    duration
+  }
+})
 
 // 日志类型映射
 const getLogType = (level: string) => {
@@ -62,128 +162,20 @@ const getLogType = (level: string) => {
 
 // 运行测试
 const runTest = async () => {
-  if (isRunning.value) return
-
-  isRunning.value = true
-  executionLogs.value = []
-  executionResult.value = null
+  if (workflowStore.executing) return
 
   try {
-    // 添加开始日志
-    addLog({
-      nodeId: 'start',
-      nodeName: '开始',
-      level: 'info',
-      message: '工作流开始执行',
-      data: testData.value
-    })
-
     // 触发执行
     emit('run', testData.value)
-
-    // 模拟执行过程（实际应该从后端获取）
-    await simulateExecution()
-
   } catch (error: any) {
-    executionResult.value = {
-      status: 'error',
-      error: error.message,
-      duration: 0
-    }
     ElMessage.error('执行失败')
-  } finally {
-    isRunning.value = false
   }
 }
 
-// 添加日志
-const addLog = (log: Omit<ExecutionLog, 'id' | 'timestamp'>) => {
-  executionLogs.value.push({
-    ...log,
-    id: Date.now().toString(),
-    timestamp: new Date().toLocaleTimeString()
-  })
-}
-
-// 模拟执行（实际应该通过 WebSocket 或轮询获取实时日志）
-const simulateExecution = async () => {
-  const startTime = Date.now()
-
-  // 模拟知识检索
-  await new Promise(resolve => setTimeout(resolve, 800))
-  addLog({
-    nodeId: 'knowledge-1',
-    nodeName: '知识检索',
-    level: 'info',
-    message: '正在检索相关知识...',
-    duration: 800
-  })
-
-  await new Promise(resolve => setTimeout(resolve, 500))
-  addLog({
-    nodeId: 'knowledge-1',
-    nodeName: '知识检索',
-    level: 'success',
-    message: '检索完成，找到 3 条相关文档',
-    data: {
-      topK: 3,
-      results: [
-        { score: 0.92, content: '人工智能是...' },
-        { score: 0.85, content: 'AI 的发展历史...' },
-        { score: 0.78, content: '机器学习是...' }
-      ]
-    },
-    duration: 500
-  })
-
-  // 模拟 LLM 调用
-  await new Promise(resolve => setTimeout(resolve, 1200))
-  addLog({
-    nodeId: 'llm-1',
-    nodeName: 'LLM',
-    level: 'info',
-    message: '正在调用大模型生成回答...',
-    duration: 1200
-  })
-
-  await new Promise(resolve => setTimeout(resolve, 800))
-  addLog({
-    nodeId: 'llm-1',
-    nodeName: 'LLM',
-    level: 'success',
-    message: 'LLM 调用成功',
-    data: {
-      model: 'deepseek-chat',
-      tokens: 256,
-      response: '人工智能（Artificial Intelligence，AI）是计算机科学的一个分支...'
-    },
-    duration: 800
-  })
-
-  // 完成
-  const duration = Date.now() - startTime
-  addLog({
-    nodeId: 'end',
-    nodeName: '结束',
-    level: 'success',
-    message: '工作流执行完成',
-    duration: duration
-  })
-
-  executionResult.value = {
-    status: 'success',
-    output: {
-      answer: '人工智能（Artificial Intelligence，AI）是计算机科学的一个分支，致力于创建能够执行通常需要人类智能的任务的系统。',
-      sources: ['文档1', '文档2', '文档3']
-    },
-    duration
-  }
-}
-
-// 清空日志
+// 清空日志（同时清空 store 中的结果）
 const clearLogs = () => {
-  executionLogs.value = []
-  executionResult.value = null
+  workflowStore.lastExecutionResponse = null
+  workflowStore.executionLogs = []
 }
 
 // 关闭面板
@@ -210,10 +202,10 @@ const handleClose = () => {
           <el-button
             type="primary"
             :icon="VideoPlay"
-            :loading="isRunning"
+            :loading="workflowStore.executing"
             @click="runTest"
           >
-            {{ isRunning ? '执行中...' : '运行测试' }}
+            {{ workflowStore.executing ? '执行中...' : '运行测试' }}
           </el-button>
         </div>
         <div class="section-content">
@@ -246,13 +238,13 @@ const handleClose = () => {
           <h3 class="section-title">
             执行日志
             <el-badge
-              v-if="executionLogs.length > 0"
-              :value="executionLogs.length"
+              v-if="displayLogs.length > 0"
+              :value="displayLogs.length"
               class="log-badge"
             />
           </h3>
           <el-button
-            v-if="executionLogs.length > 0"
+            v-if="displayLogs.length > 0"
             text
             :icon="Delete"
             @click="clearLogs"
@@ -262,13 +254,13 @@ const handleClose = () => {
         </div>
         <div class="section-content">
           <el-empty
-            v-if="executionLogs.length === 0"
+            v-if="displayLogs.length === 0"
             description="暂无执行日志"
             :image-size="80"
           />
           <el-timeline v-else>
             <el-timeline-item
-              v-for="log in executionLogs"
+              v-for="log in displayLogs"
               :key="log.id"
               :timestamp="log.timestamp"
               :type="getLogType(log.level)"
@@ -278,7 +270,7 @@ const handleClose = () => {
                 <div class="log-header">
                   <span class="log-node">{{ log.nodeName }}</span>
                   <span
-                    v-if="log.duration"
+                    v-if="log.duration !== undefined"
                     class="log-duration"
                   >
                     {{ log.duration }}ms
@@ -288,7 +280,7 @@ const handleClose = () => {
                   {{ log.message }}
                 </div>
                 <div
-                  v-if="log.data"
+                  v-if="log.data !== undefined && log.data !== null"
                   class="log-data"
                 >
                   <el-collapse>
@@ -340,7 +332,7 @@ const handleClose = () => {
             show-icon
           >
             <template #title>
-              执行失败: {{ executionResult.error }}
+              执行失败: {{ executionResult.error || '未知错误' }}
             </template>
           </el-alert>
           <div class="output-data">

@@ -16,6 +16,7 @@ export const useWorkflowStore = defineStore('workflow', {
     executing: false,
     executionLogs: [] as string[],
     executions: [] as WorkflowExecution[],
+    lastExecutionResponse: null as any,
   }),
 
   actions: {
@@ -94,6 +95,8 @@ export const useWorkflowStore = defineStore('workflow', {
 
       try {
         const response = await workflowApi.execute(this.workflowId, input)
+        this.lastExecutionResponse = response
+
         // 将后端返回的执行日志同步到前端面板
         if (Array.isArray(response.logs)) {
           this.executionLogs = response.logs

@@ -140,7 +140,7 @@ const handleDeleteEdge = (id: string) => {
     selectedEdgeId.value = ''
 }
 
-const handleRun = async () => {
+const handleRun = async (input?: string) => {
     workflowStore.executing = true
     try {
         // 如果没有保存过，先自动保存
@@ -148,7 +148,7 @@ const handleRun = async () => {
             await workflowStore.saveWorkflow()
             ElMessage.info('已自动保存工作流')
         }
-        await workflowStore.executeWorkflow('Test Input')
+        await workflowStore.executeWorkflow(input || 'Test Input')
         ElMessage.success('执行完成')
     } catch (e: any) {
         const msg = e?.response?.data?.message || e?.message || '执行失败'
@@ -190,8 +190,8 @@ const handleShowDebug = () => {
 
 const handleDebugRun = async (testData: any) => {
   console.log('[Debug] Running with test data:', testData)
-  // 这里可以调用实际的执行逻辑
-  await handleRun()
+  const input = testData?.input || 'Test Input'
+  await handleRun(input)
 }
 </script>
 
