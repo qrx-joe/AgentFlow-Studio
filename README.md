@@ -2,6 +2,8 @@
 
 轻量级类 Coze 智能体平台，支持可视化拖拽工作流编排、知识库构建与 RAG 检索，以及智能问答 Agent。
 
+[![ci](https://github.com/qrx-joe/AgentFlow-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/qrx-joe/AgentFlow-Studio/actions/workflows/ci.yml)
+
 ## 技术栈
 
 | 端   | 技术                                                   |
