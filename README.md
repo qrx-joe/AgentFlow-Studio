@@ -94,6 +94,7 @@ docker-compose up -d
 允许的 `type`：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`chore`、`ci`、`build`、`revert`
 
 示例：
+
 ```bash
 git commit -m "feat: 添加工作流执行日志面板"
 ```
