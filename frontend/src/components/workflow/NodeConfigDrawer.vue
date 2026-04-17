@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, onMounted } from 'vue'
 import type { WorkflowNode } from '@/types'
 import { ElMessage } from 'element-plus'
 import NodePolicyFields from '@/components/workflow/NodePolicyFields.vue'
+import { useKnowledgeStore } from '@/stores/knowledge'
 const props = defineProps<{
   modelValue: boolean
   node?: WorkflowNode
@@ -10,10 +11,18 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void; (e: 'save', nodeId: string, data: Record<string, any>): void }>()
+
+const knowledgeStore = useKnowledgeStore()
+
+onMounted(() => {
+  knowledgeStore.fetchKnowledgeBases()
+})
+
 const form = reactive({
   label: '',
   model: 'gpt-4o-mini',
   prompt: '',
+  dataset: '',
   topK: 3,
   scoreThreshold: 0.0,
   rerank: false,
@@ -38,6 +47,7 @@ watch(
     form.label = node.data?.label || ''
     form.model = node.data?.model || 'gpt-4o-mini'
     form.prompt = node.data?.prompt || ''
+    form.dataset = node.data?.dataset || ''
     form.topK = node.data?.topK || 3
     form.scoreThreshold = node.data?.scoreThreshold ?? 0.0
     form.rerank = Boolean(node.data?.rerank)
@@ -93,6 +103,7 @@ const handleSave = () => {
     label: form.label,
     model: form.model,
     prompt: form.prompt,
+    dataset: form.dataset,
     topK: form.topK,
     scoreThreshold: form.scoreThreshold,
     rerank: form.rerank,
@@ -147,6 +158,22 @@ const handleSave = () => {
         </el-form-item>
       </template>
       <template v-if="node?.type === 'knowledge'">
+        <el-form-item label="知识库">
+          <el-select
+            v-model="form.dataset"
+            placeholder="选择知识库"
+            :loading="knowledgeStore.loadingBases"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="kb in knowledgeStore.knowledgeBases"
+              :key="kb.id"
+              :label="kb.name"
+              :value="kb.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="TopK">
           <el-input-number
             v-model="form.topK"
