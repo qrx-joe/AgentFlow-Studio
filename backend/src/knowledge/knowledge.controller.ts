@@ -129,6 +129,7 @@ export class KnowledgeController {
     @Body('vectorWeight') vectorWeight?: number,
     @Body('keywordWeight') keywordWeight?: number,
     @Body('keywordMode') keywordMode?: 'bm25' | 'tsrank' | 'trgm',
+    @Body('knowledgeBaseId') knowledgeBaseId?: string,
   ) {
     return this.knowledgeService.searchWithStats(query, topK || 3, {
       scoreThreshold,
@@ -137,6 +138,7 @@ export class KnowledgeController {
       vectorWeight,
       keywordWeight,
       keywordMode,
+      knowledgeBaseId,
     });
   }
 

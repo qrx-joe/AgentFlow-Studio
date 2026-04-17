@@ -32,7 +32,12 @@ export class KnowledgeSearchService {
     const optionsKey = this.buildSearchOptionsKey(options);
     const runKeyword =
       options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
-    const vectorResults = await this.ragService.search(query, topK * 2, optionsKey); // 多取一些用于融合
+    const vectorResults = await this.ragService.search(
+      query,
+      topK * 2,
+      optionsKey,
+      options.knowledgeBaseId,
+    ); // 多取一些用于融合
     let keywordResults: SearchResult[] = [];
     if (runKeyword) {
       keywordResults = await this.ragService.searchKeyword(
@@ -40,10 +45,17 @@ export class KnowledgeSearchService {
         topK * 2,
         optionsKey,
         options.keywordMode || 'tsrank',
+        options.knowledgeBaseId,
       );
     } else if (vectorResults.length < topK) {
       // 向量结果不足时，自动 fallback 到关键词搜索
-      keywordResults = await this.ragService.searchKeyword(query, topK * 2, optionsKey, 'trgm');
+      keywordResults = await this.ragService.searchKeyword(
+        query,
+        topK * 2,
+        optionsKey,
+        'trgm',
+        options.knowledgeBaseId,
+      );
     }
 
     // 3. 融合结果
@@ -61,13 +73,19 @@ export class KnowledgeSearchService {
     const optionsKey = this.buildSearchOptionsKey(options);
     const runKeyword =
       options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
-    const vectorResults = await this.ragService.search(query, topK, optionsKey);
+    const vectorResults = await this.ragService.search(
+      query,
+      topK,
+      optionsKey,
+      options.knowledgeBaseId,
+    );
     const keywordResults = runKeyword
       ? await this.ragService.searchKeyword(
           query,
           topK,
           optionsKey,
           options.keywordMode || 'tsrank',
+          options.knowledgeBaseId,
         )
       : [];
     const merged = this.mergeResults(vectorResults, keywordResults);
@@ -87,6 +105,7 @@ export class KnowledgeSearchService {
       vectorWeight: typeof options.vectorWeight === 'number' ? options.vectorWeight : null,
       keywordWeight: typeof options.keywordWeight === 'number' ? options.keywordWeight : null,
       keywordMode: options.keywordMode || 'tsrank',
+      knowledgeBaseId: options.knowledgeBaseId || null,
     };
     return Buffer.from(JSON.stringify(normalized)).toString('base64');
   }
@@ -124,11 +143,17 @@ export class KnowledgeSearchService {
     // 应用分数阈值过滤
     if (typeof options.scoreThreshold === 'number') {
       const scoreThreshold = options.scoreThreshold;
-      // 注意：RRF 分数范围通常在 0-0.03 之间（因为 1/60 ≈ 0.016），需要调整阈值理解
-      // 这里我们使用归一化后的分数或直接使用 RRF 分数
       filtered = filtered.filter((item) => {
-        const score = useHybrid ? (item.rrfScore ?? 0) : (item.similarity ?? 0);
-        return score >= scoreThreshold;
+        if (useHybrid) {
+          // hybrid 模式下：有向量相似度的按向量相似度过滤；纯关键词命中的不过滤
+          //（因为 keywordScore 范围不统一，且关键词匹配本身已是相关性强信号）
+          if (typeof item.similarity === 'number') {
+            return item.similarity >= scoreThreshold;
+          }
+          return true;
+        }
+        // 纯向量模式
+        return (item.similarity ?? 0) >= scoreThreshold;
       });
     }
 

@@ -23,9 +23,15 @@ export class RagService {
     private metricsService: MetricsService,
   ) {}
 
-  async search(query: string, topK = 3, cacheKeySuffix = ''): Promise<SearchResult[]> {
+  async search(
+    query: string,
+    topK = 3,
+    cacheKeySuffix = '',
+    knowledgeBaseId?: string,
+  ): Promise<SearchResult[]> {
     const suffix = cacheKeySuffix ? `:${cacheKeySuffix}` : '';
-    const cacheKey = `rag:${Buffer.from(`${topK}:${query}${suffix}`).toString('base64')}`;
+    const kbSuffix = knowledgeBaseId ? `:kb:${knowledgeBaseId}` : '';
+    const cacheKey = `rag:${Buffer.from(`${topK}:${query}${suffix}${kbSuffix}`).toString('base64')}`;
 
     const memoryHit = this.readMemoryCache(cacheKey);
     if (memoryHit) {
@@ -49,10 +55,11 @@ export class RagService {
       SELECT id, content, document_id,
              1 - (embedding <=> $1::vector) as similarity
       FROM document_chunks
+      WHERE ($3::uuid IS NULL OR document_id = $3::uuid)
       ORDER BY embedding <=> $1::vector
       LIMIT $2
     `,
-      [JSON.stringify(queryEmbedding), topK],
+      [JSON.stringify(queryEmbedding), topK, knowledgeBaseId || null],
     );
 
     const mapped = results
@@ -75,13 +82,15 @@ export class RagService {
     topK = 3,
     cacheKeySuffix = '',
     mode: 'bm25' | 'tsrank' | 'trgm' = 'bm25',
+    knowledgeBaseId?: string,
   ): Promise<SearchResult[]> {
     if (!query || !query.trim()) {
       return [];
     }
 
     const suffix = cacheKeySuffix ? `:${cacheKeySuffix}` : '';
-    const cacheKey = `ragkw:${Buffer.from(`${topK}:${query}${suffix}`).toString('base64')}`;
+    const kbSuffix = knowledgeBaseId ? `:kb:${knowledgeBaseId}` : '';
+    const cacheKey = `ragkw:${Buffer.from(`${topK}:${query}${suffix}${kbSuffix}`).toString('base64')}`;
 
     const memoryHit = this.readMemoryCache(cacheKey);
     if (memoryHit) {
@@ -97,6 +106,7 @@ export class RagService {
     }
     void this.metricsService.recordRagCacheMiss();
 
+    const likePattern = `%${query}%`;
     const results =
       mode === 'trgm'
         ? await this.chunkRepo.query(
@@ -104,22 +114,23 @@ export class RagService {
             SELECT id, content, document_id,
                    similarity(content, $2) as keyword_score
             FROM document_chunks
-            WHERE content ILIKE $3
+            WHERE ($4::uuid IS NULL OR document_id = $4::uuid) AND content ILIKE $3
             ORDER BY keyword_score DESC
             LIMIT $1
           `,
-            [topK, query, `%${query}%`],
+            [topK, query, likePattern, knowledgeBaseId || null],
           )
         : await this.chunkRepo.query(
             `
             SELECT id, content, document_id,
                    ${mode === 'tsrank' ? 'ts_rank' : 'ts_rank_cd'}(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
             FROM document_chunks
-            WHERE to_tsvector('simple', content) @@ plainto_tsquery('simple', $2)
+            WHERE ($3::uuid IS NULL OR document_id = $3::uuid)
+              AND (to_tsvector('simple', content) @@ plainto_tsquery('simple', $2) OR content ILIKE $4)
             ORDER BY keyword_score DESC
             LIMIT $1
           `,
-            [topK, query],
+            [topK, query, knowledgeBaseId || null, likePattern],
           );
 
     const mapped = results.map((row: any) => ({

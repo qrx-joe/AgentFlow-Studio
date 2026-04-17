@@ -201,6 +201,7 @@ export const useKnowledgeStore = defineStore('knowledge', {
         vectorWeight?: number;
         keywordWeight?: number;
         keywordMode?: 'bm25' | 'tsrank' | 'trgm';
+        knowledgeBaseId?: string;
       },
     ) {
       this.searching = true;

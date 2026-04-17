@@ -98,7 +98,7 @@ const handleUpload = async (file: File) => {
 };
 
 const handleSearch = async () => {
-  if (!searchQuery.value.trim()) return;
+  if (!searchQuery.value.trim() || !kb.value) return;
   await knowledgeStore.search(searchQuery.value, topK.value, {
     scoreThreshold: scoreThreshold.value,
     hybrid: hybrid.value,
@@ -106,6 +106,7 @@ const handleSearch = async () => {
     vectorWeight: vectorWeight.value,
     keywordWeight: keywordWeight.value,
     keywordMode: keywordMode.value,
+    knowledgeBaseId: kb.value.id,
   });
 };
 

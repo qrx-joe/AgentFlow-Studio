@@ -49,12 +49,12 @@ const presets = [
   {
     name: '混合检索',
     icon: '🔀',
-    config: { hybrid: true, rerank: false, scoreThreshold: 0.5, topK: 5 },
+    config: { hybrid: true, rerank: false, scoreThreshold: 0.2, topK: 5 },
   },
   {
     name: '智能重排',
     icon: '⚡',
-    config: { hybrid: true, rerank: true, scoreThreshold: 0.3, topK: 10 },
+    config: { hybrid: true, rerank: true, scoreThreshold: 0.1, topK: 10 },
   },
 ];
 

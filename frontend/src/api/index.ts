@@ -56,6 +56,7 @@ export const knowledgeApi = {
       vectorWeight?: number;
       keywordWeight?: number;
       keywordMode?: 'bm25' | 'tsrank' | 'trgm';
+      knowledgeBaseId?: string;
     },
   ) => request.post('/knowledge/search', { query, topK, ...options }),
   eval: (payload: {

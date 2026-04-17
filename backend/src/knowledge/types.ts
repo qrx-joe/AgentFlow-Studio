@@ -22,4 +22,5 @@ export interface KnowledgeSearchOptions {
   vectorWeight?: number;
   keywordWeight?: number;
   keywordMode?: 'bm25' | 'tsrank' | 'trgm';
+  knowledgeBaseId?: string;
 }
