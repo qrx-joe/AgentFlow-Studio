@@ -41,13 +41,12 @@ export class AgentService {
         const content = response.choices[0]?.message?.content;
         if (!content) {
           console.error('[AgentService] LLM returned empty content');
-          return '抱歉，AI 未能生成回复，请稍后重试。';
+          throw new Error('AI 未能生成回复');
         }
         return content;
       } catch (error) {
         console.error('[AgentService] LLM API call failed:', error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        return `抱歉，AI 服务暂时不可用：${errorMessage}`;
+        throw error;
       }
     }
 
@@ -87,9 +86,7 @@ export class AgentService {
         return;
       } catch (error) {
         console.error('[AgentService] LLM stream API call failed:', error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        yield `抱歉，AI 服务暂时不可用：${errorMessage}`;
-        return;
+        throw error;
       }
     }
 

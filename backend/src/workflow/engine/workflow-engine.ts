@@ -44,9 +44,6 @@ export class WorkflowEngine {
     this.metrics = [];
 
     try {
-      // 先检测是否存在静态环，避免执行时死循环
-      this.topologicalSort();
-
       // 跟踪节点访问次数，用于检测动态循环（条件分支可能导致的环）
       // 使用访问次数而不是简单Set，允许合法的多路径但防止真正的循环
       const nodeVisitCount = new Map<string, number>();
@@ -506,45 +503,5 @@ export class WorkflowEngine {
       throw new Error('工作流缺少触发节点');
     }
     return startNode;
-  }
-
-  // 拓扑排序：确保执行顺序
-  private topologicalSort(): string[] {
-    const inDegree = new Map<string, number>();
-    const adjList = new Map<string, string[]>();
-
-    this.nodes.forEach((_, id) => {
-      inDegree.set(id, 0);
-      adjList.set(id, []);
-    });
-
-    this.edges.forEach((edge) => {
-      adjList.get(edge.source)?.push(edge.target);
-      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
-    });
-
-    const queue: string[] = [];
-    inDegree.forEach((degree, id) => {
-      if (degree === 0) queue.push(id);
-    });
-
-    const result: string[] = [];
-    while (queue.length > 0) {
-      const nodeId = queue.shift() as string;
-      result.push(nodeId);
-
-      const neighbors = adjList.get(nodeId) || [];
-      for (const neighbor of neighbors) {
-        const newDegree = (inDegree.get(neighbor) || 1) - 1;
-        inDegree.set(neighbor, newDegree);
-        if (newDegree === 0) queue.push(neighbor);
-      }
-    }
-
-    if (result.length !== this.nodes.size) {
-      throw new Error('工作流存在循环依赖，无法执行');
-    }
-
-    return result;
   }
 }

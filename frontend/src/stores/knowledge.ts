@@ -54,7 +54,7 @@ export const defaultSettings: KnowledgeBaseSettings = {
   retrieval: {
     mode: 'hybrid',
     topK: 5,
-    scoreThreshold: 0.5,
+    scoreThreshold: 0.01,
     rerank: false,
     vectorWeight: 1,
     keywordWeight: 0.5,
