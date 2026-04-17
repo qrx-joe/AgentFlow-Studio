@@ -76,10 +76,51 @@ docker-compose up -d
 └── docs/                   # 项目文档
 ```
 
-## CI 流水线
+## 代码质量与自动化
+
+项目已配置完整的代码检查和自动化流水线：
+
+### 本地提交前检查（Husky）
+
+- **pre-commit**：lint-staged 自动对 staged 文件执行 `prettier --write` + `eslint --fix`
+- **commit-msg**：`commitlint` 强制提交信息符合 [Conventional Commits](https://www.conventionalcommits.org/) 规范
+
+允许的 `type`：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`chore`、`ci`、`build`、`revert`
+
+示例：
+```bash
+git commit -m "feat: 添加工作流执行日志面板"
+```
+
+### CI 流水线（GitHub Actions）
+
+每次 Push / PR 自动执行：
+
+1. `pnpm run format:check` — Prettier 格式检查
+2. `pnpm -C backend lint` / `pnpm -C frontend lint` — ESLint 检查
+3. `pnpm -C backend build` — 后端构建
+4. `pnpm -C backend test` — 后端 Jest 单元测试
+5. `pnpm -C backend test:workflow` — 工作流引擎测试
+6. `pnpm -C frontend build:ci` — 前端构建
+
+### 常用命令
 
 ```bash
-pnpm -C backend build && pnpm -C backend test:workflow && pnpm -C frontend build:ci
+# 格式化全部代码
+pnpm run format
+
+# 仅检查格式
+pnpm run format:check
+
+# 后端测试
+pnpm -C backend test
+
+# 工作流引擎测试
+pnpm -C backend test:workflow
+
+# 修复 ESLint 问题
+pnpm -C backend lint
+pnpm -C frontend lint
 ```
 
 ## 许可证
