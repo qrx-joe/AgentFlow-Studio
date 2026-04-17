@@ -27,7 +27,11 @@ const SUPPORTED_MIMETYPES = [
  */
 export function isSupportedFile(filename: string, mimetype: string): boolean {
   const ext = getFileExtension(filename).toLowerCase()
-  return SUPPORTED_EXTENSIONS.includes(ext) || SUPPORTED_MIMETYPES.includes(mimetype)
+  if (SUPPORTED_EXTENSIONS.includes(ext)) return true
+  if (SUPPORTED_MIMETYPES.includes(mimetype)) return true
+  // 兜底：所有 text/* 类型均按纯文本处理（如 text/x-log、text/plain;charset=utf-8 等）
+  if (mimetype?.startsWith('text/')) return true
+  return false
 }
 
 /**
@@ -81,7 +85,12 @@ export async function parseDocument(
  * 解析纯文本
  */
 function parseText(buffer: Buffer): ParsedDocument {
-  const content = cleanText(buffer.toString('utf-8'))
+  let raw = buffer.toString('utf-8')
+  // 移除 UTF-8 BOM 头，避免 BOM-only 文件被误判为空
+  if (raw.charCodeAt(0) === 0xFEFF) {
+    raw = raw.slice(1)
+  }
+  const content = cleanText(raw)
   return { content, metadata: { format: 'text' } }
 }
 

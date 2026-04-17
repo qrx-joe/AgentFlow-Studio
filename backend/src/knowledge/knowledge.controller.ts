@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Put, Body, UseInterceptors, UploadedFile, Query } from '@nestjs/common'
+import { Controller, Delete, Get, Param, Post, Put, Body, UseInterceptors, UploadedFile, Query, BadRequestException } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { KnowledgeService } from './knowledge.service'
 import { memoryStorage } from 'multer'
@@ -96,9 +96,9 @@ export class KnowledgeController {
       })
       console.log('[Upload] Success:', result.id)
       return result
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Upload] Error:', err)
-      throw err
+      throw new BadRequestException(err.message || '文档上传失败')
     }
   }
 

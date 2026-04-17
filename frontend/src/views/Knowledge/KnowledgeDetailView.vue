@@ -89,6 +89,7 @@ const handleUpload = async (file: File) => {
     ElMessage.success('上传成功')
   } catch (e: any) {
     console.error('[KnowledgeDetail] Upload failed:', e)
+    ElMessage.error(e.response?.data?.message || '上传失败')
   }
 }
 
