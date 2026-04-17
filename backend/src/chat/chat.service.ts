@@ -114,6 +114,10 @@ export class ChatService {
     let contextText = '';
     try {
       const searchResults = await this.knowledgeService.search(content, 3);
+      console.log(
+        `[ChatService] search for "${content.substring(0, 30)}..." returned ${searchResults.length} results`,
+        searchResults.map((r) => ({ doc: r.documentId?.slice(0, 8), sim: r.similarity })),
+      );
       sources = searchResults.map((item) => ({
         documentId: item.documentId,
         content: item.content,

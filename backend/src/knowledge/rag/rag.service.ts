@@ -55,12 +55,14 @@ export class RagService {
       [JSON.stringify(queryEmbedding), topK],
     );
 
-    const mapped = results.map((row: any) => ({
-      id: row.id,
-      documentId: row.document_id,
-      content: row.content,
-      similarity: Number(row.similarity),
-    }));
+    const mapped = results
+      .map((row: any) => ({
+        id: row.id,
+        documentId: row.document_id,
+        content: row.content,
+        similarity: Number(row.similarity),
+      }))
+      .filter((row: { similarity: number }) => row.similarity > 0.1);
 
     this.writeMemoryCache(cacheKey, mapped);
     await this.cacheManager.set(cacheKey, mapped, 300);

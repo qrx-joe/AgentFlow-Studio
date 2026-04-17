@@ -49,9 +49,28 @@ export class EmbeddingService {
     const dim = Number(process.env.EMBEDDING_DIMENSION || 1536);
     return texts.map((text) => {
       const vector = new Array(dim).fill(0);
-      for (let i = 0; i < text.length; i += 1) {
-        const idx = i % dim;
-        vector[idx] += text.charCodeAt(i) % 10;
+      const lower = text.toLowerCase();
+      for (let i = 0; i < lower.length; i += 1) {
+        const code = lower.charCodeAt(i);
+        // 单字特征
+        const idx1 = code % dim;
+        vector[idx1] += (code % 100) / 100;
+        // 双字特征（bigram）
+        if (i > 0) {
+          const prev = lower.charCodeAt(i - 1);
+          const idx2 = (((code * 31 + prev) % dim) + dim) % dim;
+          vector[idx2] += 0.5;
+        }
+        // 位置加权
+        const idx3 = (((code * 17 + i) % dim) + dim) % dim;
+        vector[idx3] += 0.3;
+      }
+      // L2 归一化，使余弦距离更有意义
+      const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
+      if (norm > 0) {
+        for (let i = 0; i < dim; i += 1) {
+          vector[i] /= norm;
+        }
       }
       return vector;
     });

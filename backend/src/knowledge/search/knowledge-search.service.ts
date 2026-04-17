@@ -33,14 +33,18 @@ export class KnowledgeSearchService {
     const runKeyword =
       options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
     const vectorResults = await this.ragService.search(query, topK * 2, optionsKey); // 多取一些用于融合
-    const keywordResults = runKeyword
-      ? await this.ragService.searchKeyword(
-          query,
-          topK * 2,
-          optionsKey,
-          options.keywordMode || 'tsrank',
-        )
-      : [];
+    let keywordResults: SearchResult[] = [];
+    if (runKeyword) {
+      keywordResults = await this.ragService.searchKeyword(
+        query,
+        topK * 2,
+        optionsKey,
+        options.keywordMode || 'tsrank',
+      );
+    } else if (vectorResults.length < topK) {
+      // 向量结果不足时，自动 fallback 到关键词搜索
+      keywordResults = await this.ragService.searchKeyword(query, topK * 2, optionsKey, 'trgm');
+    }
 
     // 3. 融合结果
     const merged = this.mergeResults(vectorResults, keywordResults);
