@@ -12,7 +12,14 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist/', 'node_modules/', 'scripts/', 'init-db.js', 'test-db.js'],
+  ignorePatterns: [
+    '.eslintrc.js',
+    'dist/',
+    'node_modules/',
+    'scripts/',
+    'init-db.js',
+    'test-db.js',
+  ],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
