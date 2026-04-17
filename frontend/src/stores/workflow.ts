@@ -41,7 +41,6 @@ export const useWorkflowStore = defineStore('workflow', {
       this.saving = true
       try {
         const payload = {
-          id: this.workflowId || undefined,
           name: this.workflowName,
           description: this.workflowDescription,
           color: this.workflowColor,
@@ -106,15 +105,18 @@ export const useWorkflowStore = defineStore('workflow', {
         if (response.steps && Array.isArray(response.steps)) {
           for (const step of response.steps) {
             const node = this.nodes.find(n => n.id === step.nodeId)
-            if (node) {
-              // Running state
-              node.data = { ...node.data, status: 'running' }
+            if (node && node.data) {
+              // Running state（直接修改属性，避免替换 data 引用导致 Vue Flow 重建节点）
+              node.data.status = 'running'
 
               // Simulate processing time
               await new Promise(resolve => setTimeout(resolve, step.duration || 500))
 
               // Completed state
-              node.data = { ...node.data, status: step.status || 'success', output: step.output }
+              node.data.status = step.status || 'success'
+              if (step.output !== undefined) {
+                node.data.output = step.output
+              }
             }
           }
         }

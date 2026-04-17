@@ -36,6 +36,9 @@ const testData = ref<Record<string, any>>({
   input: '什么是人工智能？'
 })
 
+// 格式化时间戳辅助函数
+const formatTime = (ts?: number) => ts ? new Date(ts).toLocaleTimeString() : '-'
+
 // 执行日志（由后端真实数据转换而来）
 const displayLogs = computed<ExecutionLog[]>(() => {
   const response = workflowStore.lastExecutionResponse
@@ -44,13 +47,14 @@ const displayLogs = computed<ExecutionLog[]>(() => {
   const logs: ExecutionLog[] = []
   const steps = response.steps || []
   const plainLogs = response.logs || []
+  const baseTime = steps[0]?.startTime
 
   // 开始日志
   logs.push({
     id: 'start',
     nodeId: 'start',
     nodeName: '开始',
-    timestamp: new Date().toLocaleTimeString(),
+    timestamp: formatTime(baseTime),
     level: 'info',
     message: '工作流开始执行',
     data: testData.value
@@ -76,7 +80,7 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       id: `step-${step.nodeId}-${step.startTime}`,
       nodeId: step.nodeId,
       nodeName,
-      timestamp: new Date(step.endTime || step.startTime).toLocaleTimeString(),
+      timestamp: formatTime(step.endTime || step.startTime),
       level: levelMap[step.status] || 'info',
       message,
       data: step.output,
@@ -85,6 +89,8 @@ const displayLogs = computed<ExecutionLog[]>(() => {
   }
 
   // 后端原始字符串日志（过滤掉已在步骤中体现的简单日志）
+  let logIndex = 0
+  const lastStepTime = steps.length > 0 ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) : baseTime
   for (const log of plainLogs) {
     if (typeof log !== 'string') continue
     // 跳过已在步骤中体现的节点执行日志
@@ -92,13 +98,14 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       continue
     }
     logs.push({
-      id: `log-${log.slice(0, 20)}-${Date.now()}`,
+      id: `log-${logIndex}-${log.slice(0, 20)}`,
       nodeId: 'system',
       nodeName: '系统',
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: formatTime(lastStepTime),
       level: log.includes('失败') || log.includes('错误') ? 'error' : 'info',
       message: log
     })
+    logIndex++
   }
 
   // 结束日志
@@ -111,7 +118,7 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       id: 'end',
       nodeId: 'end',
       nodeName: '结束',
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: formatTime(lastStepTime),
       level: 'success',
       message: '工作流执行完成',
       duration
@@ -121,7 +128,7 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       id: 'end',
       nodeId: 'end',
       nodeName: '结束',
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: formatTime(lastStepTime),
       level: 'error',
       message: `工作流执行失败: ${response.error || '未知错误'}`,
       duration
@@ -148,6 +155,28 @@ const executionResult = computed(() => {
     duration
   }
 })
+
+// 安全的 JSON 序列化（处理循环引用）
+const safeStringify = (value: any, space?: number): string => {
+  try {
+    return JSON.stringify(value, null, space)
+  } catch {
+    try {
+      const seen = new WeakSet()
+      return JSON.stringify(value, (_key, val) => {
+        if (typeof val === 'object' && val !== null) {
+          if (seen.has(val)) {
+            return '[Circular]'
+          }
+          seen.add(val)
+        }
+        return val
+      }, space)
+    } catch {
+      return String(value)
+    }
+  }
+}
 
 // 日志类型映射
 const getLogType = (level: string) => {
@@ -288,7 +317,7 @@ const handleClose = () => {
                       title="查看详细数据"
                       name="1"
                     >
-                      <pre class="data-preview">{{ JSON.stringify(log.data, null, 2) }}</pre>
+                      <pre class="data-preview">{{ safeStringify(log.data, 2) }}</pre>
                     </el-collapse-item>
                   </el-collapse>
                 </div>
@@ -339,7 +368,7 @@ const handleClose = () => {
             <div class="output-label">
               输出数据:
             </div>
-            <pre class="data-preview">{{ JSON.stringify(executionResult.output, null, 2) }}</pre>
+            <pre class="data-preview">{{ safeStringify(executionResult.output, 2) }}</pre>
           </div>
         </div>
       </section>

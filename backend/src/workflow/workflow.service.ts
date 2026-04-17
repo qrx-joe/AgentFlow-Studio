@@ -66,6 +66,7 @@ export class WorkflowService {
   }
 
   async remove(id: string) {
+    await this.executionRepo.delete({ workflowId: id })
     await this.workflowRepo.delete(id)
     return { id }
   }

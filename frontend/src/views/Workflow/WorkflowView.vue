@@ -53,7 +53,7 @@ onMounted(async () => {
     }
 })
 const FLOW_ID = 'workflow-canvas'
-const vueFlow = useVueFlow({ id: FLOW_ID })
+const vueFlow = useVueFlow(FLOW_ID)
 const { onConnect, addEdges, project } = vueFlow
 
 // Node & Edge Types
@@ -148,7 +148,7 @@ const handleRun = async (input?: string) => {
             await workflowStore.saveWorkflow()
             ElMessage.info('已自动保存工作流')
         }
-        await workflowStore.executeWorkflow(input || 'Test Input')
+        await workflowStore.executeWorkflow(input ?? 'Test Input')
         ElMessage.success('执行完成')
     } catch (e: any) {
         const msg = e?.response?.data?.message || e?.message || '执行失败'
@@ -190,7 +190,7 @@ const handleShowDebug = () => {
 
 const handleDebugRun = async (testData: any) => {
   console.log('[Debug] Running with test data:', testData)
-  const input = testData?.input || 'Test Input'
+  const input = testData?.input ?? 'Test Input'
   await handleRun(input)
 }
 </script>

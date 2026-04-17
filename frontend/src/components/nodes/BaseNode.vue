@@ -10,7 +10,7 @@ import {
 
 const props = defineProps<{
   id?: string
-  label: string
+  label?: string
   icon?: any
   color?: string
   selected?: boolean
