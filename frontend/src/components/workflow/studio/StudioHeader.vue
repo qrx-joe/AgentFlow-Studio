@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   ArrowLeft,
   VideoPlay,
@@ -12,113 +12,120 @@ import {
   Download,
   Upload,
   Delete,
-  Edit
-} from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+  Edit,
+} from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
-const router = useRouter()
-const lastSaved = ref('刚刚')
-const saving = ref(false)
+const router = useRouter();
+const lastSaved = ref('刚刚');
+const saving = ref(false);
 
 // 颜色列表
-const colors = ['#475569', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6']
+const colors = [
+  '#475569',
+  '#10b981',
+  '#8b5cf6',
+  '#f59e0b',
+  '#ef4444',
+  '#3b82f6',
+  '#ec4899',
+  '#14b8a6',
+];
 
 const props = defineProps<{
-  workflowName?: string
-  workflowDescription?: string
-  workflowColor?: string
-  autoSave?: boolean
-}>()
+  workflowName?: string;
+  workflowDescription?: string;
+  workflowColor?: string;
+  autoSave?: boolean;
+}>();
 
 const emit = defineEmits([
-  'back', 'run', 'publish', 'save', 'showVersions', 'showSettings',
-  'update:workflowName', 'update:workflowDescription', 'update:workflowColor'
-])
+  'back',
+  'run',
+  'publish',
+  'save',
+  'showVersions',
+  'showSettings',
+  'update:workflowName',
+  'update:workflowDescription',
+  'update:workflowColor',
+]);
 
 // 编辑对话框
-const editDialogVisible = ref(false)
+const editDialogVisible = ref(false);
 const editForm = ref({
   name: '',
   description: '',
-  color: '#475569'
-})
+  color: '#475569',
+});
 
 const handleBack = () => {
-  router.push('/')
-}
+  router.push('/');
+};
 
 const handleSave = async () => {
-  saving.value = true
+  saving.value = true;
   try {
-    emit('save')
-    lastSaved.value = '刚刚'
-    ElMessage.success('保存成功')
+    emit('save');
+    lastSaved.value = '刚刚';
+    ElMessage.success('保存成功');
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存失败');
   } finally {
-    saving.value = false
+    saving.value = false;
   }
-}
+};
 
 const handleShowVersions = () => {
-  emit('showVersions')
-}
+  emit('showVersions');
+};
 
 const handleShowSettings = () => {
-  emit('showSettings')
-}
+  emit('showSettings');
+};
 
 // 打开编辑对话框
 const handleShowEdit = () => {
   editForm.value = {
     name: props.workflowName || '',
     description: props.workflowDescription || '',
-    color: props.workflowColor || '#475569'
-  }
-  editDialogVisible.value = true
-}
+    color: props.workflowColor || '#475569',
+  };
+  editDialogVisible.value = true;
+};
 
 // 保存编辑
 const handleSaveEdit = () => {
   if (!editForm.value.name.trim()) {
-    ElMessage.warning('请输入应用名称')
-    return
+    ElMessage.warning('请输入应用名称');
+    return;
   }
-  emit('update:workflowName', editForm.value.name)
-  emit('update:workflowDescription', editForm.value.description)
-  emit('update:workflowColor', editForm.value.color)
-  editDialogVisible.value = false
-  ElMessage.success('信息已更新')
-}
+  emit('update:workflowName', editForm.value.name);
+  emit('update:workflowDescription', editForm.value.description);
+  emit('update:workflowColor', editForm.value.color);
+  editDialogVisible.value = false;
+  ElMessage.success('信息已更新');
+};
 
 const saveStatusText = computed(() => {
-  if (saving.value) return '保存中...'
-  if (props.autoSave) return `自动保存于 ${lastSaved.value}`
-  return `上次保存于 ${lastSaved.value}`
-})
+  if (saving.value) return '保存中...';
+  if (props.autoSave) return `自动保存于 ${lastSaved.value}`;
+  return `上次保存于 ${lastSaved.value}`;
+});
 
-const currentColor = computed(() => props.workflowColor || '#475569')
+const currentColor = computed(() => props.workflowColor || '#475569');
 </script>
 
 <template>
   <header class="studio-header">
     <div class="left-section">
-      <el-tooltip
-        content="返回首页"
-        placement="bottom"
-      >
-        <div
-          class="back-btn"
-          @click="handleBack"
-        >
+      <el-tooltip content="返回首页" placement="bottom">
+        <div class="back-btn" @click="handleBack">
           <el-icon><ArrowLeft /></el-icon>
         </div>
       </el-tooltip>
       <div class="divider" />
-      <div
-        class="workflow-info"
-        @click="handleShowEdit"
-      >
+      <div class="workflow-info" @click="handleShowEdit">
         <div class="workflow-name-row">
           <div
             class="workflow-icon"
@@ -134,10 +141,7 @@ const currentColor = computed(() => props.workflowColor || '#475569')
           </el-icon>
         </div>
         <div class="save-status">
-          <el-icon
-            v-if="saving"
-            class="is-loading"
-          >
+          <el-icon v-if="saving" class="is-loading">
             <Loading />
           </el-icon>
           {{ saveStatusText }}
@@ -151,42 +155,18 @@ const currentColor = computed(() => props.workflowColor || '#475569')
 
     <div class="right-section">
       <!-- 保存按钮 -->
-      <el-tooltip
-        content="保存工作流 (Ctrl+S)"
-        placement="bottom"
-      >
-        <el-button
-          :icon="Document"
-          :loading="saving"
-          circle
-          class="icon-btn"
-          @click="handleSave"
-        />
+      <el-tooltip content="保存工作流 (Ctrl+S)" placement="bottom">
+        <el-button :icon="Document" :loading="saving" circle class="icon-btn" @click="handleSave" />
       </el-tooltip>
 
       <!-- 版本管理 -->
-      <el-tooltip
-        content="版本管理"
-        placement="bottom"
-      >
-        <el-button
-          :icon="Clock"
-          circle
-          class="icon-btn"
-          @click="handleShowVersions"
-        />
+      <el-tooltip content="版本管理" placement="bottom">
+        <el-button :icon="Clock" circle class="icon-btn" @click="handleShowVersions" />
       </el-tooltip>
 
       <!-- 设置 -->
-      <el-dropdown
-        trigger="click"
-        @command="handleShowSettings"
-      >
-        <el-button
-          :icon="More"
-          circle
-          class="icon-btn"
-        />
+      <el-dropdown trigger="click" @command="handleShowSettings">
+        <el-button :icon="More" circle class="icon-btn" />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="settings">
@@ -201,11 +181,7 @@ const currentColor = computed(() => props.workflowColor || '#475569')
               <el-icon><Upload /></el-icon>
               <span>导入配置</span>
             </el-dropdown-item>
-            <el-dropdown-item
-              divided
-              command="delete"
-              style="color: #f56c6c"
-            >
+            <el-dropdown-item divided command="delete" style="color: #f56c6c">
               <el-icon><Delete /></el-icon>
               <span>删除工作流</span>
             </el-dropdown-item>
@@ -216,27 +192,15 @@ const currentColor = computed(() => props.workflowColor || '#475569')
       <div class="divider" />
 
       <!-- 调试按钮 -->
-      <el-tooltip
-        content="调试运行"
-        placement="bottom"
-      >
-        <el-button
-          class="action-btn"
-          @click="$emit('run')"
-        >
+      <el-tooltip content="调试运行" placement="bottom">
+        <el-button class="action-btn" @click="$emit('run')">
           <el-icon><VideoPlay /></el-icon>
           <span class="btn-text">调试</span>
         </el-button>
       </el-tooltip>
 
       <!-- 发布按钮 -->
-      <el-button
-        type="primary"
-        class="publish-btn"
-        @click="$emit('publish')"
-      >
-        发布
-      </el-button>
+      <el-button type="primary" class="publish-btn" @click="$emit('publish')"> 发布 </el-button>
     </div>
 
     <!-- 编辑对话框 -->
@@ -246,14 +210,8 @@ const currentColor = computed(() => props.workflowColor || '#475569')
       width="480px"
       :close-on-click-modal="false"
     >
-      <el-form
-        :model="editForm"
-        label-position="top"
-      >
-        <el-form-item
-          label="应用名称"
-          required
-        >
+      <el-form :model="editForm" label-position="top">
+        <el-form-item label="应用名称" required>
           <el-input
             v-model="editForm.name"
             placeholder="输入应用名称"
@@ -285,15 +243,8 @@ const currentColor = computed(() => props.workflowColor || '#475569')
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleSaveEdit"
-        >
-          保存
-        </el-button>
+        <el-button @click="editDialogVisible = false"> 取消 </el-button>
+        <el-button type="primary" @click="handleSaveEdit"> 保存 </el-button>
       </template>
     </el-dialog>
   </header>
@@ -487,7 +438,9 @@ const currentColor = computed(() => props.workflowColor || '#475569')
 
 .color-option.active {
   border-color: #0f172a;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px currentColor;
 }
 
 :deep(.el-dropdown-menu__item) {

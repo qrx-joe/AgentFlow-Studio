@@ -30,52 +30,52 @@ export enum ErrorCategory {
 
 export interface WorkflowErrorDetails {
   /** 错误严重级别 */
-  severity: ErrorSeverity
+  severity: ErrorSeverity;
   /** 错误分类 */
-  category: ErrorCategory
+  category: ErrorCategory;
   /** 错误节点ID */
-  nodeId: string
+  nodeId: string;
   /** 错误节点类型 */
-  nodeType: string
+  nodeType: string;
   /** 是否可恢复 */
-  recoverable: boolean
+  recoverable: boolean;
   /** 建议的重试次数 */
-  suggestedRetries?: number
+  suggestedRetries?: number;
   /** 建议的重试延迟（毫秒） */
-  suggestedRetryDelay?: number
+  suggestedRetryDelay?: number;
   /** 原始错误 */
-  originalError?: Error
+  originalError?: Error;
   /** 错误上下文 */
-  context?: Record<string, any>
+  context?: Record<string, any>;
 }
 
 export class WorkflowError extends Error {
-  public readonly severity: ErrorSeverity
-  public readonly category: ErrorCategory
-  public readonly nodeId: string
-  public readonly nodeType: string
-  public readonly recoverable: boolean
-  public readonly suggestedRetries?: number
-  public readonly suggestedRetryDelay?: number
-  public readonly originalError?: Error
-  public readonly context?: Record<string, any>
+  public readonly severity: ErrorSeverity;
+  public readonly category: ErrorCategory;
+  public readonly nodeId: string;
+  public readonly nodeType: string;
+  public readonly recoverable: boolean;
+  public readonly suggestedRetries?: number;
+  public readonly suggestedRetryDelay?: number;
+  public readonly originalError?: Error;
+  public readonly context?: Record<string, any>;
 
   constructor(message: string, details: WorkflowErrorDetails) {
-    super(message)
-    this.name = 'WorkflowError'
-    this.severity = details.severity
-    this.category = details.category
-    this.nodeId = details.nodeId
-    this.nodeType = details.nodeType
-    this.recoverable = details.recoverable
-    this.suggestedRetries = details.suggestedRetries
-    this.suggestedRetryDelay = details.suggestedRetryDelay
-    this.originalError = details.originalError
-    this.context = details.context
+    super(message);
+    this.name = 'WorkflowError';
+    this.severity = details.severity;
+    this.category = details.category;
+    this.nodeId = details.nodeId;
+    this.nodeType = details.nodeType;
+    this.recoverable = details.recoverable;
+    this.suggestedRetries = details.suggestedRetries;
+    this.suggestedRetryDelay = details.suggestedRetryDelay;
+    this.originalError = details.originalError;
+    this.context = details.context;
 
     // 保持堆栈跟踪
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, WorkflowError)
+      Error.captureStackTrace(this, WorkflowError);
     }
   }
 
@@ -83,8 +83,10 @@ export class WorkflowError extends Error {
    * 判断是否应该重试
    */
   shouldRetry(): boolean {
-    return this.severity === ErrorSeverity.RETRYABLE ||
-           (this.severity === ErrorSeverity.WARNING && this.recoverable)
+    return (
+      this.severity === ErrorSeverity.RETRYABLE ||
+      (this.severity === ErrorSeverity.WARNING && this.recoverable)
+    );
   }
 
   /**
@@ -103,7 +105,7 @@ export class WorkflowError extends Error {
       suggestedRetryDelay: this.suggestedRetryDelay,
       stack: this.stack,
       context: this.context,
-    }
+    };
   }
 }
 
@@ -114,7 +116,7 @@ export function createNetworkError(
   message: string,
   nodeId: string,
   nodeType: string,
-  originalError?: Error
+  originalError?: Error,
 ): WorkflowError {
   return new WorkflowError(message, {
     severity: ErrorSeverity.RETRYABLE,
@@ -125,7 +127,7 @@ export function createNetworkError(
     suggestedRetries: 3,
     suggestedRetryDelay: 1000,
     originalError,
-  })
+  });
 }
 
 /**
@@ -135,7 +137,7 @@ export function createTimeoutError(
   message: string,
   nodeId: string,
   nodeType: string,
-  originalError?: Error
+  originalError?: Error,
 ): WorkflowError {
   return new WorkflowError(message, {
     severity: ErrorSeverity.RETRYABLE,
@@ -146,7 +148,7 @@ export function createTimeoutError(
     suggestedRetries: 2,
     suggestedRetryDelay: 2000,
     originalError,
-  })
+  });
 }
 
 /**
@@ -156,7 +158,7 @@ export function createConfigError(
   message: string,
   nodeId: string,
   nodeType: string,
-  originalError?: Error
+  originalError?: Error,
 ): WorkflowError {
   return new WorkflowError(message, {
     severity: ErrorSeverity.FATAL,
@@ -165,7 +167,7 @@ export function createConfigError(
     nodeType,
     recoverable: false,
     originalError,
-  })
+  });
 }
 
 /**
@@ -176,7 +178,7 @@ export function createExecutionError(
   nodeId: string,
   nodeType: string,
   recoverable: boolean = false,
-  originalError?: Error
+  originalError?: Error,
 ): WorkflowError {
   return new WorkflowError(message, {
     severity: recoverable ? ErrorSeverity.RETRYABLE : ErrorSeverity.FATAL,
@@ -186,7 +188,7 @@ export function createExecutionError(
     recoverable,
     suggestedRetries: recoverable ? 1 : 0,
     originalError,
-  })
+  });
 }
 
 /**
@@ -195,7 +197,7 @@ export function createExecutionError(
 export function createValidationError(
   message: string,
   nodeId: string,
-  nodeType: string
+  nodeType: string,
 ): WorkflowError {
   return new WorkflowError(message, {
     severity: ErrorSeverity.WARNING,
@@ -203,5 +205,5 @@ export function createValidationError(
     nodeId,
     nodeType,
     recoverable: true,
-  })
+  });
 }

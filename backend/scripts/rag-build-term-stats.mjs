@@ -1,13 +1,13 @@
-import { Client } from 'pg'
+import { Client } from 'pg';
 
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  console.error('DATABASE_URL is required')
-  process.exit(1)
+  console.error('DATABASE_URL is required');
+  process.exit(1);
 }
 
-const client = new Client({ connectionString: databaseUrl })
+const client = new Client({ connectionString: databaseUrl });
 
 const buildStatsSql = `
   CREATE TABLE IF NOT EXISTS rag_term_stats (
@@ -23,15 +23,15 @@ const buildStatsSql = `
     FROM document_chunks
   ) AS terms
   GROUP BY lexeme;
-`
+`;
 
 try {
-  await client.connect()
-  await client.query(buildStatsSql)
-  console.log('BM25 term stats rebuilt')
+  await client.connect();
+  await client.query(buildStatsSql);
+  console.log('BM25 term stats rebuilt');
 } catch (error) {
-  console.error('Failed to rebuild term stats', error)
-  process.exitCode = 1
+  console.error('Failed to rebuild term stats', error);
+  process.exitCode = 1;
 } finally {
-  await client.end()
+  await client.end();
 }

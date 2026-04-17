@@ -1,60 +1,60 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useVueFlow } from '@vue-flow/core'
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/core/dist/theme-default.css'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { useVueFlow } from '@vue-flow/core';
+import '@vue-flow/core/dist/style.css';
+import '@vue-flow/core/dist/theme-default.css';
+import { ElMessage } from 'element-plus';
 
 // Layout Components
-import StudioHeader from '@/components/workflow/studio/StudioHeader.vue'
-import ComponentLibrary from '@/components/workflow/studio/ComponentLibrary.vue'
-import PropertiesPanel from '@/components/workflow/studio/PropertiesPanel.vue'
-import DebugPanel from '@/components/workflow/DebugPanel.vue'
+import StudioHeader from '@/components/workflow/studio/StudioHeader.vue';
+import ComponentLibrary from '@/components/workflow/studio/ComponentLibrary.vue';
+import PropertiesPanel from '@/components/workflow/studio/PropertiesPanel.vue';
+import DebugPanel from '@/components/workflow/DebugPanel.vue';
 
 // Canvas
-import WorkflowCanvasPanel from '@/components/workflow/panels/WorkflowCanvasPanel.vue'
+import WorkflowCanvasPanel from '@/components/workflow/panels/WorkflowCanvasPanel.vue';
 
 // Logic
-import { useWorkflowStore } from '@/stores/workflow'
-import { useWorkflowDragDrop } from '@/composables/workflow/useWorkflowDragDrop'
-import { useWorkflowEdgeHandlers } from '@/composables/workflow/useWorkflowEdgeHandlers'
+import { useWorkflowStore } from '@/stores/workflow';
+import { useWorkflowDragDrop } from '@/composables/workflow/useWorkflowDragDrop';
+import { useWorkflowEdgeHandlers } from '@/composables/workflow/useWorkflowEdgeHandlers';
 // import { useWorkflowExecutions } from '@/composables/workflow/useWorkflowExecutions'
 
 // Node Types
-import BranchEdge from '@/components/workflow/BranchEdge.vue'
-import TriggerNode from '@/components/nodes/TriggerNode.vue'
-import LLMNode from '@/components/nodes/LLMNode.vue'
-import KnowledgeNode from '@/components/nodes/KnowledgeNode.vue'
-import ConditionNode from '@/components/nodes/ConditionNode.vue'
-import CodeNode from '@/components/nodes/CodeNode.vue'
-import EndNode from '@/components/nodes/EndNode.vue'
-import HttpNode from '@/components/nodes/HttpNode.vue'
+import BranchEdge from '@/components/workflow/BranchEdge.vue';
+import TriggerNode from '@/components/nodes/TriggerNode.vue';
+import LLMNode from '@/components/nodes/LLMNode.vue';
+import KnowledgeNode from '@/components/nodes/KnowledgeNode.vue';
+import ConditionNode from '@/components/nodes/ConditionNode.vue';
+import CodeNode from '@/components/nodes/CodeNode.vue';
+import EndNode from '@/components/nodes/EndNode.vue';
+import HttpNode from '@/components/nodes/HttpNode.vue';
 
-const route = useRoute()
-const workflowStore = useWorkflowStore()
+const route = useRoute();
+const workflowStore = useWorkflowStore();
 
 // Load workflow based on route ID
 onMounted(async () => {
-    const id = route.params.id as string
-    if (id) {
-        if (id === 'new') {
-            workflowStore.workflowId = ''
-            workflowStore.workflowStatus = 'draft'
-            workflowStore.loadTemplate('hello-world')
-        } else {
-            try {
-                await workflowStore.loadWorkflow(id)
-            } catch (e) {
-                console.error('加载工作流失败:', e)
-                ElMessage.error('加载工作流失败')
-            }
-        }
+  const id = route.params.id as string;
+  if (id) {
+    if (id === 'new') {
+      workflowStore.workflowId = '';
+      workflowStore.workflowStatus = 'draft';
+      workflowStore.loadTemplate('hello-world');
+    } else {
+      try {
+        await workflowStore.loadWorkflow(id);
+      } catch (e) {
+        console.error('加载工作流失败:', e);
+        ElMessage.error('加载工作流失败');
+      }
     }
-})
-const FLOW_ID = 'workflow-canvas'
-const vueFlow = useVueFlow(FLOW_ID)
-const { onConnect, addEdges, project } = vueFlow
+  }
+});
+const FLOW_ID = 'workflow-canvas';
+const vueFlow = useVueFlow(FLOW_ID);
+const { onConnect, addEdges, project } = vueFlow;
 
 // Node & Edge Types
 const nodeTypes = {
@@ -65,134 +65,132 @@ const nodeTypes = {
   code: CodeNode,
   end: EndNode,
   http: HttpNode,
-}
+};
 const edgeTypes = {
   branch: BranchEdge,
-}
+};
 
 // Add nodes directly to store (synced with VueFlow via v-model)
 const addNodesToStore = (nodes: any[]) => {
-  workflowStore.nodes.push(...nodes)
-}
+  workflowStore.nodes.push(...nodes);
+};
 
 // Logic Hooks
-const { handleConnect } = useWorkflowEdgeHandlers(workflowStore, addEdges)
-onConnect(handleConnect)
-const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodesToStore)
+const { handleConnect } = useWorkflowEdgeHandlers(workflowStore, addEdges);
+onConnect(handleConnect);
+const { onDragOver, onDrop } = useWorkflowDragDrop(project, addNodesToStore);
 
 // Selection State
-const selectedNodeId = ref('')
-const selectedEdgeId = ref('')
+const selectedNodeId = ref('');
+const selectedEdgeId = ref('');
 const selectedNode = computed(() => {
-    return workflowStore.nodes.find(n => n.id === selectedNodeId.value)
-})
+  return workflowStore.nodes.find((n) => n.id === selectedNodeId.value);
+});
 const selectedEdge = computed(() => {
-    return workflowStore.edges.find(e => e.id === selectedEdgeId.value)
-})
+  return workflowStore.edges.find((e) => e.id === selectedEdgeId.value);
+});
 
 // Event Handlers
 const onNodeClick = (node: any) => {
-    selectedNodeId.value = node.id
-    selectedEdgeId.value = '' // 清除边选择
-}
+  selectedNodeId.value = node.id;
+  selectedEdgeId.value = ''; // 清除边选择
+};
 
 const onEdgeClick = (edge: any) => {
-    selectedEdgeId.value = edge.id
-    selectedNodeId.value = '' // 清除节点选择
-}
+  selectedEdgeId.value = edge.id;
+  selectedNodeId.value = ''; // 清除节点选择
+};
 
 const onPaneClick = () => {
-    selectedNodeId.value = ''
-    selectedEdgeId.value = ''
-}
+  selectedNodeId.value = '';
+  selectedEdgeId.value = '';
+};
 
 const handleUpdateNode = (id: string, data: any) => {
-    const node = workflowStore.nodes.find(n => n.id === id)
-    if (node) {
-        node.data = { ...node.data, ...data }
-    }
-}
+  const node = workflowStore.nodes.find((n) => n.id === id);
+  if (node) {
+    node.data = { ...node.data, ...data };
+  }
+};
 
 const handleDeleteNode = (id: string) => {
-    const index = workflowStore.nodes.findIndex(n => n.id === id)
-    if (index !== -1) {
-      workflowStore.nodes.splice(index, 1)
-      // Also remove connected edges
-      workflowStore.edges = workflowStore.edges.filter(
-        e => e.source !== id && e.target !== id
-      )
-    }
-    selectedNodeId.value = ''
-}
+  const index = workflowStore.nodes.findIndex((n) => n.id === id);
+  if (index !== -1) {
+    workflowStore.nodes.splice(index, 1);
+    // Also remove connected edges
+    workflowStore.edges = workflowStore.edges.filter((e) => e.source !== id && e.target !== id);
+  }
+  selectedNodeId.value = '';
+};
 
 const handleUpdateEdge = (id: string, data: any) => {
-    const edge = workflowStore.edges.find(e => e.id === id)
-    if (edge) {
-        Object.assign(edge, data)
-    }
-}
+  const edge = workflowStore.edges.find((e) => e.id === id);
+  if (edge) {
+    Object.assign(edge, data);
+  }
+};
 
 const handleDeleteEdge = (id: string) => {
-    const index = workflowStore.edges.findIndex(e => e.id === id)
-    if (index !== -1) {
-      workflowStore.edges.splice(index, 1)
-    }
-    selectedEdgeId.value = ''
-}
+  const index = workflowStore.edges.findIndex((e) => e.id === id);
+  if (index !== -1) {
+    workflowStore.edges.splice(index, 1);
+  }
+  selectedEdgeId.value = '';
+};
 
 const handleRun = async (input?: string) => {
-    workflowStore.executing = true
-    try {
-        // 如果没有保存过，先自动保存
-        if (!workflowStore.workflowId) {
-            await workflowStore.saveWorkflow()
-            ElMessage.info('已自动保存工作流')
-        }
-        await workflowStore.executeWorkflow(input ?? 'Test Input')
-        ElMessage.success('执行完成')
-    } catch (e: any) {
-        const msg = e?.response?.data?.message || e?.message || '执行失败'
-        ElMessage.error(msg)
-        console.error('[Workflow Execute]', e)
-    } finally {
-        workflowStore.executing = false
+  workflowStore.executing = true;
+  try {
+    // 如果没有保存过，先自动保存
+    if (!workflowStore.workflowId) {
+      await workflowStore.saveWorkflow();
+      ElMessage.info('已自动保存工作流');
     }
-}
+    await workflowStore.executeWorkflow(input ?? 'Test Input');
+    ElMessage.success('执行完成');
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '执行失败';
+    ElMessage.error(msg);
+    console.error('[Workflow Execute]', e);
+  } finally {
+    workflowStore.executing = false;
+  }
+};
 
 const handlePublish = async () => {
-    try {
-        await workflowStore.publishWorkflow()
-        ElMessage.success('应用已发布')
-    } catch (e: any) {
-        const msg = e?.response?.data?.message || e?.message || '发布失败'
-        ElMessage.error(msg)
-    }
-}
+  try {
+    await workflowStore.publishWorkflow();
+    ElMessage.success('应用已发布');
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '发布失败';
+    ElMessage.error(msg);
+  }
+};
 
 const handleSave = async () => {
-    try {
-        await workflowStore.saveWorkflow()
-    } catch (e: any) {
-        const msg = e?.response?.data?.message || e?.message || '保存失败'
-        ElMessage.error(msg)
-    }
-}
+  try {
+    await workflowStore.saveWorkflow();
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '保存失败';
+    ElMessage.error(msg);
+  }
+};
 
 // Replay logic (simplified for layout demo, restore full logic later if needed)
-const replaying = ref(false)
+const replaying = ref(false);
 
 // 调试面板
-const debugPanelVisible = ref(false)
+const debugPanelVisible = ref(false);
 
 const handleShowDebug = () => {
-  debugPanelVisible.value = true
-}
+  debugPanelVisible.value = true;
+};
 
 const handleDebugRun = async (testData: any) => {
-  console.log('[Debug] Running with test data:', testData)
-  const input = testData?.input ?? 'Test Input'
-  await handleRun(input)
-}
+  console.log('[Debug] Running with test data:', testData);
+  const input = testData?.input ?? 'Test Input';
+  await handleRun(input);
+};
 </script>
 
 <template>
@@ -212,7 +210,7 @@ const handleDebugRun = async (testData: any) => {
     <div class="studio-body">
       <!-- Left: Component Library -->
       <aside class="studio-left">
-        <ComponentLibrary @drag-start="() => {}" /> 
+        <ComponentLibrary @drag-start="() => {}" />
         <!-- Note: drag-start handles dataTransfer internally in ComponentLibrary, 
              but we need to ensure local onDragStart matches useWorkflowDragDrop expectations if tailored. 
              Actually ComponentLibrary sets dataTransfer, and onDrop reads it. 
@@ -253,7 +251,7 @@ const handleDebugRun = async (testData: any) => {
                   For now we live with duplicate controls or ignore it. 
              -->
         </div>
-        
+
         <!-- Bottom: Optional Output Panel -->
         <!-- <div class="studio-bottom"></div> -->
       </main>
@@ -272,10 +270,7 @@ const handleDebugRun = async (testData: any) => {
     </div>
 
     <!-- 调试面板 -->
-    <DebugPanel
-      v-model:visible="debugPanelVisible"
-      @run="handleDebugRun"
-    />
+    <DebugPanel v-model:visible="debugPanelVisible" @run="handleDebugRun" />
   </div>
 </template>
 

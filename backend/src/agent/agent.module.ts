@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common'
-import { AgentService } from './agent.service'
+import { Module } from '@nestjs/common';
+import { AgentService } from './agent.service';
 
 @Module({
   providers: [AgentService],

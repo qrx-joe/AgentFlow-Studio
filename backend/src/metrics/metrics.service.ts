@@ -1,13 +1,13 @@
-import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { MetricsDailyEntity } from './entities/metrics-daily.entity'
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { MetricsDailyEntity } from './entities/metrics-daily.entity';
 
 @Injectable()
 export class MetricsService {
   constructor(
     @InjectRepository(MetricsDailyEntity)
-    private metricsRepo: Repository<MetricsDailyEntity>
+    private metricsRepo: Repository<MetricsDailyEntity>,
   ) {}
 
   async recordWorkflowExecution(durationMs: number, status: 'completed' | 'failed') {
@@ -15,45 +15,45 @@ export class MetricsService {
       workflowTotal: 1,
       workflowFailed: status === 'failed' ? 1 : 0,
       workflowDurationMs: durationMs,
-    })
+    });
   }
 
   async recordKnowledgeSearch(durationMs: number) {
     await this.updateDaily({
       knowledgeTotal: 1,
       knowledgeDurationMs: durationMs,
-    })
+    });
   }
 
   async recordRagCacheHit() {
-    await this.updateDaily({ ragCacheHits: 1 })
+    await this.updateDaily({ ragCacheHits: 1 });
   }
 
   async recordRagCacheMiss() {
-    await this.updateDaily({ ragCacheMisses: 1 })
+    await this.updateDaily({ ragCacheMisses: 1 });
   }
 
   async getSummary(days = 7, thresholds?: { failureRate?: number; cacheHitRate?: number }) {
-    const since = new Date()
-    since.setDate(since.getDate() - days + 1)
-    const sinceDate = since.toISOString().slice(0, 10)
+    const since = new Date();
+    since.setDate(since.getDate() - days + 1);
+    const sinceDate = since.toISOString().slice(0, 10);
 
     const rows = await this.metricsRepo
       .createQueryBuilder('metrics')
       .where('metrics.date >= :since', { since: sinceDate })
       .orderBy('metrics.date', 'ASC')
-      .getMany()
+      .getMany();
 
     const totals = rows.reduce(
       (acc, row) => {
-        acc.workflowTotal += Number(row.workflowTotal || 0)
-        acc.workflowFailed += Number(row.workflowFailed || 0)
-        acc.workflowDurationMs += Number(row.workflowDurationMs || 0)
-        acc.knowledgeTotal += Number(row.knowledgeTotal || 0)
-        acc.knowledgeDurationMs += Number(row.knowledgeDurationMs || 0)
-        acc.ragCacheHits += Number(row.ragCacheHits || 0)
-        acc.ragCacheMisses += Number(row.ragCacheMisses || 0)
-        return acc
+        acc.workflowTotal += Number(row.workflowTotal || 0);
+        acc.workflowFailed += Number(row.workflowFailed || 0);
+        acc.workflowDurationMs += Number(row.workflowDurationMs || 0);
+        acc.knowledgeTotal += Number(row.knowledgeTotal || 0);
+        acc.knowledgeDurationMs += Number(row.knowledgeDurationMs || 0);
+        acc.ragCacheHits += Number(row.ragCacheHits || 0);
+        acc.ragCacheMisses += Number(row.ragCacheMisses || 0);
+        return acc;
       },
       {
         workflowTotal: 0,
@@ -63,25 +63,25 @@ export class MetricsService {
         knowledgeDurationMs: 0,
         ragCacheHits: 0,
         ragCacheMisses: 0,
-      }
-    )
+      },
+    );
 
     const workflowAvg = totals.workflowTotal
       ? Math.round(totals.workflowDurationMs / totals.workflowTotal)
-      : 0
+      : 0;
     const knowledgeAvg = totals.knowledgeTotal
       ? Math.round(totals.knowledgeDurationMs / totals.knowledgeTotal)
-      : 0
-    const cacheTotal = totals.ragCacheHits + totals.ragCacheMisses
-    const cacheHitRate = cacheTotal ? totals.ragCacheHits / cacheTotal : 0
+      : 0;
+    const cacheTotal = totals.ragCacheHits + totals.ragCacheMisses;
+    const cacheHitRate = cacheTotal ? totals.ragCacheHits / cacheTotal : 0;
 
-    const failureRate = totals.workflowTotal ? totals.workflowFailed / totals.workflowTotal : 0
-    const alerts: Array<{ type: string; message: string }> = []
+    const failureRate = totals.workflowTotal ? totals.workflowFailed / totals.workflowTotal : 0;
+    const alerts: Array<{ type: string; message: string }> = [];
     if (thresholds?.failureRate !== undefined && failureRate > thresholds.failureRate) {
-      alerts.push({ type: 'workflow', message: '工作流失败率超出阈值' })
+      alerts.push({ type: 'workflow', message: '工作流失败率超出阈值' });
     }
     if (thresholds?.cacheHitRate !== undefined && cacheHitRate < thresholds.cacheHitRate) {
-      alerts.push({ type: 'ragCache', message: 'RAG 缓存命中率低于阈值' })
+      alerts.push({ type: 'ragCache', message: 'RAG 缓存命中率低于阈值' });
     }
 
     return {
@@ -100,7 +100,7 @@ export class MetricsService {
         misses: totals.ragCacheMisses,
         hitRate: Number(cacheHitRate.toFixed(4)),
       },
-      daily: rows.map(row => ({
+      daily: rows.map((row) => ({
         date: row.date,
         workflowTotal: row.workflowTotal,
         workflowFailed: row.workflowFailed,
@@ -111,20 +111,20 @@ export class MetricsService {
         ragCacheMisses: row.ragCacheMisses,
       })),
       alerts,
-    }
+    };
   }
 
   private async updateDaily(delta: {
-    workflowTotal?: number
-    workflowFailed?: number
-    workflowDurationMs?: number
-    knowledgeTotal?: number
-    knowledgeDurationMs?: number
-    ragCacheHits?: number
-    ragCacheMisses?: number
+    workflowTotal?: number;
+    workflowFailed?: number;
+    workflowDurationMs?: number;
+    knowledgeTotal?: number;
+    knowledgeDurationMs?: number;
+    ragCacheHits?: number;
+    ragCacheMisses?: number;
   }) {
     try {
-      const date = new Date().toISOString().slice(0, 10)
+      const date = new Date().toISOString().slice(0, 10);
       const values = {
         workflowTotal: delta.workflowTotal || 0,
         workflowFailed: delta.workflowFailed || 0,
@@ -133,7 +133,7 @@ export class MetricsService {
         knowledgeDurationMs: delta.knowledgeDurationMs || 0,
         ragCacheHits: delta.ragCacheHits || 0,
         ragCacheMisses: delta.ragCacheMisses || 0,
-      }
+      };
 
       await this.metricsRepo.query(
         `
@@ -166,8 +166,8 @@ export class MetricsService {
           values.knowledgeDurationMs,
           values.ragCacheHits,
           values.ragCacheMisses,
-        ]
-      )
+        ],
+      );
     } catch {
       // 避免指标写入影响主流程
     }

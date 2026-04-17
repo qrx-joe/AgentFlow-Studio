@@ -1,13 +1,13 @@
-import { HttpException, HttpStatus } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 // 业务异常：携带业务错误码
 export class BusinessException extends HttpException {
   constructor(
     public readonly code: string,
     message: string,
-    status: HttpStatus = HttpStatus.BAD_REQUEST
+    status: HttpStatus = HttpStatus.BAD_REQUEST,
   ) {
-    super({ code, message }, status)
+    super({ code, message }, status);
   }
 }
 
@@ -21,4 +21,4 @@ export const ErrorCodes = {
   EMBEDDING_FAILED: 'KB002',
   LLM_API_ERROR: 'LLM001',
   LLM_TIMEOUT: 'LLM002',
-}
+};

@@ -1,169 +1,160 @@
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
-import type { Message } from '@/types'
+import { ref, nextTick, watch } from 'vue';
+import type { Message } from '@/types';
 
 const props = defineProps<{
-  messages: Message[]
-  activeMessageId: string
-  input: string
-  loading: boolean
-  streaming: boolean
-}>()
+  messages: Message[];
+  activeMessageId: string;
+  input: string;
+  loading: boolean;
+  streaming: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:input', value: string): void
-  (e: 'send'): void
-  (e: 'stop'): void
-  (e: 'selectSource', messageId: string, source: any): void
-}>()
+  (e: 'update:input', value: string): void;
+  (e: 'send'): void;
+  (e: 'stop'): void;
+  (e: 'selectSource', messageId: string, source: any): void;
+}>();
 
-const messagesContainer = ref<HTMLDivElement>()
-const textareaRef = ref<HTMLTextAreaElement>()
+const messagesContainer = ref<HTMLDivElement>();
+const textareaRef = ref<HTMLTextAreaElement>();
 
 // 自动滚动到底部
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
-  })
-}
+  });
+};
 
-watch(() => props.messages.length, scrollToBottom)
-watch(() => props.messages[props.messages.length - 1]?.content, scrollToBottom)
+watch(() => props.messages.length, scrollToBottom);
+watch(() => props.messages[props.messages.length - 1]?.content, scrollToBottom);
 
 // Enter 发送, Shift+Enter 换行
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    emit('send')
+    e.preventDefault();
+    emit('send');
   }
-}
+};
 
 // 自动调整 textarea 高度
 const autoResize = () => {
   if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
-    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 200) + 'px'
+    textareaRef.value.style.height = 'auto';
+    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 200) + 'px';
   }
-}
+};
 
 const handleInput = (e: Event) => {
-  const target = e.target as HTMLTextAreaElement
-  emit('update:input', target.value)
-  autoResize()
-}
+  const target = e.target as HTMLTextAreaElement;
+  emit('update:input', target.value);
+  autoResize();
+};
 
 const formatTime = (dateStr?: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-}
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+};
 
 // 简易 Markdown 渲染
 const renderMarkdown = (text: string) => {
-  if (!text) return ''
+  if (!text) return '';
   let html = text
     // 转义 HTML (基本)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .replace(/>/g, '&gt;');
 
   // 代码块
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, lang, code) => {
-    return `<pre class="code-block"><code class="language-${lang}">${code.trim()}</code></pre>`
-  })
+    return `<pre class="code-block"><code class="language-${lang}">${code.trim()}</code></pre>`;
+  });
   // 行内代码
-  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
+  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
   // 加粗
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   // 斜体
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
   // 标题
-  html = html.replace(/^### (.+)$/gm, '<h4 class="md-h4">$1</h4>')
-  html = html.replace(/^## (.+)$/gm, '<h3 class="md-h3">$1</h3>')
-  html = html.replace(/^# (.+)$/gm, '<h2 class="md-h2">$1</h2>')
+  html = html.replace(/^### (.+)$/gm, '<h4 class="md-h4">$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3 class="md-h3">$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2 class="md-h2">$1</h2>');
   // 无序列表
-  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul class="md-list">$1</ul>')
+  html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul class="md-list">$1</ul>');
   // 有序列表
-  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
   // 换行 (保留段落感)
-  html = html.replace(/\n\n/g, '<div class="spacer"></div>')
-  html = html.replace(/\n/g, '<br />')
-  
-  // 清理
-  html = html.replace(/<br \/><\/li>/g, '</li>')
-  html = html.replace(/<br \/><pre/g, '<pre')
-  html = html.replace(/<\/pre><br \/>/g, '</pre>')
+  html = html.replace(/\n\n/g, '<div class="spacer"></div>');
+  html = html.replace(/\n/g, '<br />');
 
-  return html
-}
+  // 清理
+  html = html.replace(/<br \/><\/li>/g, '</li>');
+  html = html.replace(/<br \/><pre/g, '<pre');
+  html = html.replace(/<\/pre><br \/>/g, '</pre>');
+
+  return html;
+};
 
 const renderContent = (msg: Message) => {
-  const raw = String(msg.content || '')
-  let html = renderMarkdown(raw)
+  const raw = String(msg.content || '');
+  let html = renderMarkdown(raw);
 
   // 高亮来源文本
   const snippets = (msg.sources || [])
-    .map(item => String(item.content || '').trim())
-    .filter(Boolean)
+    .map((item) => String(item.content || '').trim())
+    .filter(Boolean);
 
   for (let i = 0; i < snippets.length; i += 1) {
-    const snippet = snippets[i]
-    if (snippet.length < 5) continue // 忽略太短的
-    const safeSnippet = snippet
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-    
+    const snippet = snippets[i];
+    if (snippet.length < 5) continue; // 忽略太短的
+    const safeSnippet = snippet.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
     if (html.includes(safeSnippet)) {
-      html = html.split(safeSnippet).join(
-        `<mark class="source-highlight" data-source-index="${i}">${safeSnippet}</mark>`
-      )
+      html = html
+        .split(safeSnippet)
+        .join(`<mark class="source-highlight" data-source-index="${i}">${safeSnippet}</mark>`);
     }
   }
 
-  return html
-}
+  return html;
+};
 
 const handleContentClick = (msg: Message, event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  const mark = target.closest('mark') as HTMLElement | null
-  if (!mark) return
-  const index = Number(mark.dataset.sourceIndex)
-  if (Number.isNaN(index)) return
-  const source = msg.sources?.[index]
+  const target = event.target as HTMLElement;
+  const mark = target.closest('mark') as HTMLElement | null;
+  if (!mark) return;
+  const index = Number(mark.dataset.sourceIndex);
+  if (Number.isNaN(index)) return;
+  const source = msg.sources?.[index];
   if (source) {
-    emit('selectSource', msg.id, source)
+    emit('selectSource', msg.id, source);
   }
-}
+};
 
 // 示例问题
 const quickPrompts = [
   { icon: '💡', text: '解释一下 RAG 检索增强生成的原理' },
   { icon: '📝', text: '帮我写一段 TypeScript 工具函数' },
   { icon: '🔍', text: '在我的知识库中搜索相关资料' },
-]
+];
 
 const handleQuickPrompt = (text: string) => {
-  emit('update:input', text)
-  nextTick(() => emit('send'))
-}
+  emit('update:input', text);
+  nextTick(() => emit('send'));
+};
 </script>
 
 <template>
   <section class="chat-main">
     <!-- 1. 消息列表区 -->
-    <div
-      ref="messagesContainer"
-      class="messages-scroll-area"
-    >
+    <div ref="messagesContainer" class="messages-scroll-area">
       <!-- 空状态 -->
-      <div
-        v-if="props.messages.length === 0"
-        class="welcome-container"
-      >
+      <div v-if="props.messages.length === 0" class="welcome-container">
         <div class="welcome-content">
           <div class="welcome-logo">
             <div class="logo-icon-large">
@@ -177,19 +168,17 @@ const handleQuickPrompt = (text: string) => {
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+                <path
+                  d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"
+                />
                 <path d="M9 12h.01" />
                 <path d="M15 12h.01" />
               </svg>
             </div>
             <!-- <div class="logo-ring"></div> -->
           </div>
-          <h2 class="welcome-title">
-            有什么可以帮你的吗？
-          </h2>
-          <p class="welcome-desc">
-            AgentFlow AI 助手，基于你的知识库进行智能对话
-          </p>
+          <h2 class="welcome-title">有什么可以帮你的吗？</h2>
+          <p class="welcome-desc">AgentFlow AI 助手，基于你的知识库进行智能对话</p>
           <div class="quick-prompts">
             <button
               v-for="(prompt, index) in quickPrompts"
@@ -206,7 +195,12 @@ const handleQuickPrompt = (text: string) => {
                   fill="none"
                   stroke="currentColor"
                   stroke-width="2"
-                ><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 21h6" /></svg>
+                >
+                  <path
+                    d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"
+                  />
+                  <path d="M9 21h6" />
+                </svg>
                 <svg
                   v-else-if="index === 1"
                   width="18"
@@ -215,7 +209,10 @@ const handleQuickPrompt = (text: string) => {
                   fill="none"
                   stroke="currentColor"
                   stroke-width="2"
-                ><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
                 <svg
                   v-else
                   width="18"
@@ -224,16 +221,10 @@ const handleQuickPrompt = (text: string) => {
                   fill="none"
                   stroke="currentColor"
                   stroke-width="2"
-                ><circle
-                  cx="11"
-                  cy="11"
-                  r="8"
-                /><line
-                  x1="21"
-                  y1="21"
-                  x2="16.65"
-                  y2="16.65"
-                /></svg>
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
               </div>
               <div class="qp-text">
                 {{ prompt.text }}
@@ -256,10 +247,7 @@ const handleQuickPrompt = (text: string) => {
       </div>
 
       <!-- 消息流 -->
-      <div
-        v-else
-        class="chat-flow"
-      >
+      <div v-else class="chat-flow">
         <div
           v-for="msg in props.messages"
           :id="`msg-${msg.id}`"
@@ -268,10 +256,7 @@ const handleQuickPrompt = (text: string) => {
           :class="[msg.role]"
         >
           <!-- 头像 -->
-          <div
-            class="avatar"
-            :class="msg.role"
-          >
+          <div class="avatar" :class="msg.role">
             <svg
               v-if="msg.role === 'user'"
               width="18"
@@ -282,11 +267,7 @@ const handleQuickPrompt = (text: string) => {
               stroke-width="2"
             >
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle
-                cx="12"
-                cy="7"
-                r="4"
-              />
+              <circle cx="12" cy="7" r="4" />
             </svg>
             <svg
               v-else
@@ -297,7 +278,9 @@ const handleQuickPrompt = (text: string) => {
               stroke="currentColor"
               stroke-width="2"
             >
-              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+              <path
+                d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"
+              />
             </svg>
           </div>
 
@@ -308,10 +291,7 @@ const handleQuickPrompt = (text: string) => {
               <span class="msg-time">{{ formatTime(msg.createdAt) }}</span>
             </div>
 
-            <div
-              class="message-bubble"
-              :class="msg.role"
-            >
+            <div class="message-bubble" :class="msg.role">
               <!-- AI 消息（无气泡背景） -->
               <div
                 v-if="msg.role === 'assistant'"
@@ -320,28 +300,25 @@ const handleQuickPrompt = (text: string) => {
                 v-html="renderContent(msg)"
               />
               <!-- 用户消息（有气泡背景） -->
-              <div
-                v-else
-                class="user-text"
-              >
+              <div v-else class="user-text">
                 {{ msg.content }}
               </div>
 
               <!-- 打字光标 -->
               <span
-                v-if="msg.role === 'assistant' && props.streaming && msg === props.messages[props.messages.length - 1]"
+                v-if="
+                  msg.role === 'assistant' &&
+                  props.streaming &&
+                  msg === props.messages[props.messages.length - 1]
+                "
                 class="typing-cursor"
-              >●</span>
+                >●</span
+              >
             </div>
 
             <!-- 来源 (仅 AI) -->
-            <div
-              v-if="msg.role === 'assistant' && msg.sources?.length"
-              class="sources-area"
-            >
-              <div class="sources-title">
-                引用来源
-              </div>
+            <div v-if="msg.role === 'assistant' && msg.sources?.length" class="sources-area">
+              <div class="sources-title">引用来源</div>
               <div class="source-list">
                 <div
                   v-for="(src, index) in msg.sources"
@@ -354,16 +331,10 @@ const handleQuickPrompt = (text: string) => {
                 </div>
               </div>
             </div>
-            
+
             <!-- 底部操作栏 (仅 AI) -->
-            <div
-              v-if="msg.role === 'assistant' && !props.streaming"
-              class="message-actions"
-            >
-              <button
-                class="action-btn"
-                title="复制"
-              >
+            <div v-if="msg.role === 'assistant' && !props.streaming" class="message-actions">
+              <button class="action-btn" title="复制">
                 <svg
                   width="14"
                   height="14"
@@ -372,21 +343,11 @@ const handleQuickPrompt = (text: string) => {
                   stroke="currentColor"
                   stroke-width="2"
                 >
-                  <rect
-                    x="9"
-                    y="9"
-                    width="13"
-                    height="13"
-                    rx="2"
-                    ry="2"
-                  />
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>
               </button>
-              <button
-                class="action-btn"
-                title="重新生成"
-              >
+              <button class="action-btn" title="重新生成">
                 <svg
                   width="14"
                   height="14"
@@ -404,10 +365,7 @@ const handleQuickPrompt = (text: string) => {
         </div>
 
         <!-- 流式加载中指示 -->
-        <div
-          v-if="props.streaming"
-          class="streaming-status"
-        >
+        <div v-if="props.streaming" class="streaming-status">
           <svg
             class="animate-spin"
             width="16"
@@ -421,9 +379,9 @@ const handleQuickPrompt = (text: string) => {
           </svg>
           AI 思考中...
         </div>
-        
+
         <!-- 底部垫高，防止被输入框遮挡 -->
-        <div style="height: 120px;" />
+        <div style="height: 120px" />
       </div>
     </div>
 
@@ -443,24 +401,9 @@ const handleQuickPrompt = (text: string) => {
             <!-- 上传附件功能暂未实现，先隐藏 -->
           </div>
           <div class="end-actions">
-            <button
-              v-if="props.streaming"
-              class="send-btn stop"
-              @click="emit('stop')"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <rect
-                  x="6"
-                  y="6"
-                  width="12"
-                  height="12"
-                  rx="2"
-                />
+            <button v-if="props.streaming" class="send-btn stop" @click="emit('stop')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
             </button>
             <button
@@ -478,21 +421,14 @@ const handleQuickPrompt = (text: string) => {
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <line
-                  x1="22"
-                  y1="2"
-                  x2="11"
-                  y2="13"
-                />
+                <line x1="22" y1="2" x2="11" y2="13" />
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
           </div>
         </div>
       </div>
-      <div class="footer-hint">
-        AgentFlow AI 提供技术支持
-      </div>
+      <div class="footer-hint">AgentFlow AI 提供技术支持</div>
     </div>
   </section>
 </template>
@@ -523,13 +459,12 @@ const handleQuickPrompt = (text: string) => {
   width: 6px;
 }
 .messages-scroll-area::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
 .messages-scroll-area::-webkit-scrollbar-track {
   background: transparent;
 }
-
 
 /* 欢迎页 */
 .welcome-container {
@@ -690,7 +625,7 @@ const handleQuickPrompt = (text: string) => {
   background: #ffffff;
   color: #0f172a;
   border-color: #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow for white avatar */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle shadow for white avatar */
 }
 
 /* 消息体 Wrapper */
@@ -834,9 +769,19 @@ const handleQuickPrompt = (text: string) => {
 }
 
 /* Markdown 样式覆盖 (Light) */
-.markdown-body :deep(h2) { font-size: 1.1em; font-weight: 700; margin-top: 16px; color: #0f172a; }
-.markdown-body :deep(p) { margin: 8px 0; }
-.markdown-body :deep(ul), .markdown-body :deep(ol) { padding-left: 20px; }
+.markdown-body :deep(h2) {
+  font-size: 1.1em;
+  font-weight: 700;
+  margin-top: 16px;
+  color: #0f172a;
+}
+.markdown-body :deep(p) {
+  margin: 8px 0;
+}
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  padding-left: 20px;
+}
 .markdown-body :deep(.code-block) {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -869,7 +814,11 @@ const handleQuickPrompt = (text: string) => {
 .animate-spin {
   animation: spin 2s linear infinite;
 }
-@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 /* ===== 2. 悬浮输入区 ===== */
 .input-float-container {

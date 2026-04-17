@@ -1,9 +1,9 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
-import { APP_GUARD } from '@nestjs/core'
-import { ThrottlerModule } from '@nestjs/throttler'
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 
-import { AuthGuard } from './guards/auth.guard'
-import { LoggerMiddleware } from './middleware/logger.middleware'
+import { AuthGuard } from './guards/auth.guard';
+import { LoggerMiddleware } from './middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -35,8 +35,8 @@ import { LoggerMiddleware } from './middleware/logger.middleware'
 })
 export class CommonModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*')
+    consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 }
 
-export { Public } from './guards/public.decorator'
+export { Public } from './guards/public.decorator';

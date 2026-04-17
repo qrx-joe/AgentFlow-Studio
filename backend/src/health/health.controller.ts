@@ -1,5 +1,5 @@
-import { Controller, Get } from '@nestjs/common'
-import { Public } from '../common/guards/public.decorator'
+import { Controller, Get } from '@nestjs/common';
+import { Public } from '../common/guards/public.decorator';
 
 @Controller('health')
 export class HealthController {
@@ -9,12 +9,12 @@ export class HealthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-    }
+    };
   }
 
   @Get('ready')
   @Public()
   ready() {
-    return { status: 'ready' }
+    return { status: 'ready' };
   }
 }

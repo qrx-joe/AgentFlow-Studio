@@ -1,53 +1,53 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { VideoPlay, Delete } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { useWorkflowStore } from '@/stores/workflow'
+import { ref, computed } from 'vue';
+import { VideoPlay, Delete } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { useWorkflowStore } from '@/stores/workflow';
 
 interface ExecutionLog {
-  id: string
-  nodeId: string
-  nodeName: string
-  timestamp: string
-  level: 'info' | 'success' | 'warning' | 'error'
-  message: string
-  data?: any
-  duration?: number
+  id: string;
+  nodeId: string;
+  nodeName: string;
+  timestamp: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  data?: any;
+  duration?: number;
 }
 
 interface InputField {
-  name: string
-  label: string
-  type: 'text' | 'textarea' | 'number'
-  placeholder?: string
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'number';
+  placeholder?: string;
 }
 
 defineProps<{
-  visible: boolean
-  inputs?: InputField[]
-}>()
+  visible: boolean;
+  inputs?: InputField[];
+}>();
 
-const emit = defineEmits(['update:visible', 'run'])
+const emit = defineEmits(['update:visible', 'run']);
 
-const workflowStore = useWorkflowStore()
+const workflowStore = useWorkflowStore();
 
 // 测试数据
 const testData = ref<Record<string, any>>({
-  input: '什么是人工智能？'
-})
+  input: '什么是人工智能？',
+});
 
 // 格式化时间戳辅助函数
-const formatTime = (ts?: number) => ts ? new Date(ts).toLocaleTimeString() : '-'
+const formatTime = (ts?: number) => (ts ? new Date(ts).toLocaleTimeString() : '-');
 
 // 执行日志（由后端真实数据转换而来）
 const displayLogs = computed<ExecutionLog[]>(() => {
-  const response = workflowStore.lastExecutionResponse
-  if (!response) return []
+  const response = workflowStore.lastExecutionResponse;
+  if (!response) return [];
 
-  const logs: ExecutionLog[] = []
-  const steps = response.steps || []
-  const plainLogs = response.logs || []
-  const baseTime = steps[0]?.startTime
+  const logs: ExecutionLog[] = [];
+  const steps = response.steps || [];
+  const plainLogs = response.logs || [];
+  const baseTime = steps[0]?.startTime;
 
   // 开始日志
   logs.push({
@@ -57,24 +57,24 @@ const displayLogs = computed<ExecutionLog[]>(() => {
     timestamp: formatTime(baseTime),
     level: 'info',
     message: '工作流开始执行',
-    data: testData.value
-  })
+    data: testData.value,
+  });
 
   // 步骤日志
   for (const step of steps) {
-    const node = workflowStore.nodes.find(n => n.id === step.nodeId)
-    const nodeName = node?.data?.label || node?.type || step.nodeId
+    const node = workflowStore.nodes.find((n) => n.id === step.nodeId);
+    const nodeName = node?.data?.label || node?.type || step.nodeId;
     const levelMap: Record<string, 'info' | 'success' | 'warning' | 'error'> = {
       running: 'info',
       success: 'success',
       failed: 'error',
-      skipped: 'warning'
-    }
+      skipped: 'warning',
+    };
 
-    let message = `节点执行${step.status || '完成'}`
-    if (step.status === 'success') message = '节点执行成功'
-    if (step.status === 'failed') message = '节点执行失败'
-    if (step.status === 'skipped') message = '节点已跳过'
+    let message = `节点执行${step.status || '完成'}`;
+    if (step.status === 'success') message = '节点执行成功';
+    if (step.status === 'failed') message = '节点执行失败';
+    if (step.status === 'skipped') message = '节点已跳过';
 
     logs.push({
       id: `step-${step.nodeId}-${step.startTime}`,
@@ -84,18 +84,25 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       level: levelMap[step.status] || 'info',
       message,
       data: step.output,
-      duration: step.duration
-    })
+      duration: step.duration,
+    });
   }
 
   // 后端原始字符串日志（过滤掉已在步骤中体现的简单日志）
-  let logIndex = 0
-  const lastStepTime = steps.length > 0 ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) : baseTime
+  let logIndex = 0;
+  const lastStepTime =
+    steps.length > 0
+      ? steps[steps.length - 1].endTime || steps[steps.length - 1].startTime
+      : baseTime;
   for (const log of plainLogs) {
-    if (typeof log !== 'string') continue
+    if (typeof log !== 'string') continue;
     // 跳过已在步骤中体现的节点执行日志
-    if (log.startsWith('执行节点：') || log.startsWith('到达结束节点') || log.startsWith('条件节点已评估')) {
-      continue
+    if (
+      log.startsWith('执行节点：') ||
+      log.startsWith('到达结束节点') ||
+      log.startsWith('条件节点已评估')
+    ) {
+      continue;
     }
     logs.push({
       id: `log-${logIndex}-${log.slice(0, 20)}`,
@@ -103,15 +110,16 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       nodeName: '系统',
       timestamp: formatTime(lastStepTime),
       level: log.includes('失败') || log.includes('错误') ? 'error' : 'info',
-      message: log
-    })
-    logIndex++
+      message: log,
+    });
+    logIndex++;
   }
 
   // 结束日志
-  const duration = steps.length > 0
-    ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
-    : 0
+  const duration =
+    steps.length > 0
+      ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
+      : 0;
 
   if (response.status === 'completed') {
     logs.push({
@@ -121,8 +129,8 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       timestamp: formatTime(lastStepTime),
       level: 'success',
       message: '工作流执行完成',
-      duration
-    })
+      duration,
+    });
   } else if (response.status === 'failed') {
     logs.push({
       id: 'end',
@@ -131,52 +139,57 @@ const displayLogs = computed<ExecutionLog[]>(() => {
       timestamp: formatTime(lastStepTime),
       level: 'error',
       message: `工作流执行失败: ${response.error || '未知错误'}`,
-      duration
-    })
+      duration,
+    });
   }
 
-  return logs
-})
+  return logs;
+});
 
 // 执行结果
 const executionResult = computed(() => {
-  const response = workflowStore.lastExecutionResponse
-  if (!response) return null
+  const response = workflowStore.lastExecutionResponse;
+  if (!response) return null;
 
-  const steps = response.steps || []
-  const duration = steps.length > 0
-    ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
-    : 0
+  const steps = response.steps || [];
+  const duration =
+    steps.length > 0
+      ? (steps[steps.length - 1].endTime || steps[steps.length - 1].startTime) - steps[0].startTime
+      : 0;
 
   return {
     status: response.status === 'completed' ? 'success' : 'error',
     output: response.output,
     error: response.error,
-    duration
-  }
-})
+    duration,
+  };
+});
 
 // 安全的 JSON 序列化（处理循环引用）
 const safeStringify = (value: any, space?: number): string => {
   try {
-    return JSON.stringify(value, null, space)
+    return JSON.stringify(value, null, space);
   } catch {
     try {
-      const seen = new WeakSet()
-      return JSON.stringify(value, (_key, val) => {
-        if (typeof val === 'object' && val !== null) {
-          if (seen.has(val)) {
-            return '[Circular]'
+      const seen = new WeakSet();
+      return JSON.stringify(
+        value,
+        (_key, val) => {
+          if (typeof val === 'object' && val !== null) {
+            if (seen.has(val)) {
+              return '[Circular]';
+            }
+            seen.add(val);
           }
-          seen.add(val)
-        }
-        return val
-      }, space)
+          return val;
+        },
+        space,
+      );
     } catch {
-      return String(value)
+      return String(value);
     }
   }
-}
+};
 
 // 日志类型映射
 const getLogType = (level: string) => {
@@ -184,33 +197,33 @@ const getLogType = (level: string) => {
     info: 'primary',
     success: 'success',
     warning: 'warning',
-    error: 'danger'
-  }
-  return typeMap[level] || 'primary'
-}
+    error: 'danger',
+  };
+  return typeMap[level] || 'primary';
+};
 
 // 运行测试
 const runTest = async () => {
-  if (workflowStore.executing) return
+  if (workflowStore.executing) return;
 
   try {
     // 触发执行
-    emit('run', testData.value)
+    emit('run', testData.value);
   } catch (error: any) {
-    ElMessage.error('执行失败')
+    ElMessage.error('执行失败');
   }
-}
+};
 
 // 清空日志（同时清空 store 中的结果）
 const clearLogs = () => {
-  workflowStore.lastExecutionResponse = null
-  workflowStore.executionLogs = []
-}
+  workflowStore.lastExecutionResponse = null;
+  workflowStore.executionLogs = [];
+};
 
 // 关闭面板
 const handleClose = () => {
-  emit('update:visible', false)
-}
+  emit('update:visible', false);
+};
 </script>
 
 <template>
@@ -225,9 +238,7 @@ const handleClose = () => {
       <!-- 输入区 -->
       <section class="debug-section">
         <div class="section-header">
-          <h3 class="section-title">
-            测试输入
-          </h3>
+          <h3 class="section-title">测试输入</h3>
           <el-button
             type="primary"
             :icon="VideoPlay"
@@ -240,7 +251,14 @@ const handleClose = () => {
         <div class="section-content">
           <el-form label-position="top">
             <el-form-item
-              v-for="input in (inputs || [{ name: 'input', label: '输入内容', type: 'textarea' as const, placeholder: '输入测试数据' }])"
+              v-for="input in inputs || [
+                {
+                  name: 'input',
+                  label: '输入内容',
+                  type: 'textarea' as const,
+                  placeholder: '输入测试数据',
+                },
+              ]"
               :key="input.name"
               :label="input.label"
             >
@@ -266,27 +284,14 @@ const handleClose = () => {
         <div class="section-header">
           <h3 class="section-title">
             执行日志
-            <el-badge
-              v-if="displayLogs.length > 0"
-              :value="displayLogs.length"
-              class="log-badge"
-            />
+            <el-badge v-if="displayLogs.length > 0" :value="displayLogs.length" class="log-badge" />
           </h3>
-          <el-button
-            v-if="displayLogs.length > 0"
-            text
-            :icon="Delete"
-            @click="clearLogs"
-          >
+          <el-button v-if="displayLogs.length > 0" text :icon="Delete" @click="clearLogs">
             清空
           </el-button>
         </div>
         <div class="section-content">
-          <el-empty
-            v-if="displayLogs.length === 0"
-            description="暂无执行日志"
-            :image-size="80"
-          />
+          <el-empty v-if="displayLogs.length === 0" description="暂无执行日志" :image-size="80" />
           <el-timeline v-else>
             <el-timeline-item
               v-for="log in displayLogs"
@@ -298,25 +303,16 @@ const handleClose = () => {
               <div class="log-entry">
                 <div class="log-header">
                   <span class="log-node">{{ log.nodeName }}</span>
-                  <span
-                    v-if="log.duration !== undefined"
-                    class="log-duration"
-                  >
+                  <span v-if="log.duration !== undefined" class="log-duration">
                     {{ log.duration }}ms
                   </span>
                 </div>
                 <div class="log-message">
                   {{ log.message }}
                 </div>
-                <div
-                  v-if="log.data !== undefined && log.data !== null"
-                  class="log-data"
-                >
+                <div v-if="log.data !== undefined && log.data !== null" class="log-data">
                   <el-collapse>
-                    <el-collapse-item
-                      title="查看详细数据"
-                      name="1"
-                    >
+                    <el-collapse-item title="查看详细数据" name="1">
                       <pre class="data-preview">{{ safeStringify(log.data, 2) }}</pre>
                     </el-collapse-item>
                   </el-collapse>
@@ -328,18 +324,10 @@ const handleClose = () => {
       </section>
 
       <!-- 输出结果 -->
-      <section
-        v-if="executionResult"
-        class="debug-section"
-      >
+      <section v-if="executionResult" class="debug-section">
         <div class="section-header">
-          <h3 class="section-title">
-            执行结果
-          </h3>
-          <el-tag
-            :type="executionResult.status === 'success' ? 'success' : 'danger'"
-            size="large"
-          >
+          <h3 class="section-title">执行结果</h3>
+          <el-tag :type="executionResult.status === 'success' ? 'success' : 'danger'" size="large">
             {{ executionResult.status === 'success' ? '成功' : '失败' }}
           </el-tag>
         </div>
@@ -350,24 +338,13 @@ const handleClose = () => {
             :closable="false"
             show-icon
           >
-            <template #title>
-              执行成功，耗时 {{ executionResult.duration }}ms
-            </template>
+            <template #title> 执行成功，耗时 {{ executionResult.duration }}ms </template>
           </el-alert>
-          <el-alert
-            v-else
-            type="error"
-            :closable="false"
-            show-icon
-          >
-            <template #title>
-              执行失败: {{ executionResult.error || '未知错误' }}
-            </template>
+          <el-alert v-else type="error" :closable="false" show-icon>
+            <template #title> 执行失败: {{ executionResult.error || '未知错误' }} </template>
           </el-alert>
           <div class="output-data">
-            <div class="output-label">
-              输出数据:
-            </div>
+            <div class="output-label">输出数据:</div>
             <pre class="data-preview">{{ safeStringify(executionResult.output, 2) }}</pre>
           </div>
         </div>

@@ -1,60 +1,60 @@
-import { IsArray, IsIn, IsOptional, IsString } from 'class-validator'
+import { IsArray, IsIn, IsOptional, IsString } from 'class-validator';
 
 // 创建工作流 DTO
 export class CreateWorkflowDto {
   @IsString()
-  name!: string
+  name!: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsIn(['draft', 'published'])
-  status?: string
+  status?: string;
 
   @IsOptional()
   @IsString()
-  icon?: string
+  icon?: string;
 
   @IsOptional()
   @IsString()
-  color?: string
+  color?: string;
 
   @IsArray()
-  nodes!: any[]
+  nodes!: any[];
 
   @IsArray()
-  edges!: any[]
+  edges!: any[];
 }
 
 // 更新工作流 DTO - 所有字段可选
 export class UpdateWorkflowDto {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsIn(['draft', 'published'])
-  status?: string
+  status?: string;
 
   @IsOptional()
   @IsString()
-  icon?: string
+  icon?: string;
 
   @IsOptional()
   @IsString()
-  color?: string
+  color?: string;
 
   @IsOptional()
   @IsArray()
-  nodes?: any[]
+  nodes?: any[];
 
   @IsOptional()
   @IsArray()
-  edges?: any[]
+  edges?: any[];
 }

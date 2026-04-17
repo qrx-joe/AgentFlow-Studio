@@ -4,11 +4,11 @@
 
 ## 技术栈
 
-| 端 | 技术 |
-|---|---|
-| 前端 | Vue 3.4+、Pinia、Vue Flow、Element Plus、Vite 5 |
-| 后端 | NestJS 10、TypeORM、PostgreSQL 15+、Redis |
-| AI | OpenAI API（可配置 base URL）、text-embedding 向量模型 |
+| 端   | 技术                                                   |
+| ---- | ------------------------------------------------------ |
+| 前端 | Vue 3.4+、Pinia、Vue Flow、Element Plus、Vite 5        |
+| 后端 | NestJS 10、TypeORM、PostgreSQL 15+、Redis              |
+| AI   | OpenAI API（可配置 base URL）、text-embedding 向量模型 |
 
 ## 功能特性
 
@@ -48,13 +48,13 @@ docker-compose up -d
 
 ### Backend (.env)
 
-| 变量 | 说明 | 默认值 |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL 连接地址 | `postgresql://agentflow:agentflow123@localhost:5432/agentflow` |
-| `REDIS_HOST` | Redis 主机 | `localhost` |
-| `REDIS_PORT` | Redis 端口 | `6379` |
-| `OPENAI_API_KEY` | OpenAI API Key | - |
-| `OPENAI_BASE_URL` | OpenAI API 地址 | `https://api.openai.com/v1` |
+| 变量              | 说明                | 默认值                                                         |
+| ----------------- | ------------------- | -------------------------------------------------------------- |
+| `DATABASE_URL`    | PostgreSQL 连接地址 | `postgresql://agentflow:agentflow123@localhost:5432/agentflow` |
+| `REDIS_HOST`      | Redis 主机          | `localhost`                                                    |
+| `REDIS_PORT`      | Redis 端口          | `6379`                                                         |
+| `OPENAI_API_KEY`  | OpenAI API Key      | -                                                              |
+| `OPENAI_BASE_URL` | OpenAI API 地址     | `https://api.openai.com/v1`                                    |
 
 ## 项目结构
 

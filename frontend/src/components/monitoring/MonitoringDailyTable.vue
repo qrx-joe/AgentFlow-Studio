@@ -1,21 +1,18 @@
 <script setup lang="ts">
 const props = defineProps<{
   daily: Array<{
-    date: string
-    workflowTotal: number
-    workflowFailed: number
-    knowledgeTotal: number
-    ragCacheHits: number
-    ragCacheMisses: number
-  }>
-}>()
+    date: string;
+    workflowTotal: number;
+    workflowFailed: number;
+    knowledgeTotal: number;
+    ragCacheHits: number;
+    ragCacheMisses: number;
+  }>;
+}>();
 </script>
 
 <template>
-  <div
-    v-if="props.daily.length"
-    class="table"
-  >
+  <div v-if="props.daily.length" class="table">
     <div class="row header">
       <span>日期</span>
       <span>工作流</span>
@@ -23,18 +20,14 @@ const props = defineProps<{
       <span>检索</span>
       <span>缓存命中率</span>
     </div>
-    <div
-      v-for="item in props.daily"
-      :key="item.date"
-      class="row"
-    >
+    <div v-for="item in props.daily" :key="item.date" class="row">
       <span>{{ item.date }}</span>
       <span>{{ item.workflowTotal }}</span>
       <span>{{ item.workflowFailed }}</span>
       <span>{{ item.knowledgeTotal }}</span>
       <span>
         {{
-          ((item.ragCacheHits + item.ragCacheMisses)
+          (item.ragCacheHits + item.ragCacheMisses
             ? item.ragCacheHits / (item.ragCacheHits + item.ragCacheMisses)
             : 0
           ).toFixed(2)
@@ -42,12 +35,7 @@ const props = defineProps<{
       </span>
     </div>
   </div>
-  <div
-    v-else
-    class="muted"
-  >
-    暂无数据
-  </div>
+  <div v-else class="muted">暂无数据</div>
 </template>
 
 <style scoped>

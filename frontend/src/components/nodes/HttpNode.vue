@@ -1,43 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Connection } from '@element-plus/icons-vue'
+import { computed } from 'vue';
+import { Connection } from '@element-plus/icons-vue';
 
 const props = defineProps<{
-  id: string
+  id: string;
   data: {
-    label?: string
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-    url?: string
-    status?: 'idle' | 'running' | 'success' | 'error'
-  }
-}>()
+    label?: string;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    url?: string;
+    status?: 'idle' | 'running' | 'success' | 'error';
+  };
+}>();
 
 const statusColor = computed(() => {
   const colors = {
     idle: '#909399',
     running: 'var(--color-primary-900)',
     success: '#67c23a',
-    error: '#f56c6c'
-  }
-  return colors[props.data.status || 'idle']
-})
+    error: '#f56c6c',
+  };
+  return colors[props.data.status || 'idle'];
+});
 
 const methodColor = computed(() => {
   const colors = {
     GET: '#67c23a',
     POST: 'var(--color-primary-900)',
     PUT: '#e6a23c',
-    DELETE: '#f56c6c'
-  }
-  return colors[props.data.method || 'GET']
-})
+    DELETE: '#f56c6c',
+  };
+  return colors[props.data.method || 'GET'];
+});
 </script>
 
 <template>
-  <div
-    class="http-node"
-    :style="{ borderColor: statusColor }"
-  >
+  <div class="http-node" :style="{ borderColor: statusColor }">
     <div class="node-header">
       <div class="icon-wrapper">
         <el-icon><Connection /></el-icon>
@@ -47,21 +44,13 @@ const methodColor = computed(() => {
           {{ data.label || 'HTTP 请求' }}
         </div>
         <div class="node-meta">
-          <el-tag
-            :color="methodColor"
-            size="small"
-            effect="dark"
-            class="method-tag"
-          >
+          <el-tag :color="methodColor" size="small" effect="dark" class="method-tag">
             {{ data.method || 'GET' }}
           </el-tag>
         </div>
       </div>
     </div>
-    <div
-      v-if="data.url"
-      class="node-body"
-    >
+    <div v-if="data.url" class="node-body">
       <div class="url-display">
         {{ data.url }}
       </div>

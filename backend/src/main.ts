@@ -1,40 +1,42 @@
-import { NestFactory } from '@nestjs/core'
-import { ValidationPipe } from '@nestjs/common'
-import { AppModule } from './app.module'
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   try {
-    console.log('[Bootstrap] Starting application...')
+    console.log('[Bootstrap] Starting application...');
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-    })
+    });
 
-    console.log('[Bootstrap] Application created.')
+    console.log('[Bootstrap] Application created.');
 
     // 开启跨域，便于前端本地访问
-    app.enableCors()
-    console.log('[Bootstrap] CORS enabled.')
+    app.enableCors();
+    console.log('[Bootstrap] CORS enabled.');
 
     // 全局验证管道
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true, // 过滤未定义的属性
-      forbidNonWhitelisted: true, // 拒绝未定义的属性
-      transform: true, // 自动转换类型
-    }))
-    console.log('[Bootstrap] ValidationPipe enabled.')
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true, // 过滤未定义的属性
+        forbidNonWhitelisted: true, // 拒绝未定义的属性
+        transform: true, // 自动转换类型
+      }),
+    );
+    console.log('[Bootstrap] ValidationPipe enabled.');
 
     // 全局异常过滤器，统一返回结构
-    app.useGlobalFilters(new AllExceptionsFilter())
+    app.useGlobalFilters(new AllExceptionsFilter());
 
-    const port = process.env.PORT || 3000
-    console.log(`[Bootstrap] Attempting to listen on port ${port}...`)
-    await app.listen(port)
-    console.log(`[Bootstrap] Application listening on port ${port}`)
+    const port = process.env.PORT || 3000;
+    console.log(`[Bootstrap] Attempting to listen on port ${port}...`);
+    await app.listen(port);
+    console.log(`[Bootstrap] Application listening on port ${port}`);
   } catch (err) {
-    console.error('[Bootstrap] Error during startup:', err)
-    process.exit(1)
+    console.error('[Bootstrap] Error during startup:', err);
+    process.exit(1);
   }
 }
 
-bootstrap()
+bootstrap();

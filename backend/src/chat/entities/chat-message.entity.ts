@@ -1,26 +1,26 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 // 消息实体：存储用户与助手的消息
 @Entity('chat_messages')
 export class ChatMessageEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  id!: string;
 
   @Column({ type: 'uuid', name: 'session_id' })
-  sessionId!: string
+  sessionId!: string;
 
   @Column({ type: 'varchar', length: 20 })
-  role!: 'user' | 'assistant' | 'system'
+  role!: 'user' | 'assistant' | 'system';
 
   @Column({ type: 'text' })
-  content!: string
+  content!: string;
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
-  sources!: any
+  sources!: any;
 
   @Column({ type: 'jsonb', default: () => "'{}'" })
-  metadata!: any
+  metadata!: any;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date
+  createdAt!: Date;
 }

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@vue-flow/core'
+import { computed } from 'vue';
+import { EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@vue-flow/core';
 
 // 条件分支边：带箭头与端点标记
-const props = defineProps<EdgeProps>()
+const props = defineProps<EdgeProps>();
 
 const edgePathData = computed(() => {
   return getBezierPath({
@@ -13,23 +13,20 @@ const edgePathData = computed(() => {
     targetY: props.targetY,
     sourcePosition: props.sourcePosition,
     targetPosition: props.targetPosition,
-  })
-})
+  });
+});
 
 const strokeColor = computed(() => {
-  if (props.selected) return '#0f172a' // Brand Slate when selected
-  const stroke = (props.style as any)?.stroke
-  return typeof stroke === 'string' ? stroke : '#cbd5e1' // Slate-300 default
-})
+  if (props.selected) return '#0f172a'; // Brand Slate when selected
+  const stroke = (props.style as any)?.stroke;
+  return typeof stroke === 'string' ? stroke : '#cbd5e1'; // Slate-300 default
+});
 
-const strokeWidth = computed(() => props.selected ? 3 : 2)
+const strokeWidth = computed(() => (props.selected ? 3 : 2));
 </script>
 
 <template>
-  <g
-    class="edge-group"
-    :class="{ selected }"
-  >
+  <g class="edge-group" :class="{ selected }">
     <defs>
       <marker
         :id="`${id}-arrow`"
@@ -40,10 +37,7 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
         orient="auto"
         markerUnits="strokeWidth"
       >
-        <path
-          d="M0,0 L0,6 L9,3 z"
-          :fill="strokeColor"
-        />
+        <path d="M0,0 L0,6 L9,3 z" :fill="strokeColor" />
       </marker>
     </defs>
 
@@ -60,25 +54,18 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
       :id="id"
       :class="['branch-edge', { flow: animated }]"
       :d="edgePathData[0]"
-      :style="{ stroke: strokeColor, strokeWidth: strokeWidth, fill: 'none', ...(style as any || {}) }"
+      :style="{
+        stroke: strokeColor,
+        strokeWidth: strokeWidth,
+        fill: 'none',
+        ...((style as any) || {}),
+      }"
       :marker-end="`url(#${id}-arrow)`"
     />
 
     <!-- 端点标记 -->
-    <circle
-      v-if="!selected"
-      :cx="sourceX"
-      :cy="sourceY"
-      r="3"
-      :fill="strokeColor"
-    />
-    <circle
-      v-if="!selected"
-      :cx="targetX"
-      :cy="targetY"
-      r="3"
-      :fill="strokeColor"
-    />
+    <circle v-if="!selected" :cx="sourceX" :cy="sourceY" r="3" :fill="strokeColor" />
+    <circle v-if="!selected" :cx="targetX" :cy="targetY" r="3" :fill="strokeColor" />
 
     <!-- 标签 -->
     <EdgeLabelRenderer>
@@ -124,7 +111,7 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
 
 .flow {
   /* Create a dot pattern */
-  stroke-dasharray: 4 4; 
+  stroke-dasharray: 4 4;
   animation: flowParticle 0.8s linear infinite;
 }
 
@@ -140,6 +127,6 @@ const strokeWidth = computed(() => props.selected ? 3 : 2)
 }
 
 .interaction-path {
-    cursor: pointer;
+  cursor: pointer;
 }
 </style>

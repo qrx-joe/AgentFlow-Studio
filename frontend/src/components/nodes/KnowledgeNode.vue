@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Files } from '@element-plus/icons-vue'
-import BaseNode from './BaseNode.vue'
+import { Files } from '@element-plus/icons-vue';
+import BaseNode from './BaseNode.vue';
 
 defineProps<{
-    data: { label: string; dataset?: string; topK?: number; status?: string },
-    selected?: boolean
-}>()
+  data: { label: string; dataset?: string; topK?: number; status?: string };
+  selected?: boolean;
+}>();
 </script>
 
 <template>
@@ -42,6 +42,11 @@ defineProps<{
   font-size: 12px;
 }
 
-.label { color: var(--color-neutral-500); }
-.value { color: var(--color-neutral-800); font-weight: 500; }
+.label {
+  color: var(--color-neutral-500);
+}
+.value {
+  color: var(--color-neutral-800);
+  font-weight: 500;
+}
 </style>

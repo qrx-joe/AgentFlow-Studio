@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps<{
-  title: string
-  labels: string[]
-  values: number[]
-  height?: number
-}>()
+  title: string;
+  labels: string[];
+  values: number[];
+  height?: number;
+}>();
 
-const width = 520
-const height = computed(() => props.height || 140)
-const padding = 16
+const width = 520;
+const height = computed(() => props.height || 140);
+const padding = 16;
 
 const points = computed(() => {
-  const values = props.values || []
-  if (values.length === 0) return ''
-  const max = Math.max(...values, 1)
-  const stepX = (width - padding * 2) / Math.max(values.length - 1, 1)
+  const values = props.values || [];
+  if (values.length === 0) return '';
+  const max = Math.max(...values, 1);
+  const stepX = (width - padding * 2) / Math.max(values.length - 1, 1);
   return values
     .map((value, index) => {
-      const x = padding + index * stepX
-      const y = height.value - padding - (value / max) * (height.value - padding * 2)
-      return `${x},${y}`
+      const x = padding + index * stepX;
+      const y = height.value - padding - (value / max) * (height.value - padding * 2);
+      return `${x},${y}`;
     })
-    .join(' ')
-})
+    .join(' ');
+});
 </script>
 
 <template>
@@ -32,22 +32,10 @@ const points = computed(() => {
     <div class="title">
       {{ props.title }}
     </div>
-    <svg
-      :width="width"
-      :height="height"
-      class="svg"
-    >
-      <polyline
-        :points="points"
-        fill="none"
-        stroke="#38bdf8"
-        stroke-width="2"
-      />
+    <svg :width="width" :height="height" class="svg">
+      <polyline :points="points" fill="none" stroke="#38bdf8" stroke-width="2" />
     </svg>
-    <div
-      v-if="props.labels.length"
-      class="labels"
-    >
+    <div v-if="props.labels.length" class="labels">
       <span>{{ props.labels[0] }}</span>
       <span>{{ props.labels[props.labels.length - 1] }}</span>
     </div>

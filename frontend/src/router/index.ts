@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import MainLayout from '@/layouts/MainLayout.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import MainLayout from '@/layouts/MainLayout.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -8,20 +8,20 @@ const router = createRouter({
       path: '/login',
       name: 'Login',
       component: () => import('@/views/Auth/LoginView.vue'),
-      meta: { title: '登录', guest: true }
+      meta: { title: '登录', guest: true },
     },
     // 工作流编辑器 - 独立全屏页面
     {
       path: '/studio/:id',
       name: 'Studio',
       component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio', requiresAuth: true }
+      meta: { title: 'Workflow Studio', requiresAuth: true },
     },
     {
       path: '/workflow/:id',
       name: 'Workflow',
       component: () => import('@/views/Workflow/WorkflowView.vue'),
-      meta: { title: 'Workflow Studio', requiresAuth: true }
+      meta: { title: 'Workflow Studio', requiresAuth: true },
     },
     {
       path: '/',
@@ -32,63 +32,63 @@ const router = createRouter({
           path: '', // Default to Dashboard
           name: 'Dashboard',
           component: () => import('@/views/Dashboard/DashboardView.vue'),
-          meta: { title: '工作室' }
+          meta: { title: '工作室' },
         },
         {
           path: 'knowledge',
           name: 'Knowledge',
           component: () => import('@/views/Knowledge/KnowledgeListView.vue'),
-          meta: { title: '知识库' }
+          meta: { title: '知识库' },
         },
         {
           path: 'knowledge/:id',
           name: 'KnowledgeDetail',
           component: () => import('@/views/Knowledge/KnowledgeDetailView.vue'),
-          meta: { title: '知识库详情' }
+          meta: { title: '知识库详情' },
         },
         {
           path: 'chat',
           name: 'Chat',
           component: () => import('@/views/Chat/ChatView.vue'),
-          meta: { title: '智能对话' }
+          meta: { title: '智能对话' },
         },
         {
           path: 'monitoring',
           name: 'Monitoring',
           component: () => import('@/views/Monitoring/MonitoringView.vue'),
-          meta: { title: '系统监控' }
-        }
-      ]
-    }
-  ]
-})
+          meta: { title: '系统监控' },
+        },
+      ],
+    },
+  ],
+});
 
 // 路由守卫
 router.beforeEach((to, _from, next) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
-  const token = localStorage.getItem('token')
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const token = localStorage.getItem('token');
 
   // 兼容处理：已登录但没有token（修复前登录的用户），自动添加token
   if (isLoggedIn && !token) {
-    const username = localStorage.getItem('username') || 'user'
-    localStorage.setItem('token', `mock-token-${Date.now()}-${username}`)
+    const username = localStorage.getItem('username') || 'user';
+    localStorage.setItem('token', `mock-token-${Date.now()}-${username}`);
   }
 
   // 需要登录的页面
-  if (to.matched.some(record => record.meta.requiresAuth)) {
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isLoggedIn) {
-      next({ name: 'Login', query: { redirect: to.fullPath } })
-      return
+      next({ name: 'Login', query: { redirect: to.fullPath } });
+      return;
     }
   }
 
   // 已登录用户访问登录页，重定向到首页
   if (to.meta.guest && isLoggedIn) {
-    next({ path: '/' })
-    return
+    next({ path: '/' });
+    return;
   }
 
-  next()
-})
+  next();
+});
 
-export default router
+export default router;

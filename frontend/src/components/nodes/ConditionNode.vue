@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Connection } from '@element-plus/icons-vue'
-import BaseNode from './BaseNode.vue'
+import { Connection } from '@element-plus/icons-vue';
+import BaseNode from './BaseNode.vue';
 
 defineProps<{
-    data: { label: string; expression?: string; status?: string },
-    selected?: boolean
-}>()
+  data: { label: string; expression?: string; status?: string };
+  selected?: boolean;
+}>();
 </script>
 
 <template>
@@ -43,18 +43,20 @@ defineProps<{
   font-size: 12px;
 }
 
-.label { color: var(--color-neutral-500); }
-.value.code { 
-    font-family: monospace; 
-    background: var(--color-neutral-100); 
-    padding: 2px 4px; 
-    border-radius: 4px; 
+.label {
+  color: var(--color-neutral-500);
+}
+.value.code {
+  font-family: monospace;
+  background: var(--color-neutral-100);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .branches {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: var(--color-neutral-400);
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--color-neutral-400);
 }
 </style>

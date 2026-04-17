@@ -1,17 +1,17 @@
 <script setup lang="ts">
 const props = defineProps<{
-  days: number
-  failureThreshold: number
-  cacheHitThreshold: number
-}>()
+  days: number;
+  failureThreshold: number;
+  cacheHitThreshold: number;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:days', value: number): void
-  (e: 'update:failureThreshold', value: number): void
-  (e: 'update:cacheHitThreshold', value: number): void
-  (e: 'refresh'): void
-  (e: 'export'): void
-}>()
+  (e: 'update:days', value: number): void;
+  (e: 'update:failureThreshold', value: number): void;
+  (e: 'update:cacheHitThreshold', value: number): void;
+  (e: 'refresh'): void;
+  (e: 'export'): void;
+}>();
 </script>
 
 <template>
@@ -40,19 +40,8 @@ const emit = defineEmits<{
       :step="0.05"
       @update:model-value="emit('update:cacheHitThreshold', $event)"
     />
-    <el-button
-      size="small"
-      @click="emit('refresh')"
-    >
-      刷新
-    </el-button>
-    <el-button
-      size="small"
-      type="primary"
-      @click="emit('export')"
-    >
-      导出CSV
-    </el-button>
+    <el-button size="small" @click="emit('refresh')"> 刷新 </el-button>
+    <el-button size="small" type="primary" @click="emit('export')"> 导出CSV </el-button>
   </div>
 </template>
 

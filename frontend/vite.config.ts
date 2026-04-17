@@ -1,14 +1,14 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
-import { visualizer } from 'rollup-plugin-visualizer'
-import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import AutoImport from 'unplugin-auto-import/vite'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
+import Components from 'unplugin-vue-components/vite';
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
+import AutoImport from 'unplugin-auto-import/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
-  const analyze = process.env.ANALYZE === 'true'
+  const analyze = process.env.ANALYZE === 'true';
 
   return {
     plugins: [
@@ -68,13 +68,13 @@ export default defineConfig(() => {
             proxy.on('proxyRes', (proxyRes, req) => {
               // 检测 SSE 响应，确保不缓冲
               if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
-                proxyRes.headers['cache-control'] = 'no-cache'
-                proxyRes.headers['x-accel-buffering'] = 'no'
+                proxyRes.headers['cache-control'] = 'no-cache';
+                proxyRes.headers['x-accel-buffering'] = 'no';
               }
-            })
+            });
           },
         },
       },
     },
-  }
-})
+  };
+});

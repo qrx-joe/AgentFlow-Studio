@@ -1,61 +1,61 @@
 <script setup lang="ts">
-import { VueFlow } from '@vue-flow/core'
-import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
-import '@vue-flow/controls/dist/style.css'
-import NodeToolbar from '@/components/workflow/NodeToolbar.vue'
+import { VueFlow } from '@vue-flow/core';
+import { Background } from '@vue-flow/background';
+import { Controls } from '@vue-flow/controls';
+import '@vue-flow/controls/dist/style.css';
+import NodeToolbar from '@/components/workflow/NodeToolbar.vue';
 
-const nodes = defineModel<any[]>('nodes', { required: true })
-const edges = defineModel<any[]>('edges', { required: true })
+const nodes = defineModel<any[]>('nodes', { required: true });
+const edges = defineModel<any[]>('edges', { required: true });
 
 const props = defineProps<{
-  flowId?: string
-  nodeTypes: Record<string, any>
-  edgeTypes: Record<string, any>
-  saving: boolean
-  executing: boolean
-  replaying: boolean
-  replaySpeed: number
-  replayProgress: number
-  replayTotal: number
-  preserveTrail: boolean
-  compareLast: boolean
-  snapshotOptions: Array<{ label: string; value: string }>
-  selectedSnapshotId: string
-  applySnapshotMeta: boolean
-  onDragOver: (event: DragEvent) => void
-  onDrop: (event: DragEvent) => void
-}>()
+  flowId?: string;
+  nodeTypes: Record<string, any>;
+  edgeTypes: Record<string, any>;
+  saving: boolean;
+  executing: boolean;
+  replaying: boolean;
+  replaySpeed: number;
+  replayProgress: number;
+  replayTotal: number;
+  preserveTrail: boolean;
+  compareLast: boolean;
+  snapshotOptions: Array<{ label: string; value: string }>;
+  selectedSnapshotId: string;
+  applySnapshotMeta: boolean;
+  onDragOver: (event: DragEvent) => void;
+  onDrop: (event: DragEvent) => void;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:replaySpeed', value: number): void
-  (e: 'update:preserveTrail', value: boolean): void
-  (e: 'update:compareLast', value: boolean): void
-  (e: 'update:selectedSnapshotId', value: string): void
-  (e: 'update:applySnapshotMeta', value: boolean): void
-  (e: 'save'): void
-  (e: 'run'): void
-  (e: 'clear'): void
-  (e: 'restore'): void
-  (e: 'replay'): void
-  (e: 'stopReplay'): void
-  (e: 'seekReplay', value: number): void
-  (e: 'clearTrail'): void
-  (e: 'saveSnapshot'): void
-  (e: 'deleteSnapshot'): void
-  (e: 'renameSnapshot'): void
-  (e: 'clearSnapshots'): void
-  (e: 'exportSnapshot'): void
-  (e: 'importSnapshot'): void
-  (e: 'exportAllSnapshots'): void
-  (e: 'exportReplayScript'): void
-  (e: 'exportReplayJson'): void
-  (e: 'exportReplayTxt'): void
-  (e: 'nodeClick', node: any): void
-  (e: 'nodeDoubleClick', node: any): void
-  (e: 'paneClick'): void
-  (e: 'edgeClick', edge: any): void
-}>()
+  (e: 'update:replaySpeed', value: number): void;
+  (e: 'update:preserveTrail', value: boolean): void;
+  (e: 'update:compareLast', value: boolean): void;
+  (e: 'update:selectedSnapshotId', value: string): void;
+  (e: 'update:applySnapshotMeta', value: boolean): void;
+  (e: 'save'): void;
+  (e: 'run'): void;
+  (e: 'clear'): void;
+  (e: 'restore'): void;
+  (e: 'replay'): void;
+  (e: 'stopReplay'): void;
+  (e: 'seekReplay', value: number): void;
+  (e: 'clearTrail'): void;
+  (e: 'saveSnapshot'): void;
+  (e: 'deleteSnapshot'): void;
+  (e: 'renameSnapshot'): void;
+  (e: 'clearSnapshots'): void;
+  (e: 'exportSnapshot'): void;
+  (e: 'importSnapshot'): void;
+  (e: 'exportAllSnapshots'): void;
+  (e: 'exportReplayScript'): void;
+  (e: 'exportReplayJson'): void;
+  (e: 'exportReplayTxt'): void;
+  (e: 'nodeClick', node: any): void;
+  (e: 'nodeDoubleClick', node: any): void;
+  (e: 'paneClick'): void;
+  (e: 'edgeClick', edge: any): void;
+}>();
 </script>
 
 <template>
@@ -98,11 +98,7 @@ const emit = defineEmits<{
       @export-replay-txt="emit('exportReplayTxt')"
     />
 
-    <div
-      class="canvas"
-      @dragover="props.onDragOver"
-      @drop="props.onDrop"
-    >
+    <div class="canvas" @dragover="props.onDragOver" @drop="props.onDrop">
       <VueFlow
         :id="props.flowId"
         v-model:nodes="nodes"

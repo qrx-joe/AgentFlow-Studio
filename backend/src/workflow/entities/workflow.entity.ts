@@ -1,36 +1,35 @@
-
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 // 工作流实体：存储节点与连线的 JSON
 @Entity('workflows')
 export class WorkflowEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  id!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name!: string
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
-  description?: string
+  description?: string;
 
   @Column({ type: 'varchar', length: 20, default: 'draft' })
-  status!: string // 'draft' | 'published'
+  status!: string; // 'draft' | 'published'
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  icon?: string
+  icon?: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  color?: string
+  color?: string;
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
-  nodes: any
+  nodes: any;
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
-  edges: any
+  edges: any;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date
+  createdAt!: Date;
 
   @Column({ type: 'timestamp', name: 'updated_at', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt!: Date
+  updatedAt!: Date;
 }

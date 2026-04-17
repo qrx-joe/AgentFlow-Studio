@@ -1,69 +1,69 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 const props = defineProps<{
-  searchQuery: string
-  topK: number
-  scoreThreshold: number
-  hybrid: boolean
-  rerank: boolean
-  vectorWeight: number
-  keywordWeight: number
-  keywordMode: 'bm25' | 'tsrank' | 'trgm'
-  searching: boolean
-}>()
+  searchQuery: string;
+  topK: number;
+  scoreThreshold: number;
+  hybrid: boolean;
+  rerank: boolean;
+  vectorWeight: number;
+  keywordWeight: number;
+  keywordMode: 'bm25' | 'tsrank' | 'trgm';
+  searching: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:searchQuery', value: string): void
-  (e: 'update:topK', value: number): void
-  (e: 'update:scoreThreshold', value: number): void
-  (e: 'update:hybrid', value: boolean): void
-  (e: 'update:rerank', value: boolean): void
-  (e: 'update:vectorWeight', value: number): void
-  (e: 'update:keywordWeight', value: number): void
-  (e: 'update:keywordMode', value: 'bm25' | 'tsrank' | 'trgm'): void
-  (e: 'search'): void
-}>()
+  (e: 'update:searchQuery', value: string): void;
+  (e: 'update:topK', value: number): void;
+  (e: 'update:scoreThreshold', value: number): void;
+  (e: 'update:hybrid', value: boolean): void;
+  (e: 'update:rerank', value: boolean): void;
+  (e: 'update:vectorWeight', value: number): void;
+  (e: 'update:keywordWeight', value: number): void;
+  (e: 'update:keywordMode', value: 'bm25' | 'tsrank' | 'trgm'): void;
+  (e: 'search'): void;
+}>();
 
-const showAdvanced = ref(false)
+const showAdvanced = ref(false);
 
 const onSearch = () => {
-  if (!props.searchQuery.trim()) return
-  emit('search')
-}
+  if (!props.searchQuery.trim()) return;
+  emit('search');
+};
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    onSearch()
+    e.preventDefault();
+    onSearch();
   }
-}
+};
 
 // 预设配置
 const presets = [
   {
     name: '精确匹配',
     icon: '🎯',
-    config: { hybrid: false, rerank: false, scoreThreshold: 0.7, topK: 3 }
+    config: { hybrid: false, rerank: false, scoreThreshold: 0.7, topK: 3 },
   },
   {
     name: '混合检索',
     icon: '🔀',
-    config: { hybrid: true, rerank: false, scoreThreshold: 0.5, topK: 5 }
+    config: { hybrid: true, rerank: false, scoreThreshold: 0.5, topK: 5 },
   },
   {
     name: '智能重排',
     icon: '⚡',
-    config: { hybrid: true, rerank: true, scoreThreshold: 0.3, topK: 10 }
-  }
-]
+    config: { hybrid: true, rerank: true, scoreThreshold: 0.3, topK: 10 },
+  },
+];
 
-const applyPreset = (preset: typeof presets[0]) => {
-  emit('update:hybrid', preset.config.hybrid)
-  emit('update:rerank', preset.config.rerank)
-  emit('update:scoreThreshold', preset.config.scoreThreshold)
-  emit('update:topK', preset.config.topK)
-}
+const applyPreset = (preset: (typeof presets)[0]) => {
+  emit('update:hybrid', preset.config.hybrid);
+  emit('update:rerank', preset.config.rerank);
+  emit('update:scoreThreshold', preset.config.scoreThreshold);
+  emit('update:topK', preset.config.topK);
+};
 </script>
 
 <template>
@@ -152,24 +152,16 @@ const applyPreset = (preset: typeof presets[0]) => {
         </div>
       </div>
 
-      <button
-        class="advanced-toggle"
-        @click="showAdvanced = !showAdvanced"
-      >
+      <button class="advanced-toggle" @click="showAdvanced = !showAdvanced">
         <span>{{ showAdvanced ? '收起' : '高级设置' }}</span>
         <span class="toggle-icon">{{ showAdvanced ? '▲' : '▼' }}</span>
       </button>
     </div>
 
     <!-- 高级设置 -->
-    <div
-      v-if="showAdvanced"
-      class="advanced-panel"
-    >
+    <div v-if="showAdvanced" class="advanced-panel">
       <div class="advanced-section">
-        <h4 class="section-title">
-          权重配置
-        </h4>
+        <h4 class="section-title">权重配置</h4>
         <div class="weight-controls">
           <div class="weight-item">
             <label class="weight-label">
@@ -208,15 +200,13 @@ const applyPreset = (preset: typeof presets[0]) => {
       </div>
 
       <div class="advanced-section">
-        <h4 class="section-title">
-          关键词算法
-        </h4>
+        <h4 class="section-title">关键词算法</h4>
         <div class="keyword-modes">
           <button
             v-for="mode in [
               { value: 'bm25', label: 'BM25', desc: '经典概率检索模型' },
               { value: 'tsrank', label: 'TS Rank', desc: 'PostgreSQL 全文检索' },
-              { value: 'trgm', label: 'Trigram', desc: '三元组相似度' }
+              { value: 'trgm', label: 'Trigram', desc: '三元组相似度' },
             ]"
             :key="mode.value"
             class="mode-btn"

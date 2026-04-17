@@ -1,63 +1,42 @@
 <script setup lang="ts">
 const props = defineProps<{
-  result: any
-}>()
+  result: any;
+}>();
 </script>
 
 <template>
-  <div
-    v-if="props.result"
-    class="result"
-  >
+  <div v-if="props.result" class="result">
     <div class="metrics">
-      <div class="metric">
-        Baseline Hit@K: {{ props.result.baseline.hitRate.toFixed(4) }}
-      </div>
-      <div class="metric">
-        Baseline MRR: {{ props.result.baseline.mrr.toFixed(4) }}
-      </div>
-      <div
-        v-if="props.result.compare"
-        class="metric"
-      >
+      <div class="metric">Baseline Hit@K: {{ props.result.baseline.hitRate.toFixed(4) }}</div>
+      <div class="metric">Baseline MRR: {{ props.result.baseline.mrr.toFixed(4) }}</div>
+      <div v-if="props.result.compare" class="metric">
         Compare Hit@K: {{ props.result.compare.hitRate.toFixed(4) }}
       </div>
-      <div
-        v-if="props.result.compare"
-        class="metric"
-      >
+      <div v-if="props.result.compare" class="metric">
         Compare MRR: {{ props.result.compare.mrr.toFixed(4) }}
       </div>
     </div>
-    <div
-      v-if="props.result?.baseline?.perQuery?.length"
-      class="table"
-    >
+    <div v-if="props.result?.baseline?.perQuery?.length" class="table">
       <div class="row header">
         <span>Query</span>
         <span>Baseline</span>
         <span>Compare</span>
       </div>
-      <div
-        v-for="(item, index) in props.result.baseline.perQuery"
-        :key="index"
-        class="row"
-      >
+      <div v-for="(item, index) in props.result.baseline.perQuery" :key="index" class="row">
         <span class="query">{{ item.query }}</span>
         <span>{{ item.hit ? `Hit@${item.rank}` : 'Miss' }}</span>
         <span v-if="props.result.compare">
-          {{ props.result.compare.perQuery?.[index]?.hit ? `Hit@${props.result.compare.perQuery[index].rank}` : 'Miss' }}
+          {{
+            props.result.compare.perQuery?.[index]?.hit
+              ? `Hit@${props.result.compare.perQuery[index].rank}`
+              : 'Miss'
+          }}
         </span>
         <span v-else>-</span>
       </div>
     </div>
   </div>
-  <div
-    v-else
-    class="muted"
-  >
-    暂无结果
-  </div>
+  <div v-else class="muted">暂无结果</div>
 </template>
 
 <style scoped>

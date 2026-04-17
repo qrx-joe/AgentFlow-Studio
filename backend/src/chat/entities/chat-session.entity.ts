@@ -1,20 +1,20 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 // 会话实体：用于多轮对话
 @Entity('chat_sessions')
 export class ChatSessionEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  id!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  title?: string
+  title?: string;
 
   @Column({ type: 'uuid', name: 'workflow_id', nullable: true })
-  workflowId?: string
+  workflowId?: string;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date
+  createdAt!: Date;
 
   @Column({ type: 'timestamp', name: 'updated_at', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt!: Date
+  updatedAt!: Date;
 }

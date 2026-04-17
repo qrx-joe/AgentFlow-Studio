@@ -1,40 +1,47 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Files, ChatLineRound, Monitor, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import {
+  Files,
+  ChatLineRound,
+  Monitor,
+  ArrowDown,
+  User,
+  SwitchButton,
+} from '@element-plus/icons-vue';
 
 // 主布局：现代化侧边栏与内容区
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
 const menus = [
   { name: '工作室', path: '/', icon: Monitor },
   { name: '知识库', path: '/knowledge', icon: Files },
   { name: '智能对话', path: '/chat', icon: ChatLineRound },
-]
+];
 
 const handleSelect = (path: string) => {
   if (route.path !== path) {
-    router.push(path)
+    router.push(path);
   }
-}
+};
 
-const username = localStorage.getItem('username') || 'User'
+const username = localStorage.getItem('username') || 'User';
 
 // 退出确认弹窗
-const logoutDialogVisible = ref(false)
+const logoutDialogVisible = ref(false);
 
 const showLogoutConfirm = () => {
-  logoutDialogVisible.value = true
-}
+  logoutDialogVisible.value = true;
+};
 
 const handleLogout = () => {
-  localStorage.removeItem('isLoggedIn')
-  localStorage.removeItem('username')
-  localStorage.removeItem('token')
-  logoutDialogVisible.value = false
-  router.push('/login')
-}
+  localStorage.removeItem('isLoggedIn');
+  localStorage.removeItem('username');
+  localStorage.removeItem('token');
+  logoutDialogVisible.value = false;
+  router.push('/login');
+};
 </script>
 
 <template>
@@ -64,7 +71,10 @@ const handleLogout = () => {
           v-for="item in menus"
           :key="item.path"
           class="nav-item"
-          :class="{ active: route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)) }"
+          :class="{
+            active:
+              route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)),
+          }"
           @click="handleSelect(item.path)"
         >
           <el-icon class="nav-icon">
@@ -91,10 +101,7 @@ const handleLogout = () => {
                 <el-icon><user /></el-icon>
                 <span>{{ username }}</span>
               </el-dropdown-item>
-              <el-dropdown-item
-                divided
-                @click="showLogoutConfirm"
-              >
+              <el-dropdown-item divided @click="showLogoutConfirm">
                 <el-icon><switch-button /></el-icon>
                 <span>退出登录</span>
               </el-dropdown-item>
@@ -108,10 +115,7 @@ const handleLogout = () => {
     <main class="content-wrapper">
       <div class="page-content">
         <router-view v-slot="{ Component }">
-          <transition
-            name="fade"
-            mode="out-in"
-          >
+          <transition name="fade" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
@@ -128,37 +132,17 @@ const handleLogout = () => {
     >
       <div class="logout-content">
         <div class="logout-icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
           </svg>
         </div>
-        <h3 class="logout-title">
-          确认退出登录？
-        </h3>
-        <p class="logout-desc">
-          退出后将需要重新登录才能访问您的数据
-        </p>
+        <h3 class="logout-title">确认退出登录？</h3>
+        <p class="logout-desc">退出后将需要重新登录才能访问您的数据</p>
       </div>
       <template #footer>
         <div class="logout-footer">
-          <el-button
-            size="large"
-            @click="logoutDialogVisible = false"
-          >
-            取消
-          </el-button>
-          <el-button
-            size="large"
-            type="primary"
-            @click="handleLogout"
-          >
-            确认退出
-          </el-button>
+          <el-button size="large" @click="logoutDialogVisible = false"> 取消 </el-button>
+          <el-button size="large" type="primary" @click="handleLogout"> 确认退出 </el-button>
         </div>
       </template>
     </el-dialog>

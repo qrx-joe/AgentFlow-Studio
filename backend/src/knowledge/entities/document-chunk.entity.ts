@@ -1,26 +1,26 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 // 文档分块实体：用于向量检索
 @Entity('document_chunks')
 export class DocumentChunkEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string
+  id!: string;
 
   @Column({ type: 'uuid', name: 'document_id' })
-  documentId!: string
+  documentId!: string;
 
   @Column({ type: 'text' })
-  content!: string
+  content!: string;
 
   @Column({ type: 'int', name: 'chunk_index' })
-  chunkIndex!: number
+  chunkIndex!: number;
 
   @Column({ type: 'vector', nullable: true })
-  embedding?: number[]
+  embedding?: number[];
 
   @Column({ type: 'jsonb', default: () => "'{}'" })
-  metadata!: Record<string, any>
+  metadata!: Record<string, any>;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date
+  createdAt!: Date;
 }

@@ -1,65 +1,51 @@
 <script setup lang="ts">
-import type { Session } from '@/types'
-import { Fold, Expand } from '@element-plus/icons-vue'
+import type { Session } from '@/types';
+import { Fold, Expand } from '@element-plus/icons-vue';
 
 const props = defineProps<{
-  sessions: Session[]
-  currentSessionId: string
-  collapsed?: boolean
-}>()
+  sessions: Session[];
+  currentSessionId: string;
+  collapsed?: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'select', id: string): void
-  (e: 'create'): void
-  (e: 'delete', id: string): void
-  (e: 'toggle-collapse'): void
-}>()
+  (e: 'select', id: string): void;
+  (e: 'create'): void;
+  (e: 'delete', id: string): void;
+  (e: 'toggle-collapse'): void;
+}>();
 
 const formatTime = (dateStr: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return '刚刚'
-  if (diffMin < 60) return `${diffMin}分钟前`
-  const diffHour = Math.floor(diffMin / 60)
-  if (diffHour < 24) return `${diffHour}小时前`
-  const diffDay = Math.floor(diffHour / 24)
-  if (diffDay < 7) return `${diffDay}天前`
-  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
-}
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '刚刚';
+  if (diffMin < 60) return `${diffMin}分钟前`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}小时前`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}天前`;
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+};
 
 const handleDelete = (e: Event, id: string) => {
-  e.stopPropagation()
-  emit('delete', id)
-}
+  e.stopPropagation();
+  emit('delete', id);
+};
 </script>
 
 <template>
-  <aside
-    class="sessions-sidebar"
-    :class="{ collapsed }"
-  >
+  <aside class="sessions-sidebar" :class="{ collapsed }">
     <!-- 收起状态 -->
-    <div
-      v-if="collapsed"
-      class="collapsed-content"
-    >
-      <button
-        class="btn-expand"
-        title="展开侧边栏"
-        @click="emit('toggle-collapse')"
-      >
+    <div v-if="collapsed" class="collapsed-content">
+      <button class="btn-expand" title="展开侧边栏" @click="emit('toggle-collapse')">
         <el-icon :size="20">
           <Expand />
         </el-icon>
       </button>
-      <button
-        class="btn-new-chat-mini"
-        title="新对话"
-        @click="emit('create')"
-      >
+      <button class="btn-new-chat-mini" title="新对话" @click="emit('create')">
         <svg
           width="18"
           height="18"
@@ -68,18 +54,8 @@ const handleDelete = (e: Event, id: string) => {
           stroke="currentColor"
           stroke-width="2"
         >
-          <line
-            x1="12"
-            y1="5"
-            x2="12"
-            y2="19"
-          />
-          <line
-            x1="5"
-            y1="12"
-            x2="19"
-            y2="12"
-          />
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </button>
       <div class="collapsed-sessions">
@@ -109,24 +85,15 @@ const handleDelete = (e: Event, id: string) => {
     <template v-else>
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <div class="logo-icon">
-            💬
-          </div>
+          <div class="logo-icon">💬</div>
           <span class="logo-text">对话历史</span>
-          <button
-            class="btn-collapse"
-            title="收起侧边栏"
-            @click="emit('toggle-collapse')"
-          >
+          <button class="btn-collapse" title="收起侧边栏" @click="emit('toggle-collapse')">
             <el-icon :size="16">
               <Fold />
             </el-icon>
           </button>
         </div>
-        <button
-          class="btn-new-chat"
-          @click="emit('create')"
-        >
+        <button class="btn-new-chat" @click="emit('create')">
           <svg
             width="16"
             height="16"
@@ -135,18 +102,8 @@ const handleDelete = (e: Event, id: string) => {
             stroke="currentColor"
             stroke-width="2"
           >
-            <line
-              x1="12"
-              y1="5"
-              x2="12"
-              y2="19"
-            />
-            <line
-              x1="5"
-              y1="12"
-              x2="19"
-              y2="12"
-            />
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           新对话
         </button>
@@ -180,11 +137,7 @@ const handleDelete = (e: Event, id: string) => {
               {{ formatTime(session.updatedAt || session.createdAt || '') }}
             </div>
           </div>
-          <button
-            class="btn-delete"
-            title="删除"
-            @click="handleDelete($event, session.id)"
-          >
+          <button class="btn-delete" title="删除" @click="handleDelete($event, session.id)">
             <svg
               width="14"
               height="14"
@@ -194,25 +147,18 @@ const handleDelete = (e: Event, id: string) => {
               stroke-width="2"
             >
               <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
             </svg>
           </button>
         </div>
       </div>
 
-      <div
-        v-if="sessions.length === 0"
-        class="empty-sessions"
-      >
-        <div class="empty-icon">
-          🗨️
-        </div>
-        <div class="empty-text">
-          还没有对话
-        </div>
-        <div class="empty-hint">
-          点击「新对话」开始
-        </div>
+      <div v-if="sessions.length === 0" class="empty-sessions">
+        <div class="empty-icon">🗨️</div>
+        <div class="empty-text">还没有对话</div>
+        <div class="empty-hint">点击「新对话」开始</div>
       </div>
     </template>
   </aside>

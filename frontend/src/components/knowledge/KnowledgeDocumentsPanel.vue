@@ -1,124 +1,122 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed } from 'vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps<{
-  documents: any[]
-  loading: boolean
-  uploading: boolean
-  chunkSize: number
-  overlap: number
-}>()
+  documents: any[];
+  loading: boolean;
+  uploading: boolean;
+  chunkSize: number;
+  overlap: number;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:chunkSize', value: number): void
-  (e: 'update:overlap', value: number): void
-  (e: 'upload', file: any): void
-  (e: 'openDoc', doc: any): void
-  (e: 'removeDoc', id: string): void
-}>()
+  (e: 'update:chunkSize', value: number): void;
+  (e: 'update:overlap', value: number): void;
+  (e: 'upload', file: any): void;
+  (e: 'openDoc', doc: any): void;
+  (e: 'removeDoc', id: string): void;
+}>();
 
-const searchKeyword = ref('')
-const isDragging = ref(false)
-const selectedDocs = ref<Set<string>>(new Set())
-const showSettings = ref(false)
+const searchKeyword = ref('');
+const isDragging = ref(false);
+const selectedDocs = ref<Set<string>>(new Set());
+const showSettings = ref(false);
 
 // 过滤文档
 const filteredDocuments = computed(() => {
-  if (!searchKeyword.value.trim()) return props.documents
-  const keyword = searchKeyword.value.toLowerCase()
-  return props.documents.filter(doc =>
-    doc.filename?.toLowerCase().includes(keyword)
-  )
-})
+  if (!searchKeyword.value.trim()) return props.documents;
+  const keyword = searchKeyword.value.toLowerCase();
+  return props.documents.filter((doc) => doc.filename?.toLowerCase().includes(keyword));
+});
 
 // 统计信息
 const stats = computed(() => ({
   total: props.documents.length,
   totalChunks: props.documents.reduce((sum, doc) => sum + (doc.metadata?.chunkCount || 0), 0),
   totalChars: props.documents.reduce((sum, doc) => sum + (doc.metadata?.charCount || 0), 0),
-}))
+}));
 
 // 文件上传
 const handleUpload = async (options: { file: File }) => {
   try {
-    await emit('upload', options.file)
+    await emit('upload', options.file);
   } catch (e) {
-    console.error('[Upload] Error:', e)
+    console.error('[Upload] Error:', e);
   }
-}
+};
 
 // 拖拽上传
 const handleDrop = (e: DragEvent) => {
-  isDragging.value = false
-  const files = e.dataTransfer?.files
+  isDragging.value = false;
+  const files = e.dataTransfer?.files;
   if (files && files.length > 0) {
-    handleUpload({ file: files[0] })
+    handleUpload({ file: files[0] });
   }
-}
+};
 
 const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  isDragging.value = true
-}
+  e.preventDefault();
+  isDragging.value = true;
+};
 
 const handleDragLeave = () => {
-  isDragging.value = false
-}
+  isDragging.value = false;
+};
 
 // 批量操作
 
 const toggleSelect = (id: string) => {
   if (selectedDocs.value.has(id)) {
-    selectedDocs.value.delete(id)
+    selectedDocs.value.delete(id);
   } else {
-    selectedDocs.value.add(id)
+    selectedDocs.value.add(id);
   }
-}
+};
 
 const handleBatchDelete = () => {
   if (selectedDocs.value.size === 0) {
-    ElMessage.warning('请先选择要删除的文档')
-    return
+    ElMessage.warning('请先选择要删除的文档');
+    return;
   }
-  selectedDocs.value.forEach(id => emit('removeDoc', id))
-  selectedDocs.value.clear()
-}
+  selectedDocs.value.forEach((id) => emit('removeDoc', id));
+  selectedDocs.value.clear();
+};
 
 // 格式化文件大小
 const formatFileSize = (bytes?: number) => {
-  if (!bytes) return '-'
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB'
-}
+  if (!bytes) return '-';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+};
 
 // 格式化时间
 const formatTime = (dateStr?: string) => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+    minute: '2-digit',
+  });
+};
 
 // 获取文件图标
 const getFileIcon = (fileType?: string) => {
-  if (!fileType) return '📄'
-  if (fileType.includes('pdf')) return '📕'
-  if (fileType.includes('word') || fileType.includes('doc')) return '📘'
-  if (fileType.includes('excel') || fileType.includes('sheet')) return '📗'
-  if (fileType.includes('text') || fileType.includes('txt')) return '📝'
-  if (fileType.includes('markdown') || fileType.includes('md')) return '📋'
-  if (fileType.includes('json')) return '📊'
-  if (fileType.includes('csv')) return '📈'
-  if (fileType.includes('html')) return '🌐'
-  return '📄'
-}
+  if (!fileType) return '📄';
+  if (fileType.includes('pdf')) return '📕';
+  if (fileType.includes('word') || fileType.includes('doc')) return '📘';
+  if (fileType.includes('excel') || fileType.includes('sheet')) return '📗';
+  if (fileType.includes('text') || fileType.includes('txt')) return '📝';
+  if (fileType.includes('markdown') || fileType.includes('md')) return '📋';
+  if (fileType.includes('json')) return '📊';
+  if (fileType.includes('csv')) return '📈';
+  if (fileType.includes('html')) return '🌐';
+  return '📄';
+};
 </script>
 
 <template>
@@ -126,9 +124,7 @@ const getFileIcon = (fileType?: string) => {
     <!-- 头部 -->
     <div class="panel-header">
       <div class="header-left">
-        <h2 class="panel-title">
-          📚 知识库
-        </h2>
+        <h2 class="panel-title">📚 知识库</h2>
         <div class="stats">
           <span class="stat-item">{{ stats.total }} 个文档</span>
           <span class="stat-divider">·</span>
@@ -143,15 +139,8 @@ const getFileIcon = (fileType?: string) => {
           circle
           @click="showSettings = !showSettings"
         />
-        <el-upload
-          :http-request="handleUpload"
-          :show-file-list="false"
-          action=""
-        >
-          <el-button
-            type="primary"
-            :loading="props.uploading"
-          >
+        <el-upload :http-request="handleUpload" :show-file-list="false" action="">
+          <el-button type="primary" :loading="props.uploading">
             <span class="btn-icon">📤</span>
             上传文档
           </el-button>
@@ -160,10 +149,7 @@ const getFileIcon = (fileType?: string) => {
     </div>
 
     <!-- 设置面板 -->
-    <div
-      v-if="showSettings"
-      class="settings-panel"
-    >
+    <div v-if="showSettings" class="settings-panel">
       <div class="setting-item">
         <label class="setting-label">分块大小</label>
         <el-input-number
@@ -172,7 +158,9 @@ const getFileIcon = (fileType?: string) => {
           :max="2000"
           :step="50"
           size="small"
-          @update:model-value="(value: number | undefined) => emit('update:chunkSize', Number(value))"
+          @update:model-value="
+            (value: number | undefined) => emit('update:chunkSize', Number(value))
+          "
         />
         <span class="setting-hint">字符数，建议 300-800</span>
       </div>
@@ -202,24 +190,10 @@ const getFileIcon = (fileType?: string) => {
           <span>🔍</span>
         </template>
       </el-input>
-      <div
-        v-if="selectedDocs.size > 0"
-        class="batch-actions"
-      >
+      <div v-if="selectedDocs.size > 0" class="batch-actions">
         <span class="selected-count">已选择 {{ selectedDocs.size }} 项</span>
-        <el-button
-          size="small"
-          @click="selectedDocs.clear()"
-        >
-          取消
-        </el-button>
-        <el-button
-          size="small"
-          type="danger"
-          @click="handleBatchDelete"
-        >
-          批量删除
-        </el-button>
+        <el-button size="small" @click="selectedDocs.clear()"> 取消 </el-button>
+        <el-button size="small" type="danger" @click="handleBatchDelete"> 批量删除 </el-button>
       </div>
     </div>
 
@@ -232,26 +206,14 @@ const getFileIcon = (fileType?: string) => {
       @dragover.prevent="handleDragOver"
       @dragleave="handleDragLeave"
     >
-      <div class="upload-icon">
-        📁
-      </div>
-      <div class="upload-title">
-        拖拽文件到这里上传
-      </div>
-      <div class="upload-hint">
-        或点击上方"上传文档"按钮
-      </div>
-      <div class="upload-formats">
-        支持 TXT, MD, PDF, DOCX, JSON, CSV, HTML 格式
-      </div>
+      <div class="upload-icon">📁</div>
+      <div class="upload-title">拖拽文件到这里上传</div>
+      <div class="upload-hint">或点击上方"上传文档"按钮</div>
+      <div class="upload-formats">支持 TXT, MD, PDF, DOCX, JSON, CSV, HTML 格式</div>
     </div>
 
     <!-- 文档卡片列表 -->
-    <div
-      v-else
-      v-loading="props.loading"
-      class="documents-grid"
-    >
+    <div v-else v-loading="props.loading" class="documents-grid">
       <div
         v-for="doc in filteredDocuments"
         :key="doc.id"
@@ -260,14 +222,8 @@ const getFileIcon = (fileType?: string) => {
         @click="emit('openDoc', doc)"
       >
         <!-- 选择框 -->
-        <div
-          class="card-checkbox"
-          @click.stop
-        >
-          <el-checkbox
-            :model-value="selectedDocs.has(doc.id)"
-            @change="toggleSelect(doc.id)"
-          />
+        <div class="card-checkbox" @click.stop>
+          <el-checkbox :model-value="selectedDocs.has(doc.id)" @change="toggleSelect(doc.id)" />
         </div>
 
         <!-- 文件图标 -->
@@ -277,10 +233,7 @@ const getFileIcon = (fileType?: string) => {
 
         <!-- 文件信息 -->
         <div class="card-content">
-          <div
-            class="card-title"
-            :title="doc.filename"
-          >
+          <div class="card-title" :title="doc.filename">
             {{ doc.filename }}
           </div>
           <div class="card-meta">
@@ -299,23 +252,9 @@ const getFileIcon = (fileType?: string) => {
         </div>
 
         <!-- 操作按钮 -->
-        <div
-          class="card-actions"
-          @click.stop
-        >
-          <el-button
-            size="small"
-            text
-            @click="emit('openDoc', doc)"
-          >
-            详情
-          </el-button>
-          <el-button
-            size="small"
-            text
-            type="danger"
-            @click="emit('removeDoc', doc.id)"
-          >
+        <div class="card-actions" @click.stop>
+          <el-button size="small" text @click="emit('openDoc', doc)"> 详情 </el-button>
+          <el-button size="small" text type="danger" @click="emit('removeDoc', doc.id)">
             删除
           </el-button>
         </div>
@@ -332,12 +271,8 @@ const getFileIcon = (fileType?: string) => {
       v-if="filteredDocuments.length === 0 && searchKeyword && !props.loading"
       class="empty-state"
     >
-      <div class="empty-icon">
-        🔍
-      </div>
-      <div class="empty-text">
-        未找到匹配的文档
-      </div>
+      <div class="empty-icon">🔍</div>
+      <div class="empty-text">未找到匹配的文档</div>
     </div>
   </div>
 </template>

@@ -1,104 +1,104 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { ArrowLeft, Setting, Search, Document, Delete, Edit } from '@element-plus/icons-vue'
-import { useKnowledgeStore, type KnowledgeBaseSettings } from '@/stores/knowledge'
-import KnowledgeDocumentsPanel from '@/components/knowledge/KnowledgeDocumentsPanel.vue'
-import KnowledgeSearchPanel from '@/components/knowledge/KnowledgeSearchPanel.vue'
-import KnowledgeResults from '@/components/knowledge/KnowledgeResults.vue'
-import KnowledgeDocDrawer from '@/components/knowledge/KnowledgeDocDrawer.vue'
+import { onMounted, ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { ArrowLeft, Setting, Search, Document, Delete, Edit } from '@element-plus/icons-vue';
+import { useKnowledgeStore, type KnowledgeBaseSettings } from '@/stores/knowledge';
+import KnowledgeDocumentsPanel from '@/components/knowledge/KnowledgeDocumentsPanel.vue';
+import KnowledgeSearchPanel from '@/components/knowledge/KnowledgeSearchPanel.vue';
+import KnowledgeResults from '@/components/knowledge/KnowledgeResults.vue';
+import KnowledgeDocDrawer from '@/components/knowledge/KnowledgeDocDrawer.vue';
 
-const route = useRoute()
-const router = useRouter()
-const knowledgeStore = useKnowledgeStore()
+const route = useRoute();
+const router = useRouter();
+const knowledgeStore = useKnowledgeStore();
 
-const activeTab = ref('documents')
-const loading = ref(true)
+const activeTab = ref('documents');
+const loading = ref(true);
 
 // 检索参数
-const searchQuery = ref('')
-const topK = ref(5)
-const scoreThreshold = ref(0.5)
-const hybrid = ref(true)
-const rerank = ref(false)
-const vectorWeight = ref(1)
-const keywordWeight = ref(0.5)
-const keywordMode = ref<'bm25' | 'tsrank' | 'trgm'>('bm25')
+const searchQuery = ref('');
+const topK = ref(5);
+const scoreThreshold = ref(0.5);
+const hybrid = ref(true);
+const rerank = ref(false);
+const vectorWeight = ref(1);
+const keywordWeight = ref(0.5);
+const keywordMode = ref<'bm25' | 'tsrank' | 'trgm'>('bm25');
 
 // 分块参数
-const chunkSize = ref(500)
-const overlap = ref(50)
+const chunkSize = ref(500);
+const overlap = ref(50);
 
 // 文档抽屉
-const showDocDrawer = ref(false)
-const selectedDoc = ref<any>(null)
-const chunkLimit = ref(10)
-const focusedChunkId = ref('')
+const showDocDrawer = ref(false);
+const selectedDoc = ref<any>(null);
+const chunkLimit = ref(10);
+const focusedChunkId = ref('');
 
 // 编辑对话框
-const showEditDialog = ref(false)
-const editForm = ref({ name: '', description: '' })
+const showEditDialog = ref(false);
+const editForm = ref({ name: '', description: '' });
 
 // 设置对话框
-const showSettingsDialog = ref(false)
-const settingsForm = ref<KnowledgeBaseSettings | null>(null)
+const showSettingsDialog = ref(false);
+const settingsForm = ref<KnowledgeBaseSettings | null>(null);
 
 // 删除确认弹窗
-const deleteDialogVisible = ref(false)
-const deleteLoading = ref(false)
+const deleteDialogVisible = ref(false);
+const deleteLoading = ref(false);
 
-const kb = computed(() => knowledgeStore.currentKnowledgeBase)
+const kb = computed(() => knowledgeStore.currentKnowledgeBase);
 
 onMounted(async () => {
-  const id = route.params.id as string
+  const id = route.params.id as string;
   if (id) {
-    loading.value = true
+    loading.value = true;
     try {
       const [kbData] = await Promise.all([
         knowledgeStore.fetchKnowledgeBase(id),
         knowledgeStore.fetchDocuments(id),
-      ])
+      ]);
       // 从知识库设置初始化检索参数
       if (kbData?.settings?.retrieval) {
-        const r = kbData.settings.retrieval
-        topK.value = r.topK || 5
-        scoreThreshold.value = r.scoreThreshold || 0.5
-        hybrid.value = r.mode === 'hybrid'
-        rerank.value = r.rerank || false
-        vectorWeight.value = r.vectorWeight || 1
-        keywordWeight.value = r.keywordWeight || 0.5
+        const r = kbData.settings.retrieval;
+        topK.value = r.topK || 5;
+        scoreThreshold.value = r.scoreThreshold || 0.5;
+        hybrid.value = r.mode === 'hybrid';
+        rerank.value = r.rerank || false;
+        vectorWeight.value = r.vectorWeight || 1;
+        keywordWeight.value = r.keywordWeight || 0.5;
       }
       if (kbData?.settings?.chunk) {
-        chunkSize.value = kbData.settings.chunk.chunkSize || 500
-        overlap.value = kbData.settings.chunk.overlap || 50
+        chunkSize.value = kbData.settings.chunk.chunkSize || 500;
+        overlap.value = kbData.settings.chunk.overlap || 50;
       }
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
-})
+});
 
 const handleBack = () => {
-  router.push('/knowledge')
-}
+  router.push('/knowledge');
+};
 
 const handleUpload = async (file: File) => {
-  if (!kb.value) return
+  if (!kb.value) return;
   try {
     await knowledgeStore.uploadDocument(file, kb.value.id, {
       chunkSize: chunkSize.value,
       overlap: overlap.value,
-    })
-    ElMessage.success('上传成功')
+    });
+    ElMessage.success('上传成功');
   } catch (e: any) {
-    console.error('[KnowledgeDetail] Upload failed:', e)
-    ElMessage.error(e.response?.data?.message || '上传失败')
+    console.error('[KnowledgeDetail] Upload failed:', e);
+    ElMessage.error(e.response?.data?.message || '上传失败');
   }
-}
+};
 
 const handleSearch = async () => {
-  if (!searchQuery.value.trim()) return
+  if (!searchQuery.value.trim()) return;
   await knowledgeStore.search(searchQuery.value, topK.value, {
     scoreThreshold: scoreThreshold.value,
     hybrid: hybrid.value,
@@ -106,121 +106,109 @@ const handleSearch = async () => {
     vectorWeight: vectorWeight.value,
     keywordWeight: keywordWeight.value,
     keywordMode: keywordMode.value,
-  })
-}
+  });
+};
 
 const openDocDetail = async (doc: any) => {
-  selectedDoc.value = doc
-  showDocDrawer.value = true
-  await knowledgeStore.fetchDocumentChunks(doc.id, chunkLimit.value)
-}
+  selectedDoc.value = doc;
+  showDocDrawer.value = true;
+  await knowledgeStore.fetchDocumentChunks(doc.id, chunkLimit.value);
+};
 
 const refreshChunks = async () => {
-  if (!selectedDoc.value) return
-  await knowledgeStore.fetchDocumentChunks(selectedDoc.value.id, chunkLimit.value)
-}
+  if (!selectedDoc.value) return;
+  await knowledgeStore.fetchDocumentChunks(selectedDoc.value.id, chunkLimit.value);
+};
 
 const handleDeleteDoc = async (id: string) => {
-  if (!kb.value) return
-  await knowledgeStore.deleteDocument(id, kb.value.id)
-}
+  if (!kb.value) return;
+  await knowledgeStore.deleteDocument(id, kb.value.id);
+};
 
 const handleEdit = () => {
-  if (!kb.value) return
+  if (!kb.value) return;
   editForm.value = {
     name: kb.value.name,
     description: kb.value.description || '',
-  }
-  showEditDialog.value = true
-}
+  };
+  showEditDialog.value = true;
+};
 
 const handleSaveEdit = async () => {
-  if (!kb.value) return
+  if (!kb.value) return;
   try {
-    await knowledgeStore.updateKnowledgeBase(kb.value.id, editForm.value)
-    ElMessage.success('更新成功')
-    showEditDialog.value = false
+    await knowledgeStore.updateKnowledgeBase(kb.value.id, editForm.value);
+    ElMessage.success('更新成功');
+    showEditDialog.value = false;
   } catch (e) {
-    ElMessage.error('更新失败')
+    ElMessage.error('更新失败');
   }
-}
+};
 
 const handleDelete = () => {
-  deleteDialogVisible.value = true
-}
+  deleteDialogVisible.value = true;
+};
 
 const confirmDelete = async () => {
-  if (!kb.value) return
-  deleteLoading.value = true
+  if (!kb.value) return;
+  deleteLoading.value = true;
   try {
-    await knowledgeStore.deleteKnowledgeBase(kb.value.id)
-    ElMessage.success('知识库已删除')
-    deleteDialogVisible.value = false
-    router.push('/knowledge')
+    await knowledgeStore.deleteKnowledgeBase(kb.value.id);
+    ElMessage.success('知识库已删除');
+    deleteDialogVisible.value = false;
+    router.push('/knowledge');
   } catch {
-    ElMessage.error('删除失败')
-    deleteLoading.value = false
+    ElMessage.error('删除失败');
+    deleteLoading.value = false;
   }
-}
+};
 
 const handleOpenSettings = () => {
-  if (!kb.value) return
-  settingsForm.value = JSON.parse(JSON.stringify(kb.value.settings))
-  showSettingsDialog.value = true
-}
+  if (!kb.value) return;
+  settingsForm.value = JSON.parse(JSON.stringify(kb.value.settings));
+  showSettingsDialog.value = true;
+};
 
 const handleSaveSettings = async () => {
-  if (!kb.value || !settingsForm.value) return
+  if (!kb.value || !settingsForm.value) return;
   try {
     await knowledgeStore.updateKnowledgeBase(kb.value.id, {
       settings: settingsForm.value,
-    })
-    ElMessage.success('设置已保存')
-    showSettingsDialog.value = false
+    });
+    ElMessage.success('设置已保存');
+    showSettingsDialog.value = false;
     // 更新本地参数
     if (settingsForm.value.retrieval) {
-      const r = settingsForm.value.retrieval
-      topK.value = r.topK
-      scoreThreshold.value = r.scoreThreshold
-      hybrid.value = r.mode === 'hybrid'
-      rerank.value = r.rerank
-      vectorWeight.value = r.vectorWeight || 1
-      keywordWeight.value = r.keywordWeight || 0.5
+      const r = settingsForm.value.retrieval;
+      topK.value = r.topK;
+      scoreThreshold.value = r.scoreThreshold;
+      hybrid.value = r.mode === 'hybrid';
+      rerank.value = r.rerank;
+      vectorWeight.value = r.vectorWeight || 1;
+      keywordWeight.value = r.keywordWeight || 0.5;
     }
     if (settingsForm.value.chunk) {
-      chunkSize.value = settingsForm.value.chunk.chunkSize
-      overlap.value = settingsForm.value.chunk.overlap
+      chunkSize.value = settingsForm.value.chunk.chunkSize;
+      overlap.value = settingsForm.value.chunk.overlap;
     }
   } catch (e) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存失败');
   }
-}
+};
 
 const formatNumber = (num: number) => {
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
-}
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+};
 </script>
 
 <template>
-  <div
-    v-loading="loading"
-    class="knowledge-detail-page"
-  >
+  <div v-loading="loading" class="knowledge-detail-page">
     <!-- 顶部导航 -->
     <div class="page-header">
       <div class="header-left">
-        <el-button
-          :icon="ArrowLeft"
-          text
-          @click="handleBack"
-        >
-          返回
-        </el-button>
-        <div
-          v-if="kb"
-          class="kb-title"
-        >
+        <el-button :icon="ArrowLeft" text @click="handleBack"> 返回 </el-button>
+        <div v-if="kb" class="kb-title">
           <div
             class="kb-icon"
             :style="{ background: (kb.color || '#64748b') + '15', color: kb.color || '#64748b' }"
@@ -238,65 +226,37 @@ const formatNumber = (num: number) => {
         </div>
       </div>
       <div class="header-right">
-        <el-button
-          :icon="Edit"
-          @click="handleEdit"
-        >
-          编辑
-        </el-button>
-        <el-button
-          :icon="Setting"
-          @click="handleOpenSettings"
-        >
-          设置
-        </el-button>
-        <el-button
-          :icon="Delete"
-          type="danger"
-          plain
-          @click="handleDelete"
-        >
-          删除
-        </el-button>
+        <el-button :icon="Edit" @click="handleEdit"> 编辑 </el-button>
+        <el-button :icon="Setting" @click="handleOpenSettings"> 设置 </el-button>
+        <el-button :icon="Delete" type="danger" plain @click="handleDelete"> 删除 </el-button>
       </div>
     </div>
 
     <!-- 统计卡片 -->
-    <div
-      v-if="kb"
-      class="stats-row"
-    >
+    <div v-if="kb" class="stats-row">
       <div class="stat-card">
         <div class="stat-value">
           {{ kb.documentCount || 0 }}
         </div>
-        <div class="stat-label">
-          文档数
-        </div>
+        <div class="stat-label">文档数</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">
           {{ formatNumber(kb.chunkCount || 0) }}
         </div>
-        <div class="stat-label">
-          分块数
-        </div>
+        <div class="stat-label">分块数</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">
           {{ formatNumber(kb.totalChars || 0) }}
         </div>
-        <div class="stat-label">
-          总字符
-        </div>
+        <div class="stat-label">总字符</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">
           {{ kb.settings?.retrieval?.mode || 'hybrid' }}
         </div>
-        <div class="stat-label">
-          检索模式
-        </div>
+        <div class="stat-label">检索模式</div>
       </div>
     </div>
 
@@ -323,10 +283,7 @@ const formatNumber = (num: number) => {
     <!-- Tab 内容 -->
     <div class="tab-content">
       <!-- 文档管理 -->
-      <div
-        v-show="activeTab === 'documents'"
-        class="content-panel"
-      >
+      <div v-show="activeTab === 'documents'" class="content-panel">
         <KnowledgeDocumentsPanel
           v-model:chunk-size="chunkSize"
           v-model:overlap="overlap"
@@ -340,10 +297,7 @@ const formatNumber = (num: number) => {
       </div>
 
       <!-- 检索测试 -->
-      <div
-        v-show="activeTab === 'retrieval'"
-        class="content-panel"
-      >
+      <div v-show="activeTab === 'retrieval'" class="content-panel">
         <div class="panel-card">
           <KnowledgeSearchPanel
             v-model:search-query="searchQuery"
@@ -359,10 +313,7 @@ const formatNumber = (num: number) => {
           />
         </div>
 
-        <div
-          v-if="knowledgeStore.searchResults.length > 0"
-          class="panel-card"
-        >
+        <div v-if="knowledgeStore.searchResults.length > 0" class="panel-card">
           <KnowledgeResults
             :search-results="knowledgeStore.searchResults"
             :search-stats="knowledgeStore.searchStats"
@@ -390,21 +341,10 @@ const formatNumber = (num: number) => {
     />
 
     <!-- 编辑对话框 -->
-    <el-dialog
-      v-model="showEditDialog"
-      title="编辑知识库"
-      width="480px"
-    >
+    <el-dialog v-model="showEditDialog" title="编辑知识库" width="480px">
       <el-form label-position="top">
-        <el-form-item
-          label="名称"
-          required
-        >
-          <el-input
-            v-model="editForm.name"
-            maxlength="50"
-            show-word-limit
-          />
+        <el-form-item label="名称" required>
+          <el-input v-model="editForm.name" maxlength="50" show-word-limit />
         </el-form-item>
         <el-form-item label="描述">
           <el-input
@@ -417,31 +357,15 @@ const formatNumber = (num: number) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditDialog = false">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleSaveEdit"
-        >
-          保存
-        </el-button>
+        <el-button @click="showEditDialog = false"> 取消 </el-button>
+        <el-button type="primary" @click="handleSaveEdit"> 保存 </el-button>
       </template>
     </el-dialog>
 
     <!-- 设置对话框 -->
-    <el-dialog
-      v-model="showSettingsDialog"
-      title="知识库设置"
-      width="560px"
-    >
-      <el-form
-        v-if="settingsForm"
-        label-position="top"
-      >
-        <h4 class="settings-section-title">
-          分块设置
-        </h4>
+    <el-dialog v-model="showSettingsDialog" title="知识库设置" width="560px">
+      <el-form v-if="settingsForm" label-position="top">
+        <h4 class="settings-section-title">分块设置</h4>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="分块大小">
@@ -465,30 +389,18 @@ const formatNumber = (num: number) => {
           </el-col>
         </el-row>
 
-        <h4 class="settings-section-title">
-          检索设置
-        </h4>
+        <h4 class="settings-section-title">检索设置</h4>
         <el-form-item label="检索模式">
           <el-radio-group v-model="settingsForm.retrieval.mode">
-            <el-radio value="vector">
-              向量检索
-            </el-radio>
-            <el-radio value="fulltext">
-              全文检索
-            </el-radio>
-            <el-radio value="hybrid">
-              混合检索
-            </el-radio>
+            <el-radio value="vector"> 向量检索 </el-radio>
+            <el-radio value="fulltext"> 全文检索 </el-radio>
+            <el-radio value="hybrid"> 混合检索 </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="返回数量 (Top K)">
-              <el-input-number
-                v-model="settingsForm.retrieval.topK"
-                :min="1"
-                :max="20"
-              />
+              <el-input-number v-model="settingsForm.retrieval.topK" :min="1" :max="20" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -509,15 +421,8 @@ const formatNumber = (num: number) => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showSettingsDialog = false">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleSaveSettings"
-        >
-          保存
-        </el-button>
+        <el-button @click="showSettingsDialog = false"> 取消 </el-button>
+        <el-button type="primary" @click="handleSaveSettings"> 保存 </el-button>
       </template>
     </el-dialog>
 
@@ -535,27 +440,13 @@ const formatNumber = (num: number) => {
             <Delete />
           </el-icon>
         </div>
-        <h3 class="delete-title">
-          确认删除知识库？
-        </h3>
-        <p class="delete-desc">
-          删除后，知识库「{{ kb?.name }}」及其所有文档与数据将不可恢复
-        </p>
+        <h3 class="delete-title">确认删除知识库？</h3>
+        <p class="delete-desc">删除后，知识库「{{ kb?.name }}」及其所有文档与数据将不可恢复</p>
       </div>
       <template #footer>
         <div class="delete-footer">
-          <el-button
-            size="large"
-            @click="deleteDialogVisible = false"
-          >
-            取消
-          </el-button>
-          <el-button
-            size="large"
-            type="danger"
-            :loading="deleteLoading"
-            @click="confirmDelete"
-          >
+          <el-button size="large" @click="deleteDialogVisible = false"> 取消 </el-button>
+          <el-button size="large" type="danger" :loading="deleteLoading" @click="confirmDelete">
             确认删除
           </el-button>
         </div>

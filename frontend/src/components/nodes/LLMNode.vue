@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Cpu } from '@element-plus/icons-vue'
-import BaseNode from './BaseNode.vue'
+import { Cpu } from '@element-plus/icons-vue';
+import BaseNode from './BaseNode.vue';
 
 defineProps<{
-    data: { label: string; model?: string; systemPrompt?: string; status?: string },
-    selected?: boolean
-}>()
+  data: { label: string; model?: string; systemPrompt?: string; status?: string };
+  selected?: boolean;
+}>();
 </script>
 
 <template>
@@ -21,10 +21,7 @@ defineProps<{
         <span class="label">模型:</span>
         <span class="value">{{ data.model || 'gpt-3.5-turbo' }}</span>
       </div>
-      <div
-        v-if="data.systemPrompt"
-        class="param-row"
-      >
+      <div v-if="data.systemPrompt" class="param-row">
         <span class="label">提示词:</span>
         <span class="value prompt">{{ data.systemPrompt }}</span>
       </div>
@@ -61,11 +58,11 @@ defineProps<{
 }
 
 .prompt {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    max-width: 140px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 140px;
 }
 </style>

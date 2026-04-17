@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 import {
   Lightning,
   Cpu,
@@ -8,10 +8,10 @@ import {
   VideoPlay,
   SwitchButton,
   Search,
-  Link
-} from '@element-plus/icons-vue'
+  Link,
+} from '@element-plus/icons-vue';
 
-const searchQuery = ref('')
+const searchQuery = ref('');
 
 const nodeGroups = [
   {
@@ -19,39 +19,37 @@ const nodeGroups = [
     items: [
       { type: 'trigger', label: '开始', icon: Lightning, color: '#f59e0b', desc: '流程入口' },
       { type: 'end', label: '结束', icon: SwitchButton, color: '#ef4444', desc: '流程出口' },
-    ]
+    ],
   },
   {
     title: 'AI 能力',
     items: [
       { type: 'llm', label: '大模型', icon: Cpu, color: '#0ea5e9', desc: '调用 LLM' },
       { type: 'knowledge', label: '知识检索', icon: Files, color: '#10b981', desc: 'RAG 查询' },
-    ]
+    ],
   },
   {
     title: '逻辑控制',
     items: [
       { type: 'condition', label: '条件判断', icon: Connection, color: '#8b5cf6', desc: 'If-Else' },
       { type: 'code', label: '代码执行', icon: VideoPlay, color: '#6366f1', desc: 'JS/Python' },
-    ]
+    ],
   },
   {
     title: '数据处理',
-    items: [
-      { type: 'http', label: 'HTTP 请求', icon: Link, color: '#667eea', desc: 'API 调用' },
-    ]
-  }
-]
+    items: [{ type: 'http', label: 'HTTP 请求', icon: Link, color: '#667eea', desc: 'API 调用' }],
+  },
+];
 
-const emit = defineEmits(['drag-start'])
+const emit = defineEmits(['drag-start']);
 
 const onDragStart = (event: DragEvent, nodeType: string) => {
   if (event.dataTransfer) {
-    event.dataTransfer.setData('application/vueflow', nodeType)
-    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('application/vueflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
   }
-  emit('drag-start', event, nodeType)
-}
+  emit('drag-start', event, nodeType);
+};
 </script>
 
 <template>
@@ -59,22 +57,18 @@ const onDragStart = (event: DragEvent, nodeType: string) => {
     <div class="panel-header">
       <span class="panel-title">组件库</span>
     </div>
-    
+
     <div class="search-box">
-      <el-input 
-        v-model="searchQuery" 
-        placeholder="搜索组件..." 
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索组件..."
         :prefix-icon="Search"
         size="small"
       />
     </div>
 
     <div class="library-content">
-      <div
-        v-for="group in nodeGroups"
-        :key="group.title"
-        class="group"
-      >
+      <div v-for="group in nodeGroups" :key="group.title" class="group">
         <div class="group-title">
           {{ group.title }}
         </div>
@@ -86,10 +80,7 @@ const onDragStart = (event: DragEvent, nodeType: string) => {
             draggable="true"
             @dragstart="onDragStart($event, node.type)"
           >
-            <div
-              class="icon-wrapper"
-              :style="{ background: node.color + '15', color: node.color }"
-            >
+            <div class="icon-wrapper" :style="{ background: node.color + '15', color: node.color }">
               <el-icon><component :is="node.icon" /></el-icon>
             </div>
             <div class="info">
@@ -202,23 +193,23 @@ const onDragStart = (event: DragEvent, nodeType: string) => {
 }
 
 .hover-tip {
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-neutral-800);
-    color: white;
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    white-space: nowrap;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-neutral-800);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
 }
 
 .component-card:hover .hover-tip {
-    opacity: 1;
-    top: -28px;
+  opacity: 1;
+  top: -28px;
 }
 </style>

@@ -1,68 +1,78 @@
-import { Injectable } from '@nestjs/common'
-import { RagService } from '../rag/rag.service'
+import { Injectable } from '@nestjs/common';
+import { RagService } from '../rag/rag.service';
 
-import type { KnowledgeSearchOptions, SearchResult } from '../types'
+import type { KnowledgeSearchOptions, SearchResult } from '../types';
 
 interface CacheEntry {
-  results: SearchResult[]
-  timestamp: number
-  query: string
-  options: string // 序列化后的选项
+  results: SearchResult[];
+  timestamp: number;
+  query: string;
+  options: string; // 序列化后的选项
 }
 
 @Injectable()
 export class KnowledgeSearchService {
   // 查询缓存：相同查询在一定时间内直接返回缓存结果
-  private queryCache = new Map<string, CacheEntry>()
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000  // 缓存有效期：5分钟
-  private readonly MAX_CACHE_SIZE = 100  // 最大缓存条目数
+  private queryCache = new Map<string, CacheEntry>();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 缓存有效期：5分钟
+  private readonly MAX_CACHE_SIZE = 100; // 最大缓存条目数
 
-  constructor(
-    private ragService: RagService
-  ) { }
+  constructor(private ragService: RagService) {}
 
   async search(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
     // 1. 检查缓存
-    const cacheKey = this.buildCacheKey(query, options)
-    const cached = this.getFromCache(cacheKey)
+    const cacheKey = this.buildCacheKey(query, options);
+    const cached = this.getFromCache(cacheKey);
     if (cached) {
       // 缓存命中，直接返回（只取前 topK 条）
-      return cached.slice(0, topK)
+      return cached.slice(0, topK);
     }
 
     // 2. 执行检索
-    const optionsKey = this.buildSearchOptionsKey(options)
-    const runKeyword = options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0)
-    const vectorResults = await this.ragService.search(query, topK * 2, optionsKey)  // 多取一些用于融合
+    const optionsKey = this.buildSearchOptionsKey(options);
+    const runKeyword =
+      options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
+    const vectorResults = await this.ragService.search(query, topK * 2, optionsKey); // 多取一些用于融合
     const keywordResults = runKeyword
-      ? await this.ragService.searchKeyword(query, topK * 2, optionsKey, options.keywordMode || 'tsrank')
-      : []
+      ? await this.ragService.searchKeyword(
+          query,
+          topK * 2,
+          optionsKey,
+          options.keywordMode || 'tsrank',
+        )
+      : [];
 
     // 3. 融合结果
-    const merged = this.mergeResults(vectorResults, keywordResults)
-    const results = await this.applySearchOptions(merged, query, options)
+    const merged = this.mergeResults(vectorResults, keywordResults);
+    const results = await this.applySearchOptions(merged, query, options);
 
     // 4. 存入缓存
-    this.setCache(cacheKey, results, query, options)
+    this.setCache(cacheKey, results, query, options);
 
     // 5. 返回前 topK 条
-    return results.slice(0, topK)
+    return results.slice(0, topK);
   }
 
   async searchWithStats(query: string, topK = 3, options: KnowledgeSearchOptions = {}) {
-    const optionsKey = this.buildSearchOptionsKey(options)
-    const runKeyword = options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0)
-    const vectorResults = await this.ragService.search(query, topK, optionsKey)
+    const optionsKey = this.buildSearchOptionsKey(options);
+    const runKeyword =
+      options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
+    const vectorResults = await this.ragService.search(query, topK, optionsKey);
     const keywordResults = runKeyword
-      ? await this.ragService.searchKeyword(query, topK, optionsKey, options.keywordMode || 'tsrank')
-      : []
-    const merged = this.mergeResults(vectorResults, keywordResults)
-    const filtered = await this.applySearchOptions(merged, query, options)
+      ? await this.ragService.searchKeyword(
+          query,
+          topK,
+          optionsKey,
+          options.keywordMode || 'tsrank',
+        )
+      : [];
+    const merged = this.mergeResults(vectorResults, keywordResults);
+    const filtered = await this.applySearchOptions(merged, query, options);
     return {
       total: merged.length,
       filtered: filtered.length,
       results: filtered,
-    }
+    };
   }
 
   private buildSearchOptionsKey(options: KnowledgeSearchOptions) {
@@ -73,95 +83,101 @@ export class KnowledgeSearchService {
       vectorWeight: typeof options.vectorWeight === 'number' ? options.vectorWeight : null,
       keywordWeight: typeof options.keywordWeight === 'number' ? options.keywordWeight : null,
       keywordMode: options.keywordMode || 'tsrank',
-    }
-    return Buffer.from(JSON.stringify(normalized)).toString('base64')
+    };
+    return Buffer.from(JSON.stringify(normalized)).toString('base64');
   }
 
   private async applySearchOptions(
     results: SearchResult[],
     query: string,
-    options: KnowledgeSearchOptions
+    options: KnowledgeSearchOptions,
   ) {
-    let filtered: SearchResult[] = results
+    let filtered: SearchResult[] = results;
 
     const keywords = query
       .split(/\s+/)
-      .map(word => word.trim())
-      .filter(Boolean)
+      .map((word) => word.trim())
+      .filter(Boolean);
 
     // 如果启用了 hybrid 模式，使用 RRF 分数；否则使用原始相似度
-    const useHybrid = options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0)
+    const useHybrid =
+      options.hybrid || (typeof options.keywordWeight === 'number' && options.keywordWeight > 0);
 
     // 添加关键词命中统计（用于展示）
-    filtered = filtered.map(item => {
-      const text = item.content || ''
+    filtered = filtered.map((item) => {
+      const text = item.content || '';
       const keywordHits = keywords.reduce((count, word) => {
-        return count + (text.toLowerCase().includes(word.toLowerCase()) ? 1 : 0)
-      }, 0)
+        return count + (text.toLowerCase().includes(word.toLowerCase()) ? 1 : 0);
+      }, 0);
       return {
         ...item,
         keywordHits,
         // 统一使用 finalScore 作为最终排序依据
         finalScore: useHybrid ? (item.rrfScore ?? item.similarity ?? 0) : (item.similarity ?? 0),
-      }
-    })
+      };
+    });
 
     // 应用分数阈值过滤
     if (typeof options.scoreThreshold === 'number') {
-      const scoreThreshold = options.scoreThreshold
+      const scoreThreshold = options.scoreThreshold;
       // 注意：RRF 分数范围通常在 0-0.03 之间（因为 1/60 ≈ 0.016），需要调整阈值理解
       // 这里我们使用归一化后的分数或直接使用 RRF 分数
-      filtered = filtered.filter(item => {
-        const score = useHybrid ? (item.rrfScore ?? 0) : (item.similarity ?? 0)
-        return score >= scoreThreshold
-      })
+      filtered = filtered.filter((item) => {
+        const score = useHybrid ? (item.rrfScore ?? 0) : (item.similarity ?? 0);
+        return score >= scoreThreshold;
+      });
     }
 
     // 最终排序（RRF 结果已经排序，这里再次确保）
-    filtered = filtered.sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0))
+    filtered = filtered.sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
 
-    return filtered
+    return filtered;
   }
 
   /**
    * 构建缓存键
    */
   private buildCacheKey(query: string, options: KnowledgeSearchOptions): string {
-    return `${query}:${this.buildSearchOptionsKey(options)}`
+    return `${query}:${this.buildSearchOptionsKey(options)}`;
   }
 
   /**
    * 从缓存获取结果
    */
   private getFromCache(key: string): SearchResult[] | null {
-    const entry = this.queryCache.get(key)
-    if (!entry) return null
+    const entry = this.queryCache.get(key);
+    if (!entry) return null;
 
     // 检查是否过期
     if (Date.now() - entry.timestamp > this.CACHE_TTL_MS) {
-      this.queryCache.delete(key)
-      return null
+      this.queryCache.delete(key);
+      return null;
     }
 
-    return entry.results
+    return entry.results;
   }
 
   /**
    * 存入缓存（带LRU清理）
    */
-  private setCache(key: string, results: SearchResult[], query: string, options: KnowledgeSearchOptions) {
+  private setCache(
+    key: string,
+    results: SearchResult[],
+    query: string,
+    options: KnowledgeSearchOptions,
+  ) {
     // 如果缓存满了，清理最旧的条目
     if (this.queryCache.size >= this.MAX_CACHE_SIZE) {
-      let oldestKey = ''
-      let oldestTime = Infinity
+      let oldestKey = '';
+      let oldestTime = Infinity;
       this.queryCache.forEach((entry, k) => {
         if (entry.timestamp < oldestTime) {
-          oldestTime = entry.timestamp
-          oldestKey = k
+          oldestTime = entry.timestamp;
+          oldestKey = k;
         }
-      })
+      });
       if (oldestKey) {
-        this.queryCache.delete(oldestKey)
+        this.queryCache.delete(oldestKey);
       }
     }
 
@@ -170,17 +186,17 @@ export class KnowledgeSearchService {
       timestamp: Date.now(),
       query,
       options: this.buildSearchOptionsKey(options),
-    })
+    });
   }
 
   /**
    * 清理过期缓存（可定时调用）
    */
   clearExpiredCache() {
-    const now = Date.now()
+    const now = Date.now();
     for (const [key, entry] of this.queryCache.entries()) {
       if (now - entry.timestamp > this.CACHE_TTL_MS) {
-        this.queryCache.delete(key)
+        this.queryCache.delete(key);
       }
     }
   }
@@ -193,7 +209,7 @@ export class KnowledgeSearchService {
       size: this.queryCache.size,
       maxSize: this.MAX_CACHE_SIZE,
       ttlMs: this.CACHE_TTL_MS,
-    }
+    };
   }
 
   /**
@@ -201,40 +217,43 @@ export class KnowledgeSearchService {
    * RRF 公式: score = 1 / (k + rank)
    * k 为平滑因子，通常取 60，用于降低高排名的主导作用
    */
-  private mergeResults(vectorResults: SearchResult[], keywordResults: SearchResult[]): SearchResult[] {
-    const k = 60  // RRF 平滑因子
-    const rrfScores = new Map<string, number>()
-    const resultMap = new Map<string, SearchResult>()
+  private mergeResults(
+    vectorResults: SearchResult[],
+    keywordResults: SearchResult[],
+  ): SearchResult[] {
+    const k = 60; // RRF 平滑因子
+    const rrfScores = new Map<string, number>();
+    const resultMap = new Map<string, SearchResult>();
 
     // 构建ID到排名的映射
-    const vectorRanks = new Map(vectorResults.map((r, i) => [r.id, i + 1]))
-    const keywordRanks = new Map(keywordResults.map((r, i) => [r.id, i + 1]))
+    const vectorRanks = new Map(vectorResults.map((r, i) => [r.id, i + 1]));
+    const keywordRanks = new Map(keywordResults.map((r, i) => [r.id, i + 1]));
 
     // 收集所有结果ID
-    const allIds = new Set([...vectorRanks.keys(), ...keywordRanks.keys()])
+    const allIds = new Set([...vectorRanks.keys(), ...keywordRanks.keys()]);
 
     // 计算 RRF 分数
-    allIds.forEach(id => {
-      const vectorRank = vectorRanks.get(id)
-      const keywordRank = keywordRanks.get(id)
+    allIds.forEach((id) => {
+      const vectorRank = vectorRanks.get(id);
+      const keywordRank = keywordRanks.get(id);
 
-      let rrfScore = 0
+      let rrfScore = 0;
 
       // 向量检索贡献（如果存在）
       if (vectorRank) {
-        rrfScore += 1 / (k + vectorRank)
+        rrfScore += 1 / (k + vectorRank);
       }
 
       // 关键词检索贡献（如果存在）
       if (keywordRank) {
-        rrfScore += 1 / (k + keywordRank)
+        rrfScore += 1 / (k + keywordRank);
       }
 
-      rrfScores.set(id, rrfScore)
+      rrfScores.set(id, rrfScore);
 
       // 保留原始结果数据，优先使用向量结果（通常包含更多信息）
-      const vectorResult = vectorResults.find(r => r.id === id)
-      const keywordResult = keywordResults.find(r => r.id === id)
+      const vectorResult = vectorResults.find((r) => r.id === id);
+      const keywordResult = keywordResults.find((r) => r.id === id);
 
       resultMap.set(id, {
         ...(vectorResult || keywordResult)!,
@@ -246,11 +265,10 @@ export class KnowledgeSearchService {
         // 同时保存排名信息用于调试
         vectorRank,
         keywordRank,
-      } as SearchResult)
-    })
+      } as SearchResult);
+    });
 
     // 按 RRF 分数降序排序
-    return Array.from(resultMap.values())
-      .sort((a, b) => (b.rrfScore || 0) - (a.rrfScore || 0))
+    return Array.from(resultMap.values()).sort((a, b) => (b.rrfScore || 0) - (a.rrfScore || 0));
   }
 }
