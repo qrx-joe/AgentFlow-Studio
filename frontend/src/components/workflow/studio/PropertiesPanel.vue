@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElCollapseTransition } from 'element-plus'
 import {
   Setting,
@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Connection
 } from '@element-plus/icons-vue'
+import { useKnowledgeStore } from '@/stores/knowledge'
 
 const props = defineProps<{
   node: any
@@ -15,6 +16,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update', 'delete', 'update-edge', 'delete-edge'])
+
+const knowledgeStore = useKnowledgeStore()
+
+onMounted(() => {
+  knowledgeStore.fetchKnowledgeBases()
+})
 
 // Mock config schema based on node type
 const isLLM = computed(() => props.node?.type === 'llm')
@@ -337,21 +344,17 @@ const toggleSection = (section: string) => {
                   <el-form-item label="知识库">
                     <el-select
                       placeholder="选择知识库"
-                      :model-value="node.data?.dataset || 'default'"
+                      :model-value="node.data?.dataset"
+                      :loading="knowledgeStore.loadingBases"
+                      clearable
                       style="width: 100%"
                       @update:model-value="$emit('update', node.id, { dataset: $event })"
                     >
                       <el-option
-                        label="默认知识库"
-                        value="default"
-                      />
-                      <el-option
-                        label="公司规章制度"
-                        value="doc-1"
-                      />
-                      <el-option
-                        label="产品技术文档"
-                        value="doc-2"
+                        v-for="kb in knowledgeStore.knowledgeBases"
+                        :key="kb.id"
+                        :label="kb.name"
+                        :value="kb.id"
                       />
                     </el-select>
                   </el-form-item>
