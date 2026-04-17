@@ -47,7 +47,19 @@ export class RecursiveCharacterTextSplitter {
       finalChunks.push(currentChunk.trim());
     }
 
-    return finalChunks;
+    // 强制截断：确保没有任何 chunk 超过 chunkSize，避免 Embedding API 413
+    const safeChunks: string[] = [];
+    for (const chunk of finalChunks) {
+      if (chunk.length <= this.chunkSize) {
+        safeChunks.push(chunk);
+      } else {
+        for (let i = 0; i < chunk.length; i += this.chunkSize - this.chunkOverlap) {
+          safeChunks.push(chunk.slice(i, i + this.chunkSize).trim());
+        }
+      }
+    }
+
+    return safeChunks.filter((c) => c.length > 0);
   }
 
   private splitOnSeparator(text: string, separator: string): string[] {
