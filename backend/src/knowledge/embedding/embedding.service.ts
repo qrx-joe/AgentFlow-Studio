@@ -32,13 +32,44 @@ export class EmbeddingService {
     if (this.client && !skip) {
       try {
         const model = process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
-        const response = await this.client.embeddings.create({
-          model,
-          input: texts,
-        });
-        // 按输入顺序返回向量
-        const sorted = response.data.sort((a, b) => a.index - b.index);
-        return sorted.map((d) => d.embedding as number[]);
+        const allEmbeddings: number[][] = [];
+
+        // 按条数和总字符数双重限制分批，避免 API 413 Payload Too Large
+        // SiliconFlow 等国内平台网关限制较严，保守设置
+        const MAX_BATCH_ITEMS = 16;
+        const MAX_BATCH_CHARS = 30_000;
+
+        let i = 0;
+        let batchIndex = 0;
+        while (i < texts.length) {
+          let batchChars = 0;
+          let batchEnd = i;
+          while (
+            batchEnd < texts.length &&
+            batchEnd - i < MAX_BATCH_ITEMS &&
+            batchChars + texts[batchEnd].length <= MAX_BATCH_CHARS
+          ) {
+            batchChars += texts[batchEnd].length;
+            batchEnd++;
+          }
+
+          const batch = texts.slice(i, batchEnd);
+          console.log(
+            `[EmbeddingService] Processing batch ${batchIndex + 1}: items=${batch.length}, chars=${batchChars}`,
+          );
+          const response = await this.client.embeddings.create({
+            model,
+            input: batch,
+          });
+          const sorted = response.data.sort((a, b) => a.index - b.index);
+          const batchEmbeds = sorted.map((d) => d.embedding as number[]);
+          allEmbeddings.push(...batchEmbeds);
+
+          i = batchEnd;
+          batchIndex++;
+        }
+
+        return allEmbeddings;
       } catch (err) {
         console.error('[EmbeddingService] Batch API 调用失败:', (err as Error).message);
         throw new Error(`Embedding API 调用失败: ${(err as Error).message}`);

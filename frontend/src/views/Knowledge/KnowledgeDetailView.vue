@@ -2,7 +2,15 @@
 import { onMounted, ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { ArrowLeft, Setting, Search, Document, Delete, Edit } from '@element-plus/icons-vue';
+import {
+  ArrowLeft,
+  Setting,
+  Search,
+  Document,
+  Delete,
+  Edit,
+  Loading,
+} from '@element-plus/icons-vue';
 import { useKnowledgeStore, type KnowledgeBaseSettings } from '@/stores/knowledge';
 import KnowledgeDocumentsPanel from '@/components/knowledge/KnowledgeDocumentsPanel.vue';
 import KnowledgeSearchPanel from '@/components/knowledge/KnowledgeSearchPanel.vue';
@@ -314,8 +322,16 @@ const formatNumber = (num: number) => {
           />
         </div>
 
-        <div v-if="knowledgeStore.searchResults.length > 0" class="panel-card">
+        <div
+          v-if="knowledgeStore.searching || knowledgeStore.searchResults.length > 0"
+          class="panel-card"
+        >
+          <div v-if="knowledgeStore.searching" class="search-loading">
+            <el-icon class="loading-icon"><Loading /></el-icon>
+            <span>正在检索...</span>
+          </div>
           <KnowledgeResults
+            v-else
             :search-results="knowledgeStore.searchResults"
             :search-stats="knowledgeStore.searchStats"
             :search-query="searchQuery"
@@ -326,6 +342,16 @@ const formatNumber = (num: number) => {
             :vector-weight="vectorWeight"
             :keyword-weight="keywordWeight"
           />
+        </div>
+        <div
+          v-else-if="searchQuery.trim() && !knowledgeStore.searching"
+          class="panel-card empty-result"
+        >
+          <el-icon :size="40" class="empty-icon"><Search /></el-icon>
+          <div class="empty-title">未找到相关结果</div>
+          <div class="empty-hint">
+            尝试降低相似度阈值、切换到混合检索，或检查知识库中是否已有文档
+          </div>
         </div>
       </div>
     </div>
@@ -695,5 +721,56 @@ const formatNumber = (num: number) => {
 .delete-footer .el-button--default:hover {
   border-color: #d1d5db;
   background: #f9fafb;
+}
+
+.search-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-icon {
+  color: #d1d5db;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: #9ca3af;
+  max-width: 400px;
+  line-height: 1.5;
 }
 </style>

@@ -224,8 +224,8 @@ export class KnowledgeService {
         )
         .filter((chunk) => chunk.length > 0);
 
-      // 3.2 批量生成向量（每批最多 2048 条，避免 API 限制）
-      const batchSize = 2048;
+      // 3.2 批量生成向量（每批最多 512 条；embedBatch 内部还会按字符数再细分，避免 413）
+      const batchSize = 512;
       const embeddings: number[][] = [];
 
       for (let i = 0; i < cleanedChunks.length; i += batchSize) {
