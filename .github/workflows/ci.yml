@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ['main', 'master']
   pull_request:
 
 jobs:
@@ -27,6 +27,9 @@ jobs:
 
       - name: Install root deps
         run: pnpm install
+
+      - name: Prettier check
+        run: pnpm run format:check
 
       - name: Lint backend
         run: pnpm -C backend lint
