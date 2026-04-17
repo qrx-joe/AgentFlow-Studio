@@ -55,7 +55,7 @@ export class RagService {
       SELECT id, content, document_id,
              1 - (embedding <=> $1::vector) as similarity
       FROM document_chunks
-      WHERE ($3::uuid IS NULL OR document_id = $3::uuid)
+      WHERE ($3::uuid IS NULL OR document_id IN (SELECT id FROM documents WHERE knowledge_base_id = $3::uuid))
       ORDER BY embedding <=> $1::vector
       LIMIT $2
     `,
@@ -114,7 +114,7 @@ export class RagService {
             SELECT id, content, document_id,
                    similarity(content, $2) as keyword_score
             FROM document_chunks
-            WHERE ($4::uuid IS NULL OR document_id = $4::uuid) AND content ILIKE $3
+            WHERE ($4::uuid IS NULL OR document_id IN (SELECT id FROM documents WHERE knowledge_base_id = $4::uuid)) AND content ILIKE $3
             ORDER BY keyword_score DESC
             LIMIT $1
           `,
@@ -125,7 +125,7 @@ export class RagService {
             SELECT id, content, document_id,
                    ${mode === 'tsrank' ? 'ts_rank' : 'ts_rank_cd'}(to_tsvector('simple', content), plainto_tsquery('simple', $2)) as keyword_score
             FROM document_chunks
-            WHERE ($3::uuid IS NULL OR document_id = $3::uuid)
+            WHERE ($3::uuid IS NULL OR document_id IN (SELECT id FROM documents WHERE knowledge_base_id = $3::uuid))
               AND (to_tsvector('simple', content) @@ plainto_tsquery('simple', $2) OR content ILIKE $4)
             ORDER BY keyword_score DESC
             LIMIT $1
