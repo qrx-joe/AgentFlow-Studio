@@ -145,12 +145,15 @@ export class KnowledgeSearchService {
       const scoreThreshold = options.scoreThreshold;
       filtered = filtered.filter((item) => {
         if (useHybrid) {
-          // hybrid 模式下：有向量相似度的按向量相似度过滤；纯关键词命中的不过滤
-          //（因为 keywordScore 范围不统一，且关键词匹配本身已是相关性强信号）
-          if (typeof item.similarity === 'number') {
-            return item.similarity >= scoreThreshold;
+          // hybrid 模式下：向量相似度达标 或 关键词命中 都放行
+          if (typeof item.similarity === 'number' && item.similarity >= scoreThreshold) {
+            return true;
           }
-          return true;
+          // 关键词匹配本身就是相关性强信号，不过滤
+          if (item.keywordRank || (item.keywordScore && item.keywordScore > 0)) {
+            return true;
+          }
+          return false;
         }
         // 纯向量模式
         return (item.similarity ?? 0) >= scoreThreshold;
