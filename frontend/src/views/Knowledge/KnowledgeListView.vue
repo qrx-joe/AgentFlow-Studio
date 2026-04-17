@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Search, EditPen, Delete } from '@element-plus/icons-vue'
 import { useKnowledgeStore } from '@/stores/knowledge'
 
 const router = useRouter()
@@ -13,6 +13,12 @@ const showCreateDialog = ref(false)
 const newKbName = ref('')
 const newKbDesc = ref('')
 const newKbColor = ref('#0f172a')
+
+const showEditDialog = ref(false)
+const editKbId = ref('')
+const editKbName = ref('')
+const editKbDesc = ref('')
+const editKbColor = ref('#0f172a')
 
 const colorOptions = [
   '#64748b', '#10b981', '#8b5cf6', '#f59e0b',
@@ -72,6 +78,34 @@ const handleDelete = async (kb: any, event: Event) => {
     ElMessage.success('知识库已删除')
   } catch {
     // 用户取消
+  }
+}
+
+const openEditDialog = (kb: any, event: Event) => {
+  event.stopPropagation()
+  editKbId.value = kb.id
+  editKbName.value = kb.name
+  editKbDesc.value = kb.description || ''
+  editKbColor.value = kb.color || '#64748b'
+  showEditDialog.value = true
+}
+
+const handleEdit = async () => {
+  if (!editKbName.value.trim()) {
+    ElMessage.warning('请输入知识库名称')
+    return
+  }
+  try {
+    await knowledgeStore.updateKnowledgeBase(editKbId.value, {
+      name: editKbName.value.trim(),
+      description: editKbDesc.value.trim() || undefined,
+      color: editKbColor.value,
+    })
+    ElMessage.success('知识库已更新')
+    showEditDialog.value = false
+  } catch (e) {
+    console.error('[KnowledgeList] Update failed:', e)
+    ElMessage.error('更新失败')
   }
 }
 
@@ -149,27 +183,27 @@ const formatDate = (dateStr?: string) => {
           >
             <span>{{ kb.name.slice(0, 1) }}</span>
           </div>
-          <el-dropdown
-            trigger="click"
+          <div
+            class="card-actions"
             @click.stop
           >
-            <el-icon class="more-btn">
-              <MoreFilled />
-            </el-icon>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="handleOpen(kb.id)">
-                  打开
-                </el-dropdown-item>
-                <el-dropdown-item
-                  divided
-                  @click="handleDelete(kb, $event)"
-                >
-                  <span style="color: #ef4444;">删除</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+            <el-button
+              type="primary"
+              link
+              :icon="EditPen"
+              @click="openEditDialog(kb, $event)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              type="danger"
+              link
+              :icon="Delete"
+              @click="handleDelete(kb, $event)"
+            >
+              删除
+            </el-button>
+          </div>
         </div>
 
         <div class="card-body">
@@ -252,6 +286,60 @@ const formatDate = (dateStr?: string) => {
           @click="handleCreate"
         >
           创建
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑对话框 -->
+    <el-dialog
+      v-model="showEditDialog"
+      title="编辑知识库"
+      width="500px"
+    >
+      <el-form label-position="top">
+        <el-form-item
+          label="名称"
+          required
+        >
+          <el-input
+            v-model="editKbName"
+            placeholder="给知识库起个名字"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input
+            v-model="editKbDesc"
+            type="textarea"
+            placeholder="简单描述知识库的用途（可选）"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="颜色">
+          <div class="color-picker">
+            <div
+              v-for="color in colorOptions"
+              :key="color"
+              class="color-option"
+              :class="{ active: editKbColor === color }"
+              :style="{ background: color }"
+              @click="editKbColor = color"
+            />
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="handleEdit"
+        >
+          保存
         </el-button>
       </template>
     </el-dialog>
@@ -344,19 +432,15 @@ const formatDate = (dateStr?: string) => {
   transform: scale(1.05);
 }
 
-.more-btn {
-  padding: 6px;
-  color: #94a3b8;
-  cursor: pointer;
-  border-radius: 6px;
-  margin-right: -10px;
-  margin-top: -6px;
-  transition: all 0.2s;
+.card-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.more-btn:hover {
-  color: #475569;
-  background: #f1f5f9;
+.kb-card:hover .card-actions {
+  opacity: 1;
 }
 
 .card-body {
