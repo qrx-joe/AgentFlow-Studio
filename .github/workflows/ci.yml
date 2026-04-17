@@ -40,6 +40,9 @@ jobs:
       - name: Build backend
         run: pnpm -C backend build
 
+      - name: Backend jest test
+        run: pnpm -C backend test
+
       - name: Backend workflow test
         run: pnpm -C backend test:workflow
 

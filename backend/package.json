@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "test": "jest",
     "test:workflow": "ts-node scripts/test-workflow.ts",
     "rag:build-terms": "node scripts/rag-build-term-stats.mjs",
     "rag:eval": "node scripts/rag-eval.mjs",
@@ -50,7 +51,9 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",
+    "@nestjs/testing": "^10.4.22",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.10",
     "@types/pdf-parse": "^1.1.5",
@@ -60,6 +63,8 @@
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }
