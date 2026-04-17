@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Plus, Search, EditPen, Delete } from '@element-plus/icons-vue'
 import { useKnowledgeStore } from '@/stores/knowledge'
 
@@ -24,6 +24,11 @@ const colorOptions = [
   '#64748b', '#10b981', '#8b5cf6', '#f59e0b',
   '#ef4444', '#ec4899', '#06b6d4', '#6366f1'
 ]
+
+// 删除确认弹窗
+const deleteDialogVisible = ref(false)
+const deletingKb = ref<any>(null)
+const deleteLoading = ref(false)
 
 onMounted(() => {
   knowledgeStore.fetchKnowledgeBases()
@@ -66,18 +71,24 @@ const handleOpen = (id: string) => {
   router.push(`/knowledge/${id}`)
 }
 
-const handleDelete = async (kb: any, event: Event) => {
+const handleDelete = (kb: any, event: Event) => {
   event.stopPropagation()
+  deletingKb.value = kb
+  deleteDialogVisible.value = true
+}
+
+const confirmDelete = async () => {
+  if (!deletingKb.value) return
+  deleteLoading.value = true
   try {
-    await ElMessageBox.confirm(
-      `确定要删除知识库「${kb.name}」吗？该操作将删除知识库下的所有文档，且不可恢复。`,
-      '删除确认',
-      { type: 'warning' }
-    )
-    await knowledgeStore.deleteKnowledgeBase(kb.id)
+    await knowledgeStore.deleteKnowledgeBase(deletingKb.value.id)
     ElMessage.success('知识库已删除')
+    deleteDialogVisible.value = false
   } catch {
-    // 用户取消
+    ElMessage.error('删除失败')
+  } finally {
+    deleteLoading.value = false
+    deletingKb.value = null
   }
 }
 
@@ -343,6 +354,47 @@ const formatDate = (dateStr?: string) => {
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 删除确认弹窗 -->
+    <el-dialog
+      v-model="deleteDialogVisible"
+      width="420px"
+      align-center
+      :show-close="false"
+      class="delete-dialog"
+    >
+      <div class="delete-content">
+        <div class="delete-icon">
+          <el-icon :size="32">
+            <Delete />
+          </el-icon>
+        </div>
+        <h3 class="delete-title">
+          确认删除知识库？
+        </h3>
+        <p class="delete-desc">
+          删除后，知识库「{{ deletingKb?.name }}」及其下的所有文档与数据将不可恢复
+        </p>
+      </div>
+      <template #footer>
+        <div class="delete-footer">
+          <el-button
+            size="large"
+            @click="deleteDialogVisible = false"
+          >
+            取消
+          </el-button>
+          <el-button
+            size="large"
+            type="danger"
+            :loading="deleteLoading"
+            @click="confirmDelete"
+          >
+            确认删除
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -604,5 +656,79 @@ const formatDate = (dateStr?: string) => {
   border-color: #0f172a;
   box-shadow: 0 0 0 2px #fff;
   transform: scale(1.1);
+}
+
+/* 删除确认弹窗样式 */
+:deep(.delete-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.delete-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.delete-dialog .el-dialog__body) {
+  padding: 40px 40px 24px;
+}
+
+:deep(.delete-dialog .el-dialog__footer) {
+  padding: 0 40px 40px;
+  border: none;
+}
+
+.delete-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.delete-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  color: #ef4444;
+}
+
+.delete-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+
+.delete-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-footer .el-button {
+  min-width: 120px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.delete-footer .el-button--default {
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.delete-footer .el-button--default:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
 }
 </style>

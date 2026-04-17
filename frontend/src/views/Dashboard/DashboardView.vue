@@ -12,7 +12,7 @@ import {
   CopyDocument
 } from '@element-plus/icons-vue'
 import { workflowApi } from '@/api'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 interface Workflow {
   id: string
@@ -44,6 +44,11 @@ const formData = ref({
   color: '#475569'
 })
 const formLoading = ref(false)
+
+// 删除确认弹窗
+const deleteDialogVisible = ref(false)
+const deletingApp = ref<Workflow | null>(null)
+const deleteLoading = ref(false)
 
 // 格式化时间
 const formatTime = (dateStr: string) => {
@@ -168,20 +173,24 @@ const handleSubmit = async () => {
 }
 
 // 删除应用
-const handleDelete = async (app: Workflow) => {
+const handleDelete = (app: Workflow) => {
+  deletingApp.value = app
+  deleteDialogVisible.value = true
+}
+
+const confirmDelete = async () => {
+  if (!deletingApp.value) return
+  deleteLoading.value = true
   try {
-    await ElMessageBox.confirm(
-      `确定要删除应用「${app.name}」吗？此操作不可恢复。`,
-      '删除确认',
-      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
-    )
-    await workflowApi.remove(app.id)
+    await workflowApi.remove(deletingApp.value.id)
     ElMessage.success('删除成功')
+    deleteDialogVisible.value = false
     fetchWorkflows()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
-    }
+  } catch {
+    ElMessage.error('删除失败')
+  } finally {
+    deleteLoading.value = false
+    deletingApp.value = null
   }
 }
 
@@ -424,6 +433,47 @@ const handleOpen = (id: string) => {
         >
           {{ dialogMode === 'create' ? '创建并编辑' : '保存' }}
         </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 删除确认弹窗 -->
+    <el-dialog
+      v-model="deleteDialogVisible"
+      width="420px"
+      align-center
+      :show-close="false"
+      class="delete-dialog"
+    >
+      <div class="delete-content">
+        <div class="delete-icon">
+          <el-icon :size="32">
+            <Delete />
+          </el-icon>
+        </div>
+        <h3 class="delete-title">
+          确认删除应用？
+        </h3>
+        <p class="delete-desc">
+          删除后，应用「{{ deletingApp?.name }}」及其所有关联数据将不可恢复
+        </p>
+      </div>
+      <template #footer>
+        <div class="delete-footer">
+          <el-button
+            size="large"
+            @click="deleteDialogVisible = false"
+          >
+            取消
+          </el-button>
+          <el-button
+            size="large"
+            type="danger"
+            :loading="deleteLoading"
+            @click="confirmDelete"
+          >
+            确认删除
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -757,5 +807,79 @@ const handleOpen = (id: string) => {
     align-items: center;
     gap: 8px;
     font-size: 13px;
+}
+
+/* 删除确认弹窗样式 */
+:deep(.delete-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.delete-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.delete-dialog .el-dialog__body) {
+  padding: 40px 40px 24px;
+}
+
+:deep(.delete-dialog .el-dialog__footer) {
+  padding: 0 40px 40px;
+  border: none;
+}
+
+.delete-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.delete-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  color: #ef4444;
+}
+
+.delete-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+
+.delete-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-footer .el-button {
+  min-width: 120px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.delete-footer .el-button--default {
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.delete-footer .el-button--default:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
 }
 </style>
