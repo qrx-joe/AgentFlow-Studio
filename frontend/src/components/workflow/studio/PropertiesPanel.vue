@@ -9,7 +9,7 @@ const props = defineProps<{
   edge?: any;
 }>();
 
-const emit = defineEmits(['update', 'delete', 'update-edge', 'delete-edge']);
+defineEmits(['update', 'delete', 'update-edge', 'delete-edge']);
 
 const knowledgeStore = useKnowledgeStore();
 

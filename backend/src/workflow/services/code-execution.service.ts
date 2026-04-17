@@ -1,10 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  WorkflowError,
-  ErrorSeverity,
-  ErrorCategory,
-  createExecutionError,
-} from '../types/error.types';
+import { createExecutionError } from '../types/error.types';
 
 export interface CodeExecutionConfig {
   code: string;
@@ -66,7 +61,6 @@ export class CodeExecutionService {
         executionTime,
       };
     } catch (error: any) {
-      const executionTime = Date.now() - startTime;
       this.logger.error(`代码节点 ${nodeId} 执行失败: ${error.message}`);
 
       throw createExecutionError(`代码执行失败: ${error.message}`, nodeId, 'code', false, error);
@@ -175,7 +169,7 @@ export class CodeExecutionService {
   /**
    * 包装用户代码，添加返回值处理和基本保护
    */
-  private wrapCode(code: string, timeout: number): string {
+  private wrapCode(code: string, _timeout: number): string {
     return `
       (async function() {
         "use strict";

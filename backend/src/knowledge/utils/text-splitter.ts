@@ -60,7 +60,7 @@ export class RecursiveCharacterTextSplitter {
     return splits.filter((s) => s !== '');
   }
 
-  private separatorOf(text: string, split: string): string {
+  private separatorOf(_text: string, _split: string): string {
     // implementation detail: strictly speaking we don't know the separator if we just have the split.
     // But usually we join with the separator we just split by.
     // In the original code logic, it seems we need to know the separator.
@@ -103,7 +103,6 @@ export class RecursiveCharacterTextSplitter {
   }
 
   private recursiveSplit(text: string, separators: string[]): string[] {
-    const finalChunks: string[] = [];
     const separator = separators[0];
     const newSeparators = separators.slice(1);
 

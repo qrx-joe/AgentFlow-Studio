@@ -10,7 +10,7 @@ import { AgentService } from '../../agent/agent.service';
 import { KnowledgeService } from '../../knowledge/knowledge.service';
 import { WorkflowHttpService } from '../services/http.service';
 import { CodeExecutionService } from '../services/code-execution.service';
-import { WorkflowError, ErrorSeverity } from '../types/error.types';
+import { WorkflowError } from '../types/error.types';
 
 // 工作流执行引擎：负责解析节点并执行
 export class WorkflowEngine {
@@ -42,7 +42,6 @@ export class WorkflowEngine {
 
     // 重置性能指标
     this.metrics = [];
-    const workflowStartTime = Date.now();
 
     try {
       // 先检测是否存在静态环，避免执行时死循环
@@ -226,9 +225,6 @@ export class WorkflowEngine {
         if (attempt > 0) {
           context.variables = { ...snapshot };
         }
-
-        // 记录节点执行前的变量快照（用于性能分析）
-        const nodeStartTime = Date.now();
 
         if (timeoutMs > 0) {
           await this.withTimeout(this.executeNode(node, context), timeoutMs);

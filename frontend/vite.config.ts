@@ -65,7 +65,7 @@ export default defineConfig(() => {
           changeOrigin: true,
           // SSE 流式传输支持：禁用代理缓冲
           configure: (proxy) => {
-            proxy.on('proxyRes', (proxyRes, req) => {
+            proxy.on('proxyRes', (proxyRes, _req) => {
               // 检测 SSE 响应，确保不缓冲
               if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
                 proxyRes.headers['cache-control'] = 'no-cache';

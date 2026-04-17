@@ -16,7 +16,7 @@ defineProps<{
   minimal?: boolean; // New prop
 }>();
 
-const emit = defineEmits([
+defineEmits([
   'save',
   'run',
   'clear',
