@@ -40,14 +40,12 @@ export class EmbeddingService {
         const sorted = response.data.sort((a, b) => a.index - b.index);
         return sorted.map((d) => d.embedding as number[]);
       } catch (err) {
-        console.warn(
-          '[EmbeddingService] Batch API 调用失败，降级为本地伪向量:',
-          (err as Error).message,
-        );
+        console.error('[EmbeddingService] Batch API 调用失败:', (err as Error).message);
+        throw new Error(`Embedding API 调用失败: ${(err as Error).message}`);
       }
     }
 
-    // 降级为伪向量
+    // 无 API 配置时降级为伪向量（仅用于本地演示，切勿与真实向量混用）
     const dim = Number(process.env.EMBEDDING_DIMENSION || 1536);
     return texts.map((text) => {
       const vector = new Array(dim).fill(0);

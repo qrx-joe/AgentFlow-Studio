@@ -322,7 +322,7 @@ const handleQuickPrompt = (text: string) => {
               <div class="source-list">
                 <div
                   v-for="(src, index) in msg.sources"
-                  :key="index"
+                  :key="src.documentId || index"
                   class="source-item"
                   @click="emit('selectSource', msg.id, src)"
                 >
