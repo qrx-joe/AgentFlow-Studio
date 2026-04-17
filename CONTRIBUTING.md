@@ -36,11 +36,13 @@ pnpm -C frontend dev
 项目使用 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范，提交信息会被 `commitlint` 强制检查。
 
 格式：
+
 ```
 <type>(<scope>): <subject>
 ```
 
 允许的 `type`：
+
 - `feat` — 新功能
 - `fix` — 修复 bug
 - `docs` — 文档更新
@@ -54,6 +56,7 @@ pnpm -C frontend dev
 - `revert` — 回滚提交
 
 示例：
+
 ```bash
 git commit -m "feat: 添加工作流节点复制功能"
 git commit -m "fix(workflow): 修复条件分支边校验错误"
@@ -63,6 +66,7 @@ git commit -m "docs: 更新 API 接口文档"
 ### 代码格式化
 
 提交前会自动运行 `lint-staged`，对 staged 文件执行：
+
 - `prettier --write`
 - `eslint --fix`
 
@@ -116,6 +120,7 @@ pnpm -C frontend build:ci
 ## Issue 反馈
 
 反馈问题时请尽量包含：
+
 - 问题描述和复现步骤
 - 期望行为 vs 实际行为
 - 运行环境（Node 版本、操作系统、浏览器）
