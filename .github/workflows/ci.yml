@@ -25,6 +25,15 @@ jobs:
       - name: Install frontend deps
         run: pnpm -C frontend install
 
+      - name: Install root deps
+        run: pnpm install
+
+      - name: Lint backend
+        run: pnpm -C backend lint
+
+      - name: Lint frontend
+        run: pnpm -C frontend lint
+
       - name: Build backend
         run: pnpm -C backend build
 
