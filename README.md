@@ -4,6 +4,10 @@
 
 [![ci](https://github.com/qrx-joe/AgentFlow-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/qrx-joe/AgentFlow-Studio/actions/workflows/ci.yml)
 
+## 演示截图
+
+![AgentFlow Studio 工作台](./docs/assets/demo-screenshot.png)
+
 ## 技术栈
 
 | 端   | 技术                                                   |
