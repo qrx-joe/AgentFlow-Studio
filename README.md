@@ -69,7 +69,7 @@
    - 调试面板对接后端真实执行数据，按节点实时展示输入 / 输出 / 耗时
 
 5. **基础设施 & 工程化**
-   - JWT 认证 + 全局 AuthGuard + `@nestjs/throttler` 速率限制 + `/health` 健康检查
+   - 业务接口 JWT 鉴权 + 全局 AuthGuard + `@nestjs/throttler` 速率限制 + `/health` 健康检查
    - PostgreSQL：开发环境 `synchronize: true` 加速迭代，生产建议关闭并通过手写 SQL（`backend/database.sql`）做迁移
    - Husky pre-commit（lint-staged + ESLint + Prettier） + commitlint 强制 Conventional Commits
    - GitHub Actions CI：Prettier check → lint（backend + frontend）→ build backend → jest → workflow engine test → build frontend
