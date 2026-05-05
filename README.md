@@ -9,13 +9,24 @@
 
 ## 演示截图
 
-![AgentFlow Studio 工作台](./docs/assets/demo-screenshot.png)
+### 工作流编排画布
 
-> **TODO（待补充截图，提升说服力）**
->
-> - [ ] 工作流编排画布 —— 拖拽节点 + 连线 + 节点配置抽屉
-> - [ ] 知识库管理 —— 文档列表 + 上传 + 检索测试结果
-> - [ ] 流式对话 —— GIF/视频，展示 SSE token 逐字输出 + 引用来源回填
+> 拖拽节点 / 连线 / 节点配置抽屉 / 小地图，一图四特性
+
+![工作流画布](./docs/assets/workflow-canvas.png)
+
+### 工作室 · 知识库 · 智能对话
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/assets/demo-screenshot.png" alt="工作室" /><p align="center"><b>工作室</b> · 应用列表与版本管理</p></td>
+    <td width="50%"><img src="./docs/assets/knowledge-list.png" alt="知识库列表" /><p align="center"><b>知识库列表</b> · 文档数 / 分块数 / 字符数概览</p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/assets/knowledge-rag.png" alt="知识库详情" /><p align="center"><b>知识库详情</b> · 多格式文档（PDF / DOCX / MD / TXT）+ hybrid 检索模式</p></td>
+    <td width="50%"><img src="./docs/assets/chat-streaming.png" alt="智能对话" /><p align="center"><b>智能对话</b> · SSE 流式输出 + 引用来源回填</p></td>
+  </tr>
+</table>
 
 ---
 
@@ -59,9 +70,9 @@
 
 5. **基础设施 & 工程化**
    - JWT 认证 + 全局 AuthGuard + `@nestjs/throttler` 速率限制 + `/health` 健康检查
-   - PostgreSQL `synchronize: false`，Schema 用手写 SQL（`backend/database.sql`）做迁移
+   - PostgreSQL：开发环境 `synchronize: true` 加速迭代，生产建议关闭并通过手写 SQL（`backend/database.sql`）做迁移
    - Husky pre-commit（lint-staged + ESLint + Prettier） + commitlint 强制 Conventional Commits
-   - GitHub Actions CI：format-check → lint → backend build → backend test → workflow engine test → frontend build
+   - GitHub Actions CI：Prettier check → lint（backend + frontend）→ build backend → jest → workflow engine test → build frontend
 
 ---
 
@@ -107,6 +118,9 @@ docker-compose up -d
 
 最初做混合检索时，把 BM25 关键词分数和向量余弦相似度做 `α * vec + (1-α) * bm25` 加权。结果发现两者尺度根本不可比 —— BM25 是无界正分，向量相似度在 [0, 1]，调权重永远调不准。后来改用 **RRF（Reciprocal Rank Fusion）**：只看每个结果在两路检索里的排名，`score = Σ 1/(k+rank)`，对绝对分值不敏感，召回质量明显改善。同时把过滤逻辑从「检索阶段按分数阈值过滤」改成「融合后按 **向量分达标 OR 关键词命中** 过滤」，避免低向量分但精确命中的文档被误删。
 → commit [`2143fb9`](https://github.com/qrx-joe/AgentFlow-Studio/commit/2143fb9) · [`ff495d5`](https://github.com/qrx-joe/AgentFlow-Studio/commit/ff495d5)
+
+![Hybrid 检索效果](./docs/assets/hybrid-search.png)
+*图：hybrid 模式下的检索结果 —— 关键词高亮 + 多路融合排名*
 
 ### 2. Embedding API 的 413 不是单条文本太长，是批量请求体太大
 
