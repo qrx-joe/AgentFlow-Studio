@@ -51,7 +51,7 @@ const isSQLiteDb = (url?: string) => url?.includes('.sqlite') || url?.startsWith
           password: dbConfig.password || undefined,
           database: dbConfig.database || undefined,
           autoLoadEntities: true,
-          synchronize: false,
+          synchronize: true, // 开发环境自动同步，生产环境务必关闭
           ssl: databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false },
           logging: isDev,
           extra: {

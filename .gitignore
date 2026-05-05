@@ -50,6 +50,8 @@ scripts/test_workflow_execution.ts
 
 # Backend test files
 backend/test_upload.txt
+*.sqlite
+*.pdf
 
 # Documentation (untracked)
 功能探索报告.md
