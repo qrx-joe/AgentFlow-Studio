@@ -21,10 +21,10 @@ export class WorkflowEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   color?: string;
 
-  @Column({ type: 'jsonb', default: () => "'[]'" })
+  @Column({ type: 'json', default: () => "'[]'" })
   nodes: any;
 
-  @Column({ type: 'jsonb', default: () => "'[]'" })
+  @Column({ type: 'json', default: () => "'[]'" })
   edges: any;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })

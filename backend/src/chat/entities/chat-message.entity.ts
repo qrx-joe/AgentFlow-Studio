@@ -15,10 +15,10 @@ export class ChatMessageEntity {
   @Column({ type: 'text' })
   content!: string;
 
-  @Column({ type: 'jsonb', default: () => "'[]'" })
+  @Column({ type: 'json', default: () => "'[]'" })
   sources!: any;
 
-  @Column({ type: 'jsonb', default: () => "'{}'" })
+  @Column({ type: 'json', default: () => "'{}'" })
   metadata!: any;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })

@@ -62,7 +62,7 @@ export class KnowledgeBaseEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   color?: string;
 
-  @Column({ type: 'jsonb', default: () => `'${JSON.stringify(defaultKnowledgeBaseSettings)}'` })
+  @Column({ type: 'json', default: () => `'${JSON.stringify(defaultKnowledgeBaseSettings)}'` })
   settings!: KnowledgeBaseSettings;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })

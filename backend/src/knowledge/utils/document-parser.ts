@@ -150,6 +150,16 @@ async function parsePDF(buffer: Buffer): Promise<ParsedDocument> {
     } catch {
       // getInfo 可能失败，忽略
     }
+
+    // 检查是否为扫描件 PDF（无文本层）
+    const rawText = textContent || '';
+    if (!rawText.trim()) {
+      await parser.destroy();
+      throw new Error(
+        'PDF 内容为空：该文件可能是扫描件（图片型 PDF），无法提取文本。请上传包含文本层的 PDF 或使用 OCR 工具转换后再上传。',
+      );
+    }
+
     const content = cleanText(textContent);
     await parser.destroy();
     return {

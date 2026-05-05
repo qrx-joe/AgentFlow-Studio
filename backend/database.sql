@@ -41,7 +41,7 @@ CREATE TRIGGER update_workflows_updated_at
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     filename VARCHAR(255) NOT NULL,
-    file_type VARCHAR(50),
+    file_type VARCHAR(255),
     file_size INTEGER,
     content TEXT,
     metadata JSONB DEFAULT '{}',
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     chunk_index INTEGER NOT NULL,
-    embedding VECTOR(1536),
+    embedding VECTOR(1024),
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

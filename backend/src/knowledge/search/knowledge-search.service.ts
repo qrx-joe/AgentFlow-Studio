@@ -289,8 +289,8 @@ export class KnowledgeSearchService {
 
       resultMap.set(id, {
         ...(vectorResult || keywordResult)!,
-        // 保存原始分数用于参考
-        similarity: vectorResult?.similarity,
+        // 保存原始分数用于参考（仅关键词命中的结果 fallback 到关键词分）
+        similarity: vectorResult?.similarity ?? keywordResult?.keywordScore ?? 0,
         keywordScore: keywordResult?.keywordScore,
         // RRF 融合分数
         rrfScore,

@@ -12,13 +12,13 @@ export class WorkflowExecutionEntity {
   @Column({ type: 'varchar', length: 20 })
   status!: 'pending' | 'running' | 'completed' | 'failed';
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   input?: Record<string, any>;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   output?: Record<string, any>;
 
-  @Column({ type: 'jsonb', default: () => "'[]'" })
+  @Column({ type: 'json', default: () => "'[]'" })
   logs!: string[];
 
   @Column({ type: 'timestamp', name: 'started_at', default: () => 'CURRENT_TIMESTAMP' })

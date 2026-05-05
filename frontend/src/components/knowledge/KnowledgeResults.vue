@@ -50,7 +50,7 @@ const highlightKeywords = (text: string) => {
     </div>
     <div v-for="item in props.searchResults" :key="item.id" class="result-item">
       <div class="meta">
-        相似度：{{ item.similarity.toFixed(3) }}
+        相似度：{{ (item.similarity ?? 0).toFixed(3) }}
         <span v-if="item.fusedScore !== undefined">| 融合分：{{ item.fusedScore.toFixed(3) }}</span>
         <span v-if="item.keywordHits !== undefined">| 关键词命中：{{ item.keywordHits }}</span>
         <span v-if="item.keywordScore !== undefined"

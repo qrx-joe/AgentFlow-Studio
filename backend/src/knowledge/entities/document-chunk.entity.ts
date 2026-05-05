@@ -18,7 +18,7 @@ export class DocumentChunkEntity {
   @Column({ type: 'vector', nullable: true })
   embedding?: number[];
 
-  @Column({ type: 'jsonb', default: () => "'{}'" })
+  @Column({ type: 'json', default: () => "'{}'" })
   metadata!: Record<string, any>;
 
   @Column({ type: 'timestamp', name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
