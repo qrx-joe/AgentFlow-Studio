@@ -32,13 +32,13 @@
 
 ## 技术栈
 
-| 端           | 技术                                                                                                    |
-| ------------ | ------------------------------------------------------------------------------------------------------- |
-| 前端         | Vue 3.4 · Vite 5.3 · TypeScript 5.5 · Vue Flow 1.41 · Element Plus 2.7 · Pinia 2.1 · Vue Router 4.4     |
-| 后端         | NestJS 10.3 · TypeORM 0.3 · openai-sdk 4.52 · class-validator 0.14 · Passport-JWT · Multer · pdf-parse  |
-| 数据 & 缓存  | PostgreSQL 15 + pgvector · Redis 7                                                                      |
-| AI 提供方    | OpenAI 兼容协议（OpenAI / DeepSeek / SiliconFlow 任选，配置 `OPENAI_BASE_URL` 切换）+ text-embedding 模型 |
-| 工程化       | pnpm workspace · Husky · lint-staged · Commitlint · ESLint · Prettier · Jest · GitHub Actions           |
+| 端          | 技术                                                                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| 前端        | Vue 3.4 · Vite 5.3 · TypeScript 5.5 · Vue Flow 1.41 · Element Plus 2.7 · Pinia 2.1 · Vue Router 4.4       |
+| 后端        | NestJS 10.3 · TypeORM 0.3 · openai-sdk 4.52 · class-validator 0.14 · Passport-JWT · Multer · pdf-parse    |
+| 数据 & 缓存 | PostgreSQL 15 + pgvector · Redis 7                                                                        |
+| AI 提供方   | OpenAI 兼容协议（OpenAI / DeepSeek / SiliconFlow 任选，配置 `OPENAI_BASE_URL` 切换）+ text-embedding 模型 |
+| 工程化      | pnpm workspace · Husky · lint-staged · Commitlint · ESLint · Prettier · Jest · GitHub Actions             |
 
 ---
 
@@ -98,13 +98,13 @@ docker-compose up -d
 
 ### 必需环境变量（`backend/.env`）
 
-| 变量              | 说明                                       | 示例                                                         |
-| ----------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| 变量              | 说明                                       | 示例                                                           |
+| ----------------- | ------------------------------------------ | -------------------------------------------------------------- |
 | `DATABASE_URL`    | PostgreSQL 连接串（pgvector 扩展已启用）   | `postgresql://agentflow:agentflow123@localhost:5432/agentflow` |
-| `REDIS_HOST`      | Redis 主机                                 | `localhost`                                                  |
-| `OPENAI_API_KEY`  | OpenAI 兼容协议的 API Key                  | `sk-xxx`                                                     |
-| `OPENAI_BASE_URL` | API 地址，可指向 DeepSeek / SiliconFlow 等 | `https://api.deepseek.com/v1`                                |
-| `JWT_SECRET`      | JWT 签名密钥                               | 任意长字符串                                                 |
+| `REDIS_HOST`      | Redis 主机                                 | `localhost`                                                    |
+| `OPENAI_API_KEY`  | OpenAI 兼容协议的 API Key                  | `sk-xxx`                                                       |
+| `OPENAI_BASE_URL` | API 地址，可指向 DeepSeek / SiliconFlow 等 | `https://api.deepseek.com/v1`                                  |
+| `JWT_SECRET`      | JWT 签名密钥                               | 任意长字符串                                                   |
 
 ---
 
@@ -116,7 +116,7 @@ docker-compose up -d
 → commit [`2143fb9`](https://github.com/qrx-joe/AgentFlow-Studio/commit/2143fb9) · [`ff495d5`](https://github.com/qrx-joe/AgentFlow-Studio/commit/ff495d5)
 
 ![Hybrid 检索效果](./docs/assets/hybrid-search.png)
-*图：hybrid 模式下的检索结果 —— 关键词高亮 + 多路融合排名*
+_图：hybrid 模式下的检索结果 —— 关键词高亮 + 多路融合排名_
 
 ### 2. Embedding API 的 413 不是单条文本太长，是批量请求体太大
 
